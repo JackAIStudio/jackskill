@@ -15,8 +15,8 @@ from urllib.request import Request, urlopen
 
 
 BASE_URL = (
-    "https://raw.githubusercontent.com/JackAIStudio/jkskill/"
-    "main/skills/jks/numbered-prompts"
+    "https://raw.githubusercontent.com/JackAIStudio/jackskill/"
+    "main/skills/jack/numbered-prompts"
 )
 ROOT = Path(__file__).resolve().parents[1] / "numbered-prompts"
 CODE = re.compile(r"[0-9]{3}\Z")
@@ -138,7 +138,7 @@ def get_prompt(code: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="JKSKILL Numbered Prompts Dispatcher")
+    parser = argparse.ArgumentParser(description="JackSkill Numbered Prompts Dispatcher")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list")
     get = sub.add_parser("get")
@@ -149,11 +149,11 @@ def main() -> int:
             items, online = catalog()
             source = "远程最新" if online else "本地已安装"
             if not items:
-                print("当前还没有可用的编号 Skill。")
+                print("JackSkill 当前还没有上架已发布的编号。敬请期待！")
             else:
-                print(f"JKSKILL 当前共有 {len(items)} 个可用编号（{source}）：\n")
+                print(f"JackSkill 当前共有 {len(items)} 个可用编号（{source}）：\n")
                 for item in items:
-                    print(f"- /jks {item['id']} ｜ {item['title']}：{item['purpose']}")
+                    print(f"- /jack {item['id']} ｜ {item['title']}：{item['purpose']}")
         else:
             if CODE.fullmatch(args.code) is None:
                 raise CatalogError("编号必须是三位数字（如 001, 002）")

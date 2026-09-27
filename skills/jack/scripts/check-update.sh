@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# jkskill 版本检查：24 小时内最多联网一次，有新版时输出一行用户提醒。
+# JackSkill 版本检查：24 小时内最多联网一次，有新版时输出一行用户提醒。
 set -uo pipefail
 
 LOCAL_VERSION="${1:-1.0.0}"
-JKS_DIR="$HOME/.jks"
-CACHE_FILE="$JKS_DIR/update_check_at"
-REMOTE_URL="${JKS_UPDATE_URL:-https://raw.githubusercontent.com/JackAIStudio/jkskill/main/UPDATE.json}"
+JACK_DIR="$HOME/.jack"
+CACHE_FILE="$JACK_DIR/update_check_at"
+REMOTE_URL="${JACK_UPDATE_URL:-https://raw.githubusercontent.com/JackAIStudio/jackskill/main/UPDATE.json}"
 CACHE_TTL=86400
 
 if [[ ! "$LOCAL_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
@@ -20,7 +20,7 @@ if [ -f "$CACHE_FILE" ]; then
   fi
 fi
 
-mkdir -p "$JKS_DIR" 2>/dev/null || exit 0
+mkdir -p "$JACK_DIR" 2>/dev/null || exit 0
 printf '%s\n' "$NOW" > "$CACHE_FILE" 2>/dev/null || exit 0
 
 # 超时时间设为 3 秒，防止阻塞对话
@@ -68,5 +68,5 @@ version_is_higher() {
 }
 
 if version_is_higher "$REMOTE_VERSION" "$LOCAL_VERSION"; then
-  printf 'jkskill v%s：%s 回复 1，我现在帮你更新。\n' "$REMOTE_VERSION" "$NOTICE"
+  printf 'JackSkill v%s：%s 回复 1，我现在帮你更新。\n' "$REMOTE_VERSION" "$NOTICE"
 fi

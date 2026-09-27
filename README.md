@@ -1,7 +1,7 @@
-# JackSkill (吴杰克 Jack 生产力武器库)
+# JackSkill (吴杰克 AI 生产力武器库)
 
-> 面向自媒体创作者、独立开发者与极客的开源 AI Skills 武器库。  
-> 把最繁琐的文案诊断、脚本拆解、多平台适配与日常提效交给 Agent，获得立即可执行的交付成果。
+> 面向每一个想用 AI 偷懒、提效、搞钱与解决麻烦事的实战工具箱。  
+> 不讲虚的大模型概念，把工作、副业、内容创作与真实生活中的具体问题交给 Agent，获得立即可执行的下一步。
 
 [![Version](https://img.shields.io/badge/version-1.0.0-2563EB.svg?style=flat-square)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-16A34A.svg?style=flat-square)](LICENSE)
@@ -9,13 +9,15 @@
 
 **支持：豆包、WorkBuddy、Claude Code、Codex、Trae，以及其他支持 Skills 的 Agent。**
 
-JackSkill 由 [吴杰克 Jack](https://github.com/JackAIStudio) 开源打造。基于自媒体工业化实战与 210+ 篇精修口播经验，旨在把独立开发者、剪辑师与内容创作者的实战工作流，转化为全网 Agent 通用的开箱即用规则库。
+JackSkill 由 [吴杰克 Jack](https://github.com/JackAIStudio) 开源打造。它不是象牙塔里的代码玩具，而是吴杰克在真实世界里折腾技术、自媒体实战、副业探索与生活观察的“第二大脑与经验结晶”。
+
+我们不做空谈的理论，只把最接地气的实操心法与避坑指南，沉淀为普通人在豆包、WorkBuddy 里开箱即用的实用武器。
 
 ---
 
 ## ⚡ 为什么选择 JackSkill？
 
-- **拒绝目录爆炸**：无论发布多少期视频，你的 Agent 目录里**永远只占 1 个位置（`/jack`）**；
+- **拒绝目录爆炸**：无论发布多少期视频与技能，你的 Agent 目录里**永远只占 1 个位置（`/jack`）**；
 - **通吃国内主流 Agent**：开箱支持豆包 Mac App、腾讯 WorkBuddy、Trae Solo 等国内主流客户端，无需复杂配置；
 - **视频暗号动态直达**：在短视频评论区领到三位数字暗号后，直接在输入框敲一行 `/jack <编号>`，Agent 自动联网拉取最新规范并当场执行；
 - **零感知静默更新**：日常新增编号免升级直接用；核心架构升级只需在聊天框回复 `1`，AI 自动在后台静默升级。
@@ -37,15 +39,15 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 
 安装完成后，打开豆包、WorkBuddy 或任何 Agent：
 
-- **日常提效**：直接输入：
+- **大白话提问（智能匹配）**：直接输入：
   ```text
-  /jack 这是我写的小红书开头，帮我看看为什么没人看：……
+  /jack 我想做个事情，但卡在……帮我看看怎么搞
   ```
-- **暗号调用**：看到视频里分享的编号时，直接输入：
+- **视频暗号直达**：看到短视频里分享的编号时，直接输入：
   ```text
   /jack <编号>
   ```
-- **查询所有可用编号**：输入：
+- **查询当前所有可用编号**：输入：
   ```text
   /jack list
   ```
@@ -58,11 +60,11 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 
 ---
 
-## 👨‍💻 作者与个人 IP
+## 👨‍💻 关于作者：吴杰克 Jack
 
-- **作者**：[吴杰克 Jack](https://github.com/JackAIStudio)
-- **定位**：独立开发者 / 自媒体实战玩家 / 极客工具创造者
-- **旗下生态**：
+- **GitHub**：[@JackAIStudio](https://github.com/JackAIStudio)
+- **定位**：用 AI 探索真实世界的实战派 / 独立开发者 / 生命力折腾党
+- **旗下自研工具矩阵**：
   - **JackDSH**：开箱即用的桌面 AI 工作台
   - **JackVoice**：基于 Tauri + Rust 的桌面全局极速听写神器
   - **JackAICut**：达芬奇智能口播粗剪助手

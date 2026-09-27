@@ -3,9 +3,13 @@
 > 面向自媒体创作者、独立开发者与极客的开源 AI Skills 武器库。  
 > 把最繁琐的文案诊断、脚本拆解、多平台适配与日常提效交给 Agent，获得立即可执行的交付成果。
 
+[![Version](https://img.shields.io/badge/version-1.0.0-2563EB.svg?style=flat-square)](VERSION)
+[![License](https://img.shields.io/badge/license-MIT-16A34A.svg?style=flat-square)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/JackAIStudio/jackskill?style=flat-square)](https://github.com/JackAIStudio/jackskill/stargazers)
+
 **支持：豆包、WorkBuddy、Claude Code、Codex、Trae，以及其他支持 Skills 的 Agent。**
 
-由 [吴杰克 Jack](https://github.com/JackAIStudio) 开源。基于自媒体工业化实战与 210+ 篇精修口播经验，提炼为全网通用的开箱即用规则库。
+JackSkill 由 [吴杰克 Jack](https://github.com/JackAIStudio) 开源打造。基于自媒体工业化实战与 210+ 篇精修口播经验，旨在把独立开发者、剪辑师与内容创作者的实战工作流，转化为全网 Agent 通用的开箱即用规则库。
 
 ---
 
@@ -39,7 +43,7 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
   ```
 - **暗号调用**：看到视频里分享的编号时，直接输入：
   ```text
-  /jack 001
+  /jack <编号>
   ```
 - **查询所有可用编号**：输入：
   ```text
@@ -51,6 +55,17 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 ## 📋 当前已发布编号清单
 
 实战编号正在持续根据当期短视频高频发布与更新中。输入 `/jack list` 即可秒级拉取最新全量列表。
+
+---
+
+## 👨‍💻 作者与个人 IP
+
+- **作者**：[吴杰克 Jack](https://github.com/JackAIStudio)
+- **定位**：独立开发者 / 自媒体实战玩家 / 极客工具创造者
+- **旗下生态**：
+  - **JackDSH**：开箱即用的桌面 AI 工作台
+  - **JackVoice**：基于 Tauri + Rust 的桌面全局极速听写神器
+  - **JackAICut**：达芬奇智能口播粗剪助手
 
 ---
 

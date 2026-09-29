@@ -69,11 +69,11 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 
 ## 📚 吴杰克全量视频口播逐字稿开源集 (2023—至今)
 
-在本项目 [`transcripts/`](transcripts/) 目录下，我们正式开源了吴杰克过去 3 年半公开发布的 **全部 215 篇高清视频精修口播逐字稿（累计逾 17 万字）**！
+在本项目 [`transcripts/`](transcripts/) 目录下，我们正式开源了吴杰克过去 3 年半公开发布的 **全部 216 篇高清视频精修口播逐字稿（累计逾 17 万字）**！
 
-- **`transcripts/README.md`**：包含全部 215 篇视频的完整索引大表、时长与 B 站高清原片直达链接；
+- **`transcripts/README.md`**：包含全部 216 篇视频的完整索引大表、时长与 B 站高清原片直达链接；
 - **`transcripts/all-transcripts.jsonl`**：专供 AI 智能体与 RAG 向量检索一键导入的结构化单文件；
-- **`transcripts/md/`**：215 篇独立 Markdown 原稿，无论是做自媒体脚本拆解、学习口播结构，还是喂给大模型做知识库，**完全免费开源自取**！
+- **`transcripts/md/`**：216 篇独立 Markdown 原稿，无论是做自媒体脚本拆解、学习口播结构，还是喂给大模型做知识库，**完全免费开源自取**！
 
 ---
 

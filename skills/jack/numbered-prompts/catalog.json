@@ -1,5 +1,30 @@
 {
   "schema_version": 1,
   "updated_at": "2026-09-27",
-  "items": []
+  "items": [
+    {
+      "id": "101",
+      "title": "JackVoice 超低声全局语音听写神器",
+      "purpose": "超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器",
+      "sha256": "a084de78081a9ea0a67471a3aa8c4975883ee6975681352b8d97ef9014e83af5"
+    },
+    {
+      "id": "365",
+      "title": "全平台免费不限速下载神器与加速配置 (qBittorrent)",
+      "purpose": "免开百度/夸克会员，开源磁力下载器调优与最新全网优质 Tracker 节点生成",
+      "sha256": "52e6dceae69f242af2218780d6dec61112cb8b35441234e5cdaa20d51b4f8581"
+    },
+    {
+      "id": "666",
+      "title": "JackDSH 开源桌面客户端与内核升级全指南",
+      "purpose": "最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控实战",
+      "sha256": "3cd0713f7fbb43cb3daed9df4ee5ad3fe36e5e71d1ed5d8be0767f5c2d3e53cd"
+    },
+    {
+      "id": "888",
+      "title": "达芬奇 AI 智能口播剪辑助手 (JackAICut)",
+      "purpose": "口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达",
+      "sha256": "933036789c172c0c6eb88767c7345ea17d6b166e4eaa914669601029c37b5254"
+    }
+  ]
 }

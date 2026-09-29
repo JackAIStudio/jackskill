@@ -54,9 +54,26 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 
 ---
 
-## 📋 当前已发布编号清单
+## 📋 当前已发布王牌编号清单（首发）
 
-实战编号正在持续根据当期短视频高频发布与更新中。输入 `/jack list` 即可秒级拉取最新全量列表。
+输入 `/jack list` 即可秒级拉取最新全量列表：
+
+| 编号 | 核心技能 | 对应视频原片 | 实战价值与一键交付 |
+|---|---|---|---|
+| **`/jack 101`** | **JackVoice 超低声语音输入法** | [📺 B站原片](https://www.bilibili.com/video/BV19qju6dEA7/) | 超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器 |
+| **`/jack 365`** | **全平台免费不限速下载神器** | [📺 B站原片](https://www.bilibili.com/video/BV1xVho6UE2N/) | 免开网盘会员，开源磁力下载器 qBittorrent 调优与最新优质 Tracker 节点生成 |
+| **`/jack 666`** | **JackDSH 桌面 AI 工作台全指南** | [📺 B站原片](https://www.bilibili.com/video/BV1v5aT6ZETi/) | 最新 0.1.7 RC2 内核便携包、免 Key 订阅大模型与手机扫码遥控实战 |
+| **`/jack 888`** | **达芬奇 AI 智能口播剪辑 (JackAICut)** | [📺 B站原片](https://www.bilibili.com/video/BV1DBh862EPh/) | 口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达 |
+
+---
+
+## 📚 吴杰克全量视频口播逐字稿开源集 (2023—至今)
+
+在本项目 [`transcripts/`](transcripts/) 目录下，我们正式开源了吴杰克过去 3 年半公开发布的 **全部 215 篇高清视频精修口播逐字稿（累计逾 17 万字）**！
+
+- **`transcripts/README.md`**：包含全部 215 篇视频的完整索引大表、时长与 B 站高清原片直达链接；
+- **`transcripts/all-transcripts.jsonl`**：专供 AI 智能体与 RAG 向量检索一键导入的结构化单文件；
+- **`transcripts/md/`**：215 篇独立 Markdown 原稿，无论是做自媒体脚本拆解、学习口播结构，还是喂给大模型做知识库，**完全免费开源自取**！
 
 ---
 

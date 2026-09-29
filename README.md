@@ -60,7 +60,7 @@ bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 
 | 编号 | 核心技能 | 对应视频原片 | 实战价值与一键交付 |
 |---|---|---|---|
-| **`/jack 101`** | **JackVoice 超低声语音输入法** | [📺 B站原片](https://www.bilibili.com/video/BV19qju6dEA7/) | 超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器 |
+| **`/jack 101`** | **JackVoice 超低声语音输入法** | [📺 B站原片](https://www.bilibili.com/video/BV1ayg76aEDD/) | 超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器 |
 | **`/jack 365`** | **全平台免费不限速下载神器** | [📺 B站原片](https://www.bilibili.com/video/BV1xVho6UE2N/) | 免开网盘会员，开源磁力下载器 qBittorrent 调优与最新优质 Tracker 节点生成 |
 | **`/jack 666`** | **JackDSH 桌面 AI 工作台全指南** | [📺 B站原片](https://www.bilibili.com/video/BV1v5aT6ZETi/) | 最新 0.1.7 RC2 内核便携包、免 Key 订阅大模型与手机扫码遥控实战 |
 | **`/jack 888`** | **达芬奇 AI 智能口播剪辑 (JackAICut)** | [📺 B站原片](https://www.bilibili.com/video/BV1DBh862EPh/) | 口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达 |

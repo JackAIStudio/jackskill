@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-27",
+  "updated_at": "2026-09-29",
   "items": [
     {
       "id": "101",
       "title": "JackVoice 超低声全局语音听写神器",
       "purpose": "超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器",
-      "sha256": "a084de78081a9ea0a67471a3aa8c4975883ee6975681352b8d97ef9014e83af5"
+      "sha256": "0a65bc616780d3ffaba65f04b38c3eb89f636f6fc7e313e757ce8e437465c4b0"
     },
     {
-      "id": "365",
-      "title": "全平台免费不限速下载神器与加速配置 (qBittorrent)",
-      "purpose": "免开百度/夸克会员，开源磁力下载器调优与最新全网优质 Tracker 节点生成",
-      "sha256": "52e6dceae69f242af2218780d6dec61112cb8b35441234e5cdaa20d51b4f8581"
+      "id": "201",
+      "title": "Jack Media Publisher 多平台视频发布准备助手",
+      "purpose": "一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿",
+      "sha256": "cefa19b2a8f6778aea7e698943a2ef9de87db70e3c1f30d92869c768a1baf311"
     },
     {
       "id": "666",

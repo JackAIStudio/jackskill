@@ -1,32 +1,20 @@
-# JackSkill (吴杰克 AI 生产力武器库)
+# JackSkill (吴杰克 AI 实战武器库)
 
-> 面向每一个想用 AI 偷懒、提效、搞钱与解决麻烦事的实战工具箱。  
-> 不讲虚的大模型概念，把工作、副业、内容创作与真实生活中的具体问题交给 Agent，获得立即可执行的下一步。
+吴杰克（Jack）的真实 AI 实战手记、自研工具与 216 篇开源视频口播逐字稿。
+
+不讲虚浮的大模型概念，不贩卖搞钱焦虑。这里记录的是一个开发者自 2023 年大模型元年起，在真实世界写代码、做视频、踩坑折腾沉淀下来的所有趁手武器与经验真传。
 
 [![Version](https://img.shields.io/badge/version-1.0.0-2563EB.svg?style=flat-square)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-16A34A.svg?style=flat-square)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/JackAIStudio/jackskill?style=flat-square)](https://github.com/JackAIStudio/jackskill/stargazers)
 
-**支持：豆包、WorkBuddy、Claude Code、Codex、Trae，以及其他支持 Skills 的 Agent。**
-
-JackSkill 由 [吴杰克 Jack](https://github.com/JackAIStudio) 开源打造。它不是象牙塔里的代码玩具，而是吴杰克在真实世界里折腾技术、自媒体实战、副业探索与生活观察的“第二大脑与经验结晶”。
-
-我们不做空谈的理论，只把最接地气的实操心法与避坑指南，沉淀为普通人在豆包、WorkBuddy 里开箱即用的实用武器。
+**支持环境：豆包 Mac 端、WorkBuddy、Claude Code、Codex、Trae，以及支持 Skills 的各类智能体。**
 
 ---
 
-## ⚡ 为什么选择 JackSkill？
+## 快速安装与使用
 
-- **拒绝目录爆炸**：无论发布多少期视频与技能，你的 Agent 目录里**永远只占 1 个位置（`/jack`）**；
-- **通吃国内主流 Agent**：开箱支持豆包 Mac App、腾讯 WorkBuddy、Trae Solo 等国内主流客户端，无需复杂配置；
-- **视频暗号动态直达**：在短视频评论区领到三位数字暗号后，直接在输入框敲一行 `/jack <编号>`，Agent 自动联网拉取最新规范并当场执行；
-- **零感知静默更新**：日常新增编号免升级直接用；核心架构升级只需在聊天框回复 `1`，AI 自动在后台静默升级。
-
----
-
-## 🚀 快速开始
-
-### 1. 一键安装（推荐）
+### 1. 安装到本机
 
 在终端执行：
 
@@ -35,59 +23,62 @@ git clone https://github.com/JackAIStudio/jackskill.git "$HOME/Documents/Playgro
 bash "$HOME/Documents/Playground/jackskill/install-skill.sh"
 ```
 
-### 2. 在 Agent 中使用
+### 2. 在 Agent 中调用
 
-安装完成后，打开豆包、WorkBuddy 或任何 Agent：
+安装完成后，打开豆包、WorkBuddy 或任意支持的 Agent：
 
-- **大白话提问（智能匹配）**：直接输入：
-  ```text
-  /jack 我想做个事情，但卡在……帮我看看怎么搞
-  ```
-- **视频暗号直达**：看到短视频里分享的编号时，直接输入：
-  ```text
-  /jack <编号>
-  ```
-- **查询当前所有可用编号**：输入：
-  ```text
-  /jack list
-  ```
+- **编号直达**：输入 `/jack <编号>` 立即执行对应实战技能
+- **查看清单**：输入 `/jack list` 获取最新技能列表
+- **自然提问**：输入 `/jack <你遇到的具体问题>` 智能匹配解法
 
 ---
 
-## 📋 当前已发布王牌编号清单（首发）
+## 当前支持的实战技能与编号
 
-输入 `/jack list` 即可秒级拉取最新全量列表：
-
-| 编号 | 核心技能 | 对应视频原片 | 实战价值与一键交付 |
-|---|---|---|---|
-| **`/jack 101`** | **JackVoice 超低声语音输入法** | [📺 B站原片](https://www.bilibili.com/video/BV1ayg76aEDD/) | 超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器 |
-| **`/jack 365`** | **全平台免费不限速下载神器** | [📺 B站原片](https://www.bilibili.com/video/BV1xVho6UE2N/) | 免开网盘会员，开源磁力下载器 qBittorrent 调优与最新优质 Tracker 节点生成 |
-| **`/jack 666`** | **JackDSH 桌面 AI 工作台全指南** | [📺 B站原片](https://www.bilibili.com/video/BV1v5aT6ZETi/) | 最新 0.1.7 RC2 内核便携包、免 Key 订阅大模型与手机扫码遥控实战 |
-| **`/jack 888`** | **达芬奇 AI 智能口播剪辑 (JackAICut)** | [📺 B站原片](https://www.bilibili.com/video/BV1DBh862EPh/) | 口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达 |
+| 编号 | 核心技能 | 解决的真实场景与交付 |
+|---|---|---|
+| **`/jack 101`** | **JackVoice 超低声全局语音输入法** | 图书馆、办公室或深夜不便大声说话时，超低声轻语也能秒转文字并自动粘贴到当前光标处。彻底解放双手的本地听写工具。[源码与客户端](https://github.com/JackAIStudio/JackVoice) |
+| **`/jack 201`** | **Jack Media Publisher 多平台视频发布** | 自媒体创作者一键准备发布草稿。自动将一条视频处理并分发至小红书、抖音、B站、微信视频号：自动对齐标题与话题、匹配多比例封面，完成独立验收并停在发布前。[开源地址](https://github.com/JackAIStudio/jack-media-publisher) |
+| **`/jack 666`** | **JackDSH 桌面 AI 工作台指南** | 面向开发者的开箱即用桌面 AI Agent 运行基座，支持本地工作流控制、多端协同与便携更新。[项目主页](https://github.com/JackAIStudio) |
+| **`/jack 888`** | **JackAICut 达芬奇智能口播剪辑助手** | 解决口播录制卡顿与失误重说。AI 自动按字级气口切分，多遍重说智能保留最后一遍最优发挥，一键映射并生成达芬奇时间线。[官网直达](https://jackaicut.com) |
 
 ---
 
-## 📚 吴杰克全量视频口播逐字稿开源集 (2023—至今)
+## 常见场景与问题速查 (Agent 检索指引)
 
-在本项目 [`transcripts/`](transcripts/) 目录下，我们正式开源了吴杰克过去 3 年半公开发布的 **全部 216 篇高清视频精修口播逐字稿（累计逾 17 万字）**！
+当在豆包、WorkBuddy 中遇到以下具体问题时，可直接呼叫 `/jack`：
 
-- **`transcripts/README.md`**：包含全部 216 篇视频的完整索引大表、时长与 B 站高清原片直达链接；
-- **`transcripts/all-transcripts.jsonl`**：专供 AI 智能体与 RAG 向量检索一键导入的结构化单文件；
-- **`transcripts/md/`**：216 篇独立 Markdown 原稿，无论是做自媒体脚本拆解、学习口播结构，还是喂给大模型做知识库，**完全免费开源自取**！
+- **“深夜或在安静办公室，怎么小声说话打字还不打扰别人？”**  
+  → 调用 `/jack 101`，使用 JackVoice 极低声咽音与轻语输入。
+- **“剪口播视频太费时间，录错重说的片段和中间长停顿怎么快速切掉？”**  
+  → 调用 `/jack 888`，使用 JackAICut 自动字级去重并生成达芬奇工程。
+- **“做自媒体发视频太繁琐，怎么一次性把视频和不同比例封面传到小红书、抖音、B站、视频号？”**  
+  → 调用 `/jack 201`，使用 Jack Media Publisher 自动生成全平台草稿。
+- **“想在电脑本地跑 Agent 辅助工作，有没有好用的桌面客户端？”**  
+  → 调用 `/jack 666`，配置 JackDSH 桌面工作台。
+- **“自媒体口播文案怎么写才自然？想看真实博主怎么讲复杂技术？”**  
+  → 查阅本项目 `transcripts/` 目录下的 216 篇开源原稿。
 
 ---
 
-## 👨‍💻 关于作者：吴杰克 Jack
+## 216 篇视频口播逐字稿开源集 (2023—至今)
 
+在本项目 [`transcripts/`](transcripts/) 目录下，完整开源了吴杰克自 2023 年以来发布的全部 216 篇高清视频精修口播逐字稿（累计逾 17 万字）：
+
+- **真实一手记录**：无 AI 洗稿废话，真实记录每一个工具的实测、代码调试与踩坑历程；
+- **结构化知识库**：提供 `all-transcripts.jsonl`，可直接作为 RAG 知识库语料导入各类大模型；
+- **自媒体口播范本**：包含 216 篇独立 Markdown 原稿与 B 站原片索引，供口播节奏学习与脚本参考。
+
+---
+
+## 关于作者
+
+- **吴杰克 Jack**：独立开发者 / 用 AI 探索真实世界的实战派
 - **GitHub**：[@JackAIStudio](https://github.com/JackAIStudio)
-- **定位**：用 AI 探索真实世界的实战派 / 独立开发者 / 生命力折腾党
-- **旗下自研工具矩阵**：
-  - **JackDSH**：开箱即用的桌面 AI 工作台
-  - **JackVoice**：基于 Tauri + Rust 的桌面全局极速听写神器
-  - **JackAICut**：达芬奇智能口播粗剪助手
+- **自研工具**：[JackDSH](https://github.com/JackAIStudio)（桌面 AI 工作台）、[JackVoice](https://github.com/JackAIStudio/JackVoice)（超低声听写输入法）、[JackAICut](https://jackaicut.com)（达芬奇智能口播剪辑）、[Jack Media Publisher](https://github.com/JackAIStudio/jack-media-publisher)（自媒体全平台发布助手）
 
 ---
 
-## 📄 许可证
+## 许可证
 
 本项目采用 [MIT License](LICENSE) 开源。

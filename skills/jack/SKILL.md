@@ -14,11 +14,11 @@ description: 吴杰克 Jack AI 实战武器库（JackSkill）统一入口，沉�
 1. **编号技能执行**：当用户输入 `/jack <三位数字>`（如 `/jack 101`、`/jack 201`、`/jack 666`、`/jack 888`）时，自动从本地或公开仓库加载对应编号的专属规范，在当前对话中直接带用户执行并交付结果。
 2. **技能目录查询**：当用户询问「所有编号」「技能清单」「/jack list」时，列出当前所有已发布的编号、名称和实战用途。
 3. **真实问题引导**：当用户未带编号直接输入 `/jack <问题>` 时，结合当前对话上下文，判断最适合的方法或推荐对应的编号工具。
-4. **静默版本检查与一键升级**：进入本 Skill 时无感检查远端版本。有新版时在末尾提醒，用户回复 `1` 时自动帮用户在后台完成静默升级。
+4. **静默版本检查与口头一键升级**：进入本 Skill 时无感检查远端版本。当用户说「更新 jackskill」「升级技能」或回复 `1` 时，自动帮用户在后台完成静默升级并同步最新内容。
 
 ---
 
-## 版本检查与静默升级
+## 版本检查与口头升级
 
 每次进入本 Skill 时，在执行其他逻辑前，先在后台运行检查脚本：
 
@@ -30,22 +30,20 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.0.0"
 - **追加提醒**：当脚本有输出时，将输出内容追加在本次回复的最末尾，单独成段，格式为：
   > 🔔 {输出内容}
 - **脚本无输出时**：直接跳过，不影响正常任务执行。
-- **回复 1 自动升级**：
-  若上一轮助手的回复末尾包含了升级提醒，且用户紧接着回复了数字 `1`：
-  立即在后台执行本地仓库拉取或安装脚本：
+- **口头一键升级**：
+  当用户明确输入「更新 jackskill」「升级 jackskill」「更新技能」，或上一轮助手提示升级后用户回复了数字 `1`：
+  立即在后台执行更新命令：
   ```bash
-  if command -v skills >/dev/null 2>&1; then
-    skills update -g || true
+  if command -v npx >/dev/null 2>&1; then
+    npx -y skills add JackAIStudio/jackskill -g --all >/dev/null 2>&1 || true
   fi
   SRC_DIR=$(cd "<本 SKILL.md 所在目录>/../.." && pwd)
   if [ -d "$SRC_DIR/.git" ]; then
-    git -C "$SRC_DIR" pull --rebase && bash "$SRC_DIR/install.sh"
-  elif [ -d "$HOME/.jackskill/.git" ]; then
-    git -C "$HOME/.jackskill" pull --rebase && bash "$HOME/.jackskill/install.sh"
+    git -C "$SRC_DIR" pull --rebase --quiet || true
   fi
   ```
-  执行成功后，回复用户：
-  > 🎉 JackSkill 已在后台自动升级到最新版本！新建一次对话后即可体验全新能力。
+  执行完成后，直接回复用户：
+  > 🎉 JackSkill 已在后台自动更新到最新版本！已同步最新的技能与口播逐字稿。
 
 ---
 

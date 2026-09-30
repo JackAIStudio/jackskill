@@ -12,9 +12,7 @@
 
 ## 快速安装与使用
 
-### 1. 安装到本机
-
-**推荐方式（一行命令自动识别并配置多端 Agent）：**
+### 1. 一行安装到本机
 
 在终端执行：
 
@@ -22,29 +20,14 @@
 npx -y skills add JackAIStudio/jackskill -g --all
 ```
 
-*若电脑未安装 Node/npm，也可直接执行一键安装脚本：*
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/JackAIStudio/jackskill/main/install.sh | bash
-```
-
 ### 2. 在 Agent 中调用
 
 安装完成后，打开豆包、WorkBuddy 或任意支持的 Agent：
 
-- **编号直达**：输入 `/jack <编号>` 立即执行对应技能
+- **编号直达**：输入 `/jack <编号>` 立即执行对应技能（如 `/jack 101`）
 - **查看清单**：输入 `/jack list` 获取最新技能列表
 - **自然提问**：输入 `/jack <你想问的任何问题>` 智能匹配解法
-
-### 3. 后续更新
-
-当有新技能或逐字稿更新时，在终端执行：
-
-```bash
-npx -y skills update -g
-```
-
-或在 Agent 对话框中直接对它说“更新 jackskill”即可。
+- **一键更新**：直接对 Agent 说 **“更新 jackskill”**，全自动同步最新技能与逐字稿
 
 ---
 

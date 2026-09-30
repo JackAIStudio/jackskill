@@ -1,63 +1,57 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# JackSkill 一键安装与配置脚本 (支持本地运行与远程 curl | bash)
-# 支持环境：豆包 Mac、WorkBuddy、Claude Code、Codex、Trae 以及通用 Agents
+# JackSkill 一键安装脚本
+# 统一安装至 Agent 通用标准目录：~/.agents/skills/jack
+# 兼容环境：豆包、WorkBuddy、Codex、Claude Code、Trae 以及各类 AI Agents
 # ==============================================================================
 
 set -euo pipefail
 
-TARGET_DIR="${HOME}/.jackskill"
+SKILLS_ROOT="${HOME}/.agents/skills"
+TARGET_JACK="${SKILLS_ROOT}/jack"
 REPO_URL="https://github.com/JackAIStudio/jackskill.git"
 
-# 1. 确定源文件所在位置
-if [ -t 0 ] && [ -f "$(dirname "${BASH_SOURCE[0]:-$0}")/skills/jack/SKILL.md" ]; then
-  # 本地仓库直接运行
-  INSTALL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+mkdir -p "${SKILLS_ROOT}"
+
+echo "🚀 开始安装 JackSkill 到 Agent 通用目录..."
+
+# 1. 判断是本地源码运行，还是远程终端运行
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
+if [ -n "${SCRIPT_DIR}" ] && [ -f "${SCRIPT_DIR}/skills/jack/SKILL.md" ]; then
+  # 本地仓库运行：直接软链接到通用目录，开发修改实时生效
+  SRC_JACK="${SCRIPT_DIR}/skills/jack"
+  ln -sfn "${SRC_JACK}" "${TARGET_JACK}"
+  echo "  ✓ 已通过源码链接至: ${TARGET_JACK}"
 else
-  # 远程 curl | bash 运行，静默安装到 ~/.jackskill
-  echo "📦 正在获取 JackSkill 最新代码..."
-  if [ -d "${TARGET_DIR}/.git" ]; then
-    git -C "${TARGET_DIR}" pull --quiet || true
-  else
-    mkdir -p "${TARGET_DIR}"
-    git clone --quiet --depth=1 "${REPO_URL}" "${TARGET_DIR}"
-  fi
-  INSTALL_DIR="${TARGET_DIR}"
+  # 远程 curl | bash 运行：直接将 jack skill 部署到通用目录
+  TMP_DIR="$(mktemp -d)"
+  trap 'rm -rf "${TMP_DIR}"' EXIT
+  echo "  📦 正在获取最新技能文件..."
+  git clone --quiet --depth=1 "${REPO_URL}" "${TMP_DIR}/jackskill"
+  rm -rf "${TARGET_JACK}"
+  cp -R "${TMP_DIR}/jackskill/skills/jack" "${TARGET_JACK}"
+  echo "  ✓ 已部署至通用 Agent 目录: ${TARGET_JACK}"
 fi
 
-SOURCE_JACK="${INSTALL_DIR}/skills/jack"
-
-if [ ! -d "${SOURCE_JACK}" ]; then
-  echo "❌ 错误：未找到 jack 技能目录：${SOURCE_JACK}"
-  exit 1
-fi
-
-echo "🚀 开始配置 JackSkill 到本机各 Agent 环境..."
-
-# 2. 通用 Agent 公共入口（豆包 Mac App, Trae, Codex, Cursor, Windsurf 等）
-AGENTS_DIR="${HOME}/.agents/skills"
-mkdir -p "${AGENTS_DIR}"
-ln -sfn "${SOURCE_JACK}" "${AGENTS_DIR}/jack"
-echo "  ✓ 已配置通用 Agents 入口: ${AGENTS_DIR}/jack"
-
-# 3. 腾讯 WorkBuddy 专属入口 (若存在 ~/.workbuddy)
+# 2. 腾讯 WorkBuddy 专属入口兼容（若存在 ~/.workbuddy/skills）
 if [ -d "${HOME}/.workbuddy" ]; then
   WB_DIR="${HOME}/.workbuddy/skills"
   mkdir -p "${WB_DIR}"
-  ln -sfn "${SOURCE_JACK}" "${WB_DIR}/jack"
-  echo "  ✓ 已配置 WorkBuddy 专属入口: ${WB_DIR}/jack"
+  ln -sfn "${TARGET_JACK}" "${WB_DIR}/jack"
+  echo "  ✓ 已同步 WorkBuddy 入口: ${WB_DIR}/jack"
 fi
 
-# 4. Claude Code 专属入口 (若存在 ~/.claude)
+# 3. Claude Code 专属入口兼容（若存在 ~/.claude/skills）
 if [ -d "${HOME}/.claude" ]; then
   CLAUDE_DIR="${HOME}/.claude/skills"
   mkdir -p "${CLAUDE_DIR}"
-  ln -sfn "${SOURCE_JACK}" "${CLAUDE_DIR}/jack"
-  echo "  ✓ 已配置 Claude Code 专属入口: ${CLAUDE_DIR}/jack"
+  ln -sfn "${TARGET_JACK}" "${CLAUDE_DIR}/jack"
+  echo "  ✓ 已同步 Claude Code 入口: ${CLAUDE_DIR}/jack"
 fi
 
 echo ""
-echo "🎉 安装完成！现在可以在 豆包、WorkBuddy、Claude Code 或任何支持的 Agent 中直接使用："
-echo "   - 输入「/jack」开始使用或获取推荐"
+echo "🎉 安装完成！核心目录已就绪: ${TARGET_JACK}"
+echo "   现在可在 豆包、WorkBuddy、Claude Code、Codex 等任意支持的 Agent 中直接使用："
+echo "   - 输入「/jack」开始使用"
 echo "   - 输入「/jack <编号>」直接执行对应技能（如 /jack 101）"
 echo "   - 输入「/jack list」查看当前技能清单"

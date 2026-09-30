@@ -25,7 +25,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.2.1"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.3.0"
 ```
 
 执行规则：

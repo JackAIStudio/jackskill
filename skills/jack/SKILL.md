@@ -34,9 +34,14 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.0.0"
   若上一轮助手的回复末尾包含了升级提醒，且用户紧接着回复了数字 `1`：
   立即在后台执行本地仓库拉取或安装脚本：
   ```bash
+  if command -v skills >/dev/null 2>&1; then
+    skills update -g || true
+  fi
   SRC_DIR=$(cd "<本 SKILL.md 所在目录>/../.." && pwd)
   if [ -d "$SRC_DIR/.git" ]; then
-    git -C "$SRC_DIR" pull --rebase && bash "$SRC_DIR/install-skill.sh"
+    git -C "$SRC_DIR" pull --rebase && bash "$SRC_DIR/install.sh"
+  elif [ -d "$HOME/.jackskill/.git" ]; then
+    git -C "$HOME/.jackskill" pull --rebase && bash "$HOME/.jackskill/install.sh"
   fi
   ```
   执行成功后，回复用户：

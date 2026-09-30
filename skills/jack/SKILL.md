@@ -23,7 +23,7 @@ description: 吴杰克 Jack AI 实战武器库（JackSkill）统一入口，沉�
 每次进入本 Skill 时，在执行其他逻辑前，先在后台运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.0.0"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.1.0"
 ```
 
 执行规则：

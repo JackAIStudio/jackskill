@@ -1,12 +1,12 @@
 # JackSkill
 
-吴杰克 Jack 把自己开源了。这里收录了他做的几个工具，以及 2023 年至今全部视频的口播逐字稿，持续更新。按需取用，一起成长。
+吴杰克 Jack 把自己开源了。这里收录了他做的开源工具和商业产品，以及全部视频的口播逐字稿（持续更新）
 
 [![Version](https://img.shields.io/badge/version-1.2.1-2563EB.svg?style=flat-square)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-16A34A.svg?style=flat-square)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/JackAIStudio/jackskill?style=flat-square)](https://github.com/JackAIStudio/jackskill/stargazers)
 
-这个 skill 体积很轻，内容都在 GitHub 上，本地几乎零占用。支持环境：豆包、WorkBuddy、Codex、Claude Code，以及支持 Skills 的各类智能体。
+支持环境：豆包、WorkBuddy、Codex、Claude Code，以及支持 Skills 的各类智能体。
 
 ---
 

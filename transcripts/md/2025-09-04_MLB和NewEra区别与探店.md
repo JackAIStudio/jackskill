@@ -1,8 +1,9 @@
-# mlb还是newera？我的选择是… | 探店vlog
+# MLB和NewEra的区别与探店选购
 
-- **视频原片**：*(原视频正在同步至 B 站)*
+- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1HDamziEa9/)
 - **发布日期**：2025-09-04
 - **视频时长**：06:04 (364 秒)
+- **各平台发布标题**：mlb还是newera？我的选择是… | 探店vlog / 活动mlb和newera的区别是什么？我的选择是…|探店vlog
 
 ---
 

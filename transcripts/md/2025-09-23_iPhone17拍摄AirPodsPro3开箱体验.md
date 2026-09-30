@@ -1,8 +1,9 @@
-# 使用iphone17和17pro拍摄airpods pro 3开箱是种怎样的体验？
+# 使用iPhone 17和17 Pro拍摄AirPods Pro 3开箱体验
 
-- **视频原片**：*(原视频正在同步至 B 站)*
+- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1VnJyzjEyh/)
 - **发布日期**：2025-09-23
 - **视频时长**：03:43 (223 秒)
+- **各平台发布标题**：使用iphone17和17pro拍摄airpods pro 3开箱是种怎样的体验？ / 用iphone17系列拍摄airpods pro 3开箱视频
 
 ---
 

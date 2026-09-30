@@ -23,7 +23,7 @@ CODE = re.compile(r"[0-9]{3}\Z")
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 TITLE = re.compile(r"^# ([0-9]{3})｜(.+)$", re.MULTILINE)
 
-# 思想库（全量视频口播逐字稿）主题归类规则：具体主题在前、宽泛主题在后兜底。
+# 口播逐字稿主题归类规则：具体主题在前、宽泛主题在后兜底。
 # 分类分两阶段：先用标题匹配全部规则；标题无命中时，再用正文前 400 字走一遍同样顺序。
 TOPICS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("剪辑与达芬奇实战", ("达芬奇", "剪辑", "字幕", "成片", "多机位", "录屏", "JackAICut", "Screen Studio", "ScreenStudio")),
@@ -214,7 +214,7 @@ def classify(entry: dict[str, str]) -> str:
 def transcripts_overview(entries: list[dict[str, str]]) -> str:
     total_chars = sum(len(item["text"]) for item in entries)
     lines = [
-        f"📚 Jack 思想库：共 {len(entries)} 篇全量视频口播逐字稿，约 {total_chars / 10000:.0f} 万字，"
+        f"口播逐字稿：共 {len(entries)} 篇，约 {total_chars / 10000:.0f} 万字，"
         f"时间跨度 {entries[-1]['date']} 至 {entries[0]['date']}。",
         "",
         "主题分布：",
@@ -294,7 +294,7 @@ def main() -> int:
             items, online = catalog()
             source = "远程最新" if online else "本地已安装"
             if not items:
-                print("JackSkill 当前还没有上架已发布的编号。敬请期待！")
+                print("JackSkill 当前还没有已发布的编号。")
             else:
                 print(f"【工具编号】JackSkill 当前共有 {len(items)} 个可用编号（{source}）：\n")
                 for item in items:
@@ -303,7 +303,7 @@ def main() -> int:
             try:
                 print(transcripts_overview(load_transcripts()))
             except CatalogError:
-                print("【思想库】当前环境未检出逐字稿库（仅完整克隆仓库时可用）。")
+                print("【逐字稿】当前环境未检出逐字稿目录（仅完整克隆仓库时可用）。")
         elif args.command == "get":
             if CODE.fullmatch(args.code) is None:
                 raise CatalogError("编号必须是三位数字（如 001, 002）")

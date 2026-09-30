@@ -14,20 +14,20 @@ if [ ! -d "${SOURCE_JACK}" ]; then
   exit 1
 fi
 
-echo "🚀 开始安装 JackSkill（吴杰克 Jack 生产力武器库）..."
+echo "开始安装 JackSkill..."
 
 # 1. 核心公共入口：~/.agents/skills/jack (覆盖豆包 Mac App, Trae, Codex, DSH 等)
 AGENTS_DIR="${HOME}/.agents/skills"
 mkdir -p "${AGENTS_DIR}"
 ln -sfn "${SOURCE_JACK}" "${AGENTS_DIR}/jack"
-echo "  ✓ 已链接通用 Agents 公共入口: ${AGENTS_DIR}/jack"
+echo "  已链接通用 Agents 入口: ${AGENTS_DIR}/jack"
 
 # 2. 腾讯 WorkBuddy 专属入口 (若存在 ~/.workbuddy)
 if [ -d "${HOME}/.workbuddy" ]; then
   WB_DIR="${HOME}/.workbuddy/skills"
   mkdir -p "${WB_DIR}"
   ln -sfn "${SOURCE_JACK}" "${WB_DIR}/jack"
-  echo "  ✓ 已链接 WorkBuddy 专属入口: ${WB_DIR}/jack"
+  echo "  已链接 WorkBuddy 入口: ${WB_DIR}/jack"
 fi
 
 # 3. Claude Code 专属入口 (若存在 ~/.claude)
@@ -35,11 +35,11 @@ if [ -d "${HOME}/.claude" ]; then
   CLAUDE_DIR="${HOME}/.claude/skills"
   mkdir -p "${CLAUDE_DIR}"
   ln -sfn "${SOURCE_JACK}" "${CLAUDE_DIR}/jack"
-  echo "  ✓ 已链接 Claude Code 专属入口: ${CLAUDE_DIR}/jack"
+  echo "  已链接 Claude Code 入口: ${CLAUDE_DIR}/jack"
 fi
 
 echo ""
-echo "🎉 安装完成！你可以在 豆包、WorkBuddy、Claude Code 或任何 Agent 中使用："
+echo "安装完成。你可以在豆包、WorkBuddy、Claude Code 或任何 Agent 中使用："
 echo "   - 输入「/jack」开始使用或获取推荐"
-echo "   - 输入「/jack <编号>」直接执行对应视频技能"
-echo "   - 输入「/jack list」查看当前所有发布的实战编号与技能"
+echo "   - 输入「/jack <编号>」直接执行对应编号工具"
+echo "   - 输入「/jack list」查看所有编号与逐字稿概览"

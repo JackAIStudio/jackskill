@@ -1,12 +1,12 @@
 # JackSkill
 
-吴杰克Jack的数字分身，开源工具、商业产品、生活经历以及发布的所有视频口播逐字稿。
+吴杰克 Jack 把自己开源了。这里收录了他做的几个工具，以及 2023 年至今全部视频的口播逐字稿，持续更新。按需取用，一起成长。
 
-[![Version](https://img.shields.io/badge/version-1.0.0-2563EB.svg?style=flat-square)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.2.1-2563EB.svg?style=flat-square)](VERSION)
 [![License](https://img.shields.io/badge/license-MIT-16A34A.svg?style=flat-square)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/JackAIStudio/jackskill?style=flat-square)](https://github.com/JackAIStudio/jackskill/stargazers)
 
-**支持环境：豆包、WorkBuddy、Codex、Claude Code，以及支持 Skills 的各类智能体和AI Agent。**
+这个 skill 体积很轻，内容都在 GitHub 上，本地几乎零占用。支持环境：豆包、WorkBuddy、Codex、Claude Code，以及支持 Skills 的各类智能体。
 
 ---
 
@@ -31,39 +31,39 @@ npx -y skills add JackAIStudio/jackskill -g --all
 
 ---
 
-## 当前支持的实战技能与编号
+## 当前支持的编号工具
 
-| 编号 | 核心技能 | 解决的真实场景与交付 |
+| 编号 | 工具 | 场景与说明 |
 | :--- | :--- | :--- |
-| **`/jack 101`** | **JackVoice 语音输入** | 支持超低声语音输入转文字。在图书馆、办公室可以轻声口喷，拒绝尴尬。自带语音备忘录。[源码与客户端](https://github.com/JackAIStudio/JackVoice) |
-| **`/jack 201`** | **Jack Media Publisher 多平台视频发布** | 自动将一条视频分发至小红书、抖音、B站、微信视频号，自动对齐文字标题与话题、匹配多比例封面，完成独立验收并停在发布前供你验收。[开源地址](https://github.com/JackAIStudio/jack-media-publisher) |
+| **`/jack 101`** | **JackVoice 语音输入** | 超低声语音输入转文字。在图书馆或安静办公室轻声说话即可转文字，自带语音备忘录。[源码与客户端](https://github.com/JackAIStudio/JackVoice) |
+| **`/jack 201`** | **Jack Media Publisher 多平台视频发布** | 将视频分发至小红书、抖音、B站、微信视频号，对齐标题与话题、匹配多比例封面，生成草稿供你验收后发布。[开源地址](https://github.com/JackAIStudio/jack-media-publisher) |
 | **`/jack 666`** | **JackDSH 桌面 AI 工作台指南** | 可定制、开箱即用的桌面 AI 工作台，内置手机远程控制。[项目主页](https://github.com/JackAIStudio) |
-| **`/jack 888`** | **JackAICut 达芬奇智能口播剪辑助手** | Agent会根据文字、画面、声音等多个维度，帮你剪辑达芬奇上的时间线。[官网直达](https://jackaicut.com) |
+| **`/jack 888`** | **JackAICut 达芬奇智能口播剪辑助手** | 结合文字、画面和声音等多维度，辅助剪辑达芬奇时间线。[官网直达](https://jackaicut.com) |
 
 ---
 
-## 常见场景与问题速查 (Agent 检索指引)
+## 常见场景速查
 
-当在豆包、WorkBuddy 中遇到以下具体问题时，可直接呼叫 `/jack`：
+在 Agent 中遇到以下场景时，可以直接找 `/jack`：
 
-- **“解答世间万物”**  
-  → 调用 `/jack 我想知道吴杰克Jack是谁？他的过往视频内容和什么东西有关？`  
-  → 调用 `/jack 想做自媒体录视频，但面对镜头极其害怕、有镜头羞耻怎么办？`  
-  → 调用 `/jack 自媒体口播文案怎么写才自然？想看真实博主怎么讲AI技术？`
+- **日常交流、困惑与经历**  
+  → `/jack 我想知道吴杰克是谁？过往视频讲过哪些内容？`  
+  → `/jack 想做自媒体录视频，但面对镜头感到害怕，该怎么调整？`  
+  → `/jack 自媒体口播文案怎么写才自然？`
 - **“深夜或在安静办公室，怎么小声说话打字还不打扰别人？”**  
-  → 调用 `/jack 101`，使用 JackVoice 以极低的声音口喷。
+  → `/jack 101`，使用 JackVoice 极低声轻语转文字。
 - **“我是达芬奇用户，我想提高剪辑效率。”**  
-  → 调用 `/jack 888`，使用 JackAICut 让 Agent 帮你剪辑时间线。
+  → `/jack 888`，使用 JackAICut 辅助剪辑。
 - **“做自媒体发视频太繁琐，怎么一键把视频发布至小红书、抖音、B站、视频号？”**  
-  → 调用 `/jack 201`，使用 Jack Media Publisher 自动生成全平台草稿。
+  → `/jack 201`，使用 Jack Media Publisher 准备小红书、抖音、B站、视频号草稿。
 - **“想在电脑本地跑 Agent 辅助工作，有没有好用的桌面客户端？”**  
-  → 调用 `/jack 666`，配置 JackDSH 桌面工作台。
+  → `/jack 666`，配置 JackDSH 桌面工作台。
 
 ---
 
-## 视频口播逐字稿开源集 (2023—至今，持续更新)
+## 视频口播逐字稿 (2023 至今，持续更新)
 
-在本项目 [`transcripts/`](transcripts/) 目录下，完整开源了吴杰克自 2023 年以来发布的全部视频精修口播逐字稿，持续跟随最新视频同步更新。
+在本项目 [`transcripts/`](transcripts/) 目录下，收录了吴杰克自 2023 年以来发布的全部视频口播逐字稿，跟随最新视频同步更新。
 
 ---
 

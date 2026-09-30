@@ -4,8 +4,8 @@
   "items": [
     {
       "id": "101",
-      "title": "JackVoice 超低声全局语音听写神器",
-      "purpose": "超低声轻语也能秒转文字并自动粘贴，彻底解放双手的懒人免打字神器",
+      "title": "JackVoice 超低声全局语音输入工具",
+      "purpose": "超低声轻语转文字并自动粘贴，适合安静场景下的免打字输入",
       "sha256": "0a65bc616780d3ffaba65f04b38c3eb89f636f6fc7e313e757ce8e437465c4b0"
     },
     {
@@ -17,7 +17,7 @@
     {
       "id": "666",
       "title": "JackDSH 开源桌面客户端与内核升级全指南",
-      "purpose": "最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控实战",
+      "purpose": "最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控使用说明",
       "sha256": "3cd0713f7fbb43cb3daed9df4ee5ad3fe36e5e71d1ed5d8be0767f5c2d3e53cd"
     },
     {

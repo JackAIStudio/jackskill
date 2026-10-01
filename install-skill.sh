@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_JACK="${SCRIPT_DIR}/skills/jack"
 
 if [ ! -d "${SOURCE_JACK}" ]; then
-  echo "❌ 错误：未找到 jack 核心技能目录：${SOURCE_JACK}"
+  echo "错误：未找到 jack 核心技能目录：${SOURCE_JACK}"
   exit 1
 fi
 

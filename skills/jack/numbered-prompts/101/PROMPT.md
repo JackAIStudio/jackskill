@@ -1,8 +1,8 @@
 # 101｜JackVoice 超低声全局语音听写神器
 
-- **🎬 视频原片直达**：[📺 B站：图书馆也能口喷不打扰别人｜支持超低声语音输入的工具](https://www.bilibili.com/video/BV1ayg76aEDD/)
-- **👤 创作者**：吴杰克 Jack
-- **💻 GitHub 开源地址**：[https://github.com/JackAIStudio/JackVoice](https://github.com/JackAIStudio/JackVoice)
+- **视频原片**：[B站：图书馆也能口喷不打扰别人｜支持超低声语音输入的工具](https://www.bilibili.com/video/BV1ayg76aEDD/)
+- **创作者**：吴杰克 Jack
+- **GitHub 开源地址**：[https://github.com/JackAIStudio/JackVoice](https://github.com/JackAIStudio/JackVoice)
 
 ## 用户要完成的事
 帮助打工人、文字工作者与创作者彻底解放双手，告别键盘打字疲劳，掌握超低声轻语也能 100% 精准识别并全局自动粘贴的 AI 语音输入工作流，直达开源桌面客户端 JackVoice。

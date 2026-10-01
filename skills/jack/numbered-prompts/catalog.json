@@ -1,30 +1,30 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-09-29",
+  "updated_at": "2026-10-01",
   "items": [
     {
       "id": "101",
       "title": "JackVoice 超低声全局语音输入工具",
       "purpose": "超低声轻语转文字并自动粘贴，适合安静场景下的免打字输入",
-      "sha256": "0a65bc616780d3ffaba65f04b38c3eb89f636f6fc7e313e757ce8e437465c4b0"
+      "sha256": "5883f3ba199989bbf3f9988d345eb50a8a7fdcf14f2981b79bd4dadfbdf58a4f"
     },
     {
       "id": "201",
       "title": "Jack Media Publisher 多平台视频发布准备助手",
       "purpose": "一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿",
-      "sha256": "cefa19b2a8f6778aea7e698943a2ef9de87db70e3c1f30d92869c768a1baf311"
+      "sha256": "26fcd0b9c269d240ffc22a6fe0578e2e57a864e1cdd80a7fdbe7e04d7aa59b18"
     },
     {
       "id": "666",
       "title": "JackDSH 开源桌面客户端与内核升级全指南",
       "purpose": "最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控使用说明",
-      "sha256": "3cd0713f7fbb43cb3daed9df4ee5ad3fe36e5e71d1ed5d8be0767f5c2d3e53cd"
+      "sha256": "2fa34caee103136db5c30ac3988c36e88097482b3cce29d00a9f296a9dcdcc2b"
     },
     {
       "id": "888",
       "title": "达芬奇 AI 智能口播剪辑助手 (JackAICut)",
       "purpose": "口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达",
-      "sha256": "933036789c172c0c6eb88767c7345ea17d6b166e4eaa914669601029c37b5254"
+      "sha256": "47edb55fc88966a3064c6cd8a1b9bfee2510dfac5456d3ac521094231d4e7e12"
     }
   ]
 }

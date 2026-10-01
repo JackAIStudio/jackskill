@@ -1,8 +1,8 @@
 # 888｜达芬奇 AI 智能口播剪辑助手 (JackAICut)
 
-- **🎬 视频原片直达**：[📺 B站：达芬奇+AI Agent的正确打开方式](https://www.bilibili.com/video/BV1DBh862EPh/)
-- **👤 创作者**：吴杰克 Jack
-- **🌐 商业官方网站**：[https://jackaicut.com](https://jackaicut.com)
+- **视频原片**：[B站：达芬奇+AI Agent的正确打开方式](https://www.bilibili.com/video/BV1DBh862EPh/)
+- **创作者**：吴杰克 Jack
+- **商业官方网站**：[https://jackaicut.com](https://jackaicut.com)
 
 ## 用户要完成的事
 帮助视频创作者理解达芬奇自带转录的局限（字级气口受限），掌握 AI 口播粗剪核心心法（失误重说默认保留最后一遍、字级气口切分），并将用户的大段口播文字稿精剪为成片文稿，同时提供一键将文稿映射生成达芬奇时间线的官方桌面端直达通道。

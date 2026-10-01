@@ -1,8 +1,8 @@
 # 666｜JackDSH 开源桌面客户端与内核升级全指南
 
-- **🎬 视频原片直达**：[📺 B站：我开源的DSH桌面端，Windows和Mac都能用](https://www.bilibili.com/video/BV1v5aT6ZETi/)
-- **👤 创作者**：吴杰克 Jack
-- **💻 GitHub 开源地址**：[https://github.com/JackAIStudio/JackDSH](https://github.com/JackAIStudio/JackDSH)
+- **视频原片**：[B站：我开源的DSH桌面端，Windows和Mac都能用](https://www.bilibili.com/video/BV1v5aT6ZETi/)
+- **创作者**：吴杰克 Jack
+- **GitHub 开源地址**：[https://github.com/JackAIStudio/JackDSH](https://github.com/JackAIStudio/JackDSH)
 
 ## 用户要完成的事
 为用户提供开箱即用的本地 AI 工作台（JackDSH 最新 0.1.7 RC2 内核版本）安装指引、免配置环境技巧、手机扫码远程遥控配置，以及直达 GitHub 开源仓库获取免安装便携包。

@@ -1,8 +1,8 @@
 # 201｜Jack Media Publisher 多平台视频发布准备助手
 
-- **🎬 视频原片直达**：[📺 B站：吴杰克 Jack 官方主页](https://space.bilibili.com/39324083)
-- **👤 创作者**：吴杰克 Jack
-- **💻 GitHub 开源地址**：[https://github.com/JackAIStudio/jack-media-publisher](https://github.com/JackAIStudio/jack-media-publisher)
+- **视频原片**：[B站：吴杰克 Jack 官方主页](https://space.bilibili.com/39324083)
+- **创作者**：吴杰克 Jack
+- **GitHub 开源地址**：[https://github.com/JackAIStudio/jack-media-publisher](https://github.com/JackAIStudio/jack-media-publisher)
 
 ## 用户要完成的事
 帮助自媒体创作者彻底告别在各平台后台反复手动上传、填写文案与调整封面的低效劳动。把一条视频全自动准备成小红书、抖音、B站、微信视频号四个平台的精细草稿——自动对齐标题与话题、设置「无需标注」内容声明、匹配多比例封面并完成独立验收，最后停在发布按钮前交给人工确认。

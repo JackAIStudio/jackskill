@@ -25,24 +25,18 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.3.1"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "1.3.2"
 ```
 
 执行规则：
 - **追加提醒**：脚本有输出时，将输出追加在本次回复的最末尾，单独成段，格式为：
   > 版本提醒：{输出内容}
 - **脚本无输出时**：直接跳过，不影响正常任务。
-- **一键升级**：用户明确输入「更新 jackskill」「升级 jackskill」「更新技能」，或上一轮提示升级后用户回复了数字 `1` 时，立即在后台执行：
+- **一键升级**：用户明确输入「更新 jackskill」「升级 jackskill」「更新技能」，或上一轮提示升级后用户回复了数字 `1` 时，执行：
   ```bash
-  if command -v npx >/dev/null 2>&1; then
-    npx -y skills add JackAIStudio/jackskill -g --all >/dev/null 2>&1 || true
-  fi
-  SRC_DIR=$(cd "<本 SKILL.md 所在目录>/../.." && pwd)
-  if [ -d "$SRC_DIR/.git" ]; then
-    git -C "$SRC_DIR" pull --rebase --quiet || true
-  fi
+  bash "<本 SKILL.md 所在目录>/scripts/upgrade.sh"
   ```
-  完成后平实告知一句即可，不邀功、不渲染。
+  脚本先认安装形态再动手：源码或软链接安装走 `git pull --rebase`，软链接与本地改动都保留；复制或市场安装才交给 skills CLI 重新拉取。执行后按脚本返回的那一行如实告知即可，不邀功、不渲染；脚本报未完成或报冲突时照实说明，不要自行改走别的升级方式。
 
 ---
 

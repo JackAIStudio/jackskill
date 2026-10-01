@@ -60,3 +60,17 @@
 - **拒绝无用的冗余产物**：
   - 检索脚本直接扫描 `transcripts/md/*.md`，无需维护多余的集中式大型 JSON/JSONL 文件；
   - 保持目录整洁、可读。
+
+---
+
+## 5. 安装与升级形态
+
+仓库同时服务两类使用者。改动安装与升级相关逻辑时，两类都要照顾到：
+
+- **源码 / 软链接安装**：`install.sh`、`install-skill.sh` 把 `skills/jack` 软链接到 `~/.agents/skills/jack`、`~/.workbuddy/skills/jack`、`~/.claude/skills/jack` 等入口，改动源码即时生效。这类环境只能走 `git pull`——用 `npx skills add` 重新拉取会把软链接替换成一份副本，本地改动随之丢失。
+- **复制 / 市场安装**：`npx -y skills add JackAIStudio/jackskill -g --all` 复制一份到本地目录，只能靠重新拉取拿到更新。
+
+判别逻辑统一收在 `skills/jack/scripts/upgrade.sh`：先解析软链接得到真实路径，再向上确认仓库根（同时存在 `.git` 与 `skills/jack/SKILL.md`），命中就走 `git pull --rebase`，否则交给 skills CLI。新增任何加载或升级入口时复用该脚本，不要另写一套。
+
+改动 `numbered-prompts/<编号>/PROMPT.md` 后，必须重算 `catalog.json` 里对应的 `sha256` 并一起提交，否则本地校验会失败。
+

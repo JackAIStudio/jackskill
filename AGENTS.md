@@ -80,7 +80,5 @@
 
 ---
 
-## 6. 自媒体数据同步的铁律
 
-- **禁止在云端 ECS 上启动任何浏览器采集进程**：不要在 ECS（`aliyun-ecs-new`）上跑 `content-radar` 的 `backfill:recent` / `backfill:full` 等 puppeteer worker，也不要在 ECS 上手动拉起 Chromium。这些云端采集 worker 已停用，**除非 Jack 明确要求重新启用，否则一律不得启动**。
-- **同步默认在本地完成**：作品指标和粉丝数据的抓取交给本机 Agent 自由发挥，方式不限——浏览器控制工具、公开接口、CLI 都行，也可以让它直接读本机 Chrome 里的登录态；抓到的最新作品、指标快照与粉丝数再回填 Hub。
+

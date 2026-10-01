@@ -1,6 +1,6 @@
 # 把Agent接入达芬奇，一个Skill自动出片
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1mbeJ69E2Z/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1mbeJ69E2Z/) · [抖音](https://www.douyin.com/video/7685729748839861530)
 - **发布日期**：2026-09-15
 - **视频时长**：02:22 (142 秒)
 

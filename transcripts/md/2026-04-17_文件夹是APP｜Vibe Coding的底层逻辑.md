@@ -1,6 +1,6 @@
 # 文件夹是APP｜Vibe Coding的底层逻辑
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1eedLB6EXG/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1eedLB6EXG/) · [抖音](https://www.douyin.com/video/7629760434270260523)
 - **发布日期**：2026-04-17
 - **视频时长**：01:45 (105 秒)
 

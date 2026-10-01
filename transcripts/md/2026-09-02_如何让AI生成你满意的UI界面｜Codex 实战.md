@@ -1,6 +1,6 @@
 # 如何让AI生成你满意的UI界面｜Codex 实战
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1ZaKm67EZi/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1ZaKm67EZi/) · [抖音](https://www.douyin.com/video/7664536319414013230)
 - **发布日期**：2026-09-02
 - **视频时长**：01:41 (101 秒)
 

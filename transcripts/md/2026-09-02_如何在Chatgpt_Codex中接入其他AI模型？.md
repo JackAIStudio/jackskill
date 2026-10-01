@@ -1,6 +1,6 @@
 # 如何在Chatgpt/Codex中接入其他AI模型？
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1mC3K64Ew3/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1mC3K64Ew3/)
 - **发布日期**：2026-09-02
 - **视频时长**：01:49 (109 秒)
 

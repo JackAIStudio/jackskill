@@ -1,6 +1,6 @@
 # WorkBuddy 接入 GPT、Gemini、Grok
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV11SYg6sEvp/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV11SYg6sEvp/)
 - **发布日期**：2026-09-10
 - **视频时长**：01:46 (106 秒)
 

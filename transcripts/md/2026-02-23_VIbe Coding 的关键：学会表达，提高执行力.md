@@ -1,6 +1,6 @@
 # VIbe Coding 的关键：学会表达，提高执行力
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1SbfqBNEHf/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1SbfqBNEHf/) · [抖音](https://www.douyin.com/video/7609990106178538762)
 - **发布日期**：2026-02-23
 - **视频时长**：01:00 (60 秒)
 

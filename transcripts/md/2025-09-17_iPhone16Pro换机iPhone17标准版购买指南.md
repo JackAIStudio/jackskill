@@ -1,6 +1,6 @@
 # 16Pro有必要换iPhone 17标准版吗？购买指南与详细分析
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1uzpWzsEWT/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1uzpWzsEWT/)
 - **发布日期**：2025-09-17
 - **视频时长**：07:07 (427 秒)
 - **各平台发布标题**：16 pro有必要换iphone 17标准版吗？超详细分析！ / 16pro有必要换iphone 17标准版吗｜购买指南

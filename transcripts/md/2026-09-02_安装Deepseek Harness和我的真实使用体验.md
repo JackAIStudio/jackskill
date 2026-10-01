@@ -1,6 +1,6 @@
 # 安装Deepseek Harness和我的真实使用体验
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1UTb96uEyD/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1UTb96uEyD/) · [抖音](https://www.douyin.com/video/7674562919706774799)
 - **发布日期**：2026-09-02
 - **视频时长**：02:09 (129 秒)
 

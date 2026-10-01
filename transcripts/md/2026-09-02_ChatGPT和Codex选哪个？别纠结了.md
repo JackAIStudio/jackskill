@@ -1,6 +1,6 @@
 # ChatGPT和Codex选哪个？别纠结了
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1SAKn6WEEw/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1SAKn6WEEw/) · [抖音](https://www.douyin.com/video/7663439467218226458)
 - **发布日期**：2026-09-02
 - **视频时长**：01:34 (94 秒)
 

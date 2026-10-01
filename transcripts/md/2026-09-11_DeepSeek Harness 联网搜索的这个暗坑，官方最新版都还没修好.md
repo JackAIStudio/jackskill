@@ -1,6 +1,6 @@
 # DeepSeek Harness 联网搜索的这个暗坑，官方最新版都还没修好
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1pkYm6REjf/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1pkYm6REjf/)
 - **发布日期**：2026-09-11
 - **视频时长**：01:20 (80 秒)
 

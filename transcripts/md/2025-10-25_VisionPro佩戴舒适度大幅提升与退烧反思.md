@@ -1,6 +1,6 @@
 # Vision Pro佩戴舒适度大幅提升，我却退烧了
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1josRzFEHC/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1josRzFEHC/)
 - **发布日期**：2025-10-25
 - **视频时长**：04:08 (248 秒)
 - **各平台发布标题**：M5 vision pro ｜佩戴舒适度大幅提升，可我却退烧了 / M5 vision pro ｜舒适度大提升，我却退烧了

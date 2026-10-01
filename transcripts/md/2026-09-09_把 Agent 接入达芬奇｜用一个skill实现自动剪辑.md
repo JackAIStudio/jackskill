@@ -1,6 +1,6 @@
 # 把 Agent 接入达芬奇｜用一个skill实现自动剪辑
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1fdYb6AEET/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1fdYb6AEET/) · [抖音](https://www.douyin.com/video/7683611440728542490)
 - **发布日期**：2026-09-09
 - **视频时长**：02:01 (121 秒)
 

@@ -1,6 +1,6 @@
 # DeepSeek-V4-Flash深度使用体验
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1Xcu36CEXk/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1Xcu36CEXk/) · [抖音](https://www.douyin.com/video/7671661945115692303)
 - **发布日期**：2026-09-02
 - **视频时长**：02:57 (177 秒)
 

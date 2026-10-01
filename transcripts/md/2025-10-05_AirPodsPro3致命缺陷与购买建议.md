@@ -1,6 +1,6 @@
 # 使用两周后发现AirPods Pro 3的致命缺陷：它还值得买吗
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1FUxKzNEdb/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1FUxKzNEdb/)
 - **发布日期**：2025-10-05
 - **视频时长**：06:12 (372 秒)
 - **各平台发布标题**：使用两周后发现AirPodsPro3的致命缺陷｜它还值得买吗 / 发现AirPodsPro3的致命缺陷｜它还值得买吗

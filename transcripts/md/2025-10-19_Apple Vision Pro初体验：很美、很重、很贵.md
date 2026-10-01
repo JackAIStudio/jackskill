@@ -1,6 +1,6 @@
 # Apple Vision Pro初体验：很美、很重、很贵
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1UjsAzvESZ/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1UjsAzvESZ/)
 - **发布日期**：2025-10-19
 - **视频时长**：04:39 (279 秒)
 

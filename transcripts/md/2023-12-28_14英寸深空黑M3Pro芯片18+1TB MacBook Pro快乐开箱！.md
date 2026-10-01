@@ -1,6 +1,6 @@
 # 14英寸深空黑M3Pro芯片18+1TB MacBook Pro快乐开箱！
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1vc411r7uZ/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1vc411r7uZ/)
 - **发布日期**：2023-12-28
 - **视频时长**：03:15 (195 秒)
 

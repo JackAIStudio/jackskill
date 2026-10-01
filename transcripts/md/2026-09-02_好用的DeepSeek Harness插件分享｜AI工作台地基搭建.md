@@ -1,6 +1,6 @@
 # 好用的DeepSeek Harness插件分享｜AI工作台地基搭建
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1NFtT6eE8b/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1NFtT6eE8b/) · [抖音](https://www.douyin.com/video/7679165279678631203)
 - **发布日期**：2026-09-02
 - **视频时长**：03:57 (237 秒)
 

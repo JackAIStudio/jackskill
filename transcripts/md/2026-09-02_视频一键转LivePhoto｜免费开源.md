@@ -1,6 +1,6 @@
 # 视频一键转LivePhoto｜免费开源
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1kVg36bEgt/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1kVg36bEgt/) · [抖音](https://www.douyin.com/video/7674082823975750921)
 - **发布日期**：2026-09-02
 - **视频时长**：01:34 (94 秒)
 

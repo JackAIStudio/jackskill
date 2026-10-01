@@ -1,6 +1,6 @@
 # Deepseek V4 Flash接入Codex的真实干活体验
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1LGuJ6uERq/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1LGuJ6uERq/)
 - **发布日期**：2026-09-02
 - **视频时长**：01:34 (94 秒)
 

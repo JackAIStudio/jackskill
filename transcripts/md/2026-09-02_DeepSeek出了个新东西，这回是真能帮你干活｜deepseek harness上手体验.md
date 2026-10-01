@@ -1,6 +1,6 @@
 # DeepSeek出了个新东西，这回是真能帮你干活｜deepseek harness上手体验
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1pt8R6qEqX/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1pt8R6qEqX/)
 - **发布日期**：2026-09-02
 - **视频时长**：01:24 (84 秒)
 

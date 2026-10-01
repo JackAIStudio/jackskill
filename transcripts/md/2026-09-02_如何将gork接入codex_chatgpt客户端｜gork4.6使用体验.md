@@ -1,6 +1,6 @@
 # 如何将gork接入codex/chatgpt客户端｜gork4.6使用体验
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1mm8x6cEaB/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1mm8x6cEaB/)
 - **发布日期**：2026-09-02
 - **视频时长**：02:31 (151 秒)
 

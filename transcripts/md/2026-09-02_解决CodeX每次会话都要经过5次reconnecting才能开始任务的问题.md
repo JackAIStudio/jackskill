@@ -1,6 +1,6 @@
 # 解决CodeX每次会话都要经过5次reconnecting才能开始任务的问题
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1i7K56UE3x/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1i7K56UE3x/)
 - **发布日期**：2026-09-02
 - **视频时长**：00:44 (44 秒)
 

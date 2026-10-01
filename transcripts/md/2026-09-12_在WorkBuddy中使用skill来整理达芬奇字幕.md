@@ -1,6 +1,6 @@
 # 在WorkBuddy中使用skill来整理达芬奇字幕
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1xaYo6WESh/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1xaYo6WESh/) · [抖音](https://www.douyin.com/video/7684722892487134504)
 - **发布日期**：2026-09-12
 - **视频时长**：01:39 (99 秒)
 

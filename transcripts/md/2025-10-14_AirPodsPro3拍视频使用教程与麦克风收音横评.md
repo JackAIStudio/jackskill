@@ -1,6 +1,6 @@
 # AirPods Pro 3拍视频教程与麦克风收音效果横评
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1Lh48zZE38/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1Lh48zZE38/)
 - **发布日期**：2025-10-14
 - **视频时长**：07:31 (451 秒)
 - **各平台发布标题**：AirPodsPro3拍视频有多爽？教程、购买建议 / 为什么说AirPods Pro 3是iphone拍视频的最佳搭子 ？使用教程、购买建议｜feat.相机遥控器&无线麦克风|收音效果横评

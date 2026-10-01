@@ -1,6 +1,6 @@
 # 杜绝弹窗提问！让WorkBuddy自己干完
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1N5eX6VEWc/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1N5eX6VEWc/) · [抖音](https://www.douyin.com/video/7687062946765180201)
 - **发布日期**：2026-09-19
 - **视频时长**：01:49 (109 秒)
 

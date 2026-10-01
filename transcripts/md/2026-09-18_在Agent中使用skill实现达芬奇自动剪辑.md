@@ -1,6 +1,6 @@
 # 在Agent中使用skill实现达芬奇自动剪辑
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1Wpe169E5V/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1Wpe169E5V/) · [抖音](https://www.douyin.com/video/7686773959299288358)
 - **发布日期**：2026-09-18
 - **视频时长**：02:16 (136 秒)
 

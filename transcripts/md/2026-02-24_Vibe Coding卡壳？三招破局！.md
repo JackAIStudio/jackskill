@@ -1,6 +1,6 @@
 # Vibe Coding卡壳？三招破局！
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1Zbf1BTEjS/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1Zbf1BTEjS/) · [抖音](https://www.douyin.com/video/7610327449057971502)
 - **发布日期**：2026-02-24
 - **视频时长**：01:07 (67 秒)
 

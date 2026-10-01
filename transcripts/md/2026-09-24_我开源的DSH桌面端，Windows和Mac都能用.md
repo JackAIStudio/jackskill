@@ -1,6 +1,6 @@
 # 我开源的DSH桌面端，Windows和Mac都能用
 
-- **视频原片**：[B站观看](https://www.bilibili.com/video/BV1v5aT6ZETi/)
+- **视频原片**：[B站](https://www.bilibili.com/video/BV1v5aT6ZETi/) · [抖音](https://www.douyin.com/video/7689150117080878371)
 - **发布日期**：2026-09-24
 - **视频时长**：01:28 (88 秒)
 

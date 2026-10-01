@@ -4,7 +4,26 @@
 #                     重新拉取会把软链接替换成一份副本，本地改动随之丢失，因此必须走 git。
 #   复制 / 市场安装  ：交给 skills CLI 重新拉取。
 # 标准输出一行结果，退出码非 0 表示未完成升级。
+#
+# 用法：
+#   upgrade.sh            执行升级（有写操作）
+#   upgrade.sh --dry-run  只读诊断，不做任何写操作，用于日常自检与测试前置
 set -uo pipefail
+
+DRY_RUN=0
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    -h|--help)
+      sed -n '1,11p' "${BASH_SOURCE[0]}"
+      exit 0
+      ;;
+    *)
+      echo "未知参数：$arg（支持 --dry-run / --help）"
+      exit 2
+      ;;
+  esac
+done
 
 # 逐级解析软链接，拿到脚本自身的真实路径
 resolve_self() {
@@ -17,6 +36,47 @@ resolve_self() {
     esac
   done
   printf '%s\n' "$target"
+}
+
+# 判断调用路径上的 skill 目录（scripts 的上一级）是不是软链接。
+# 必须看调用路径本身：pwd -P 会把软链接解掉；比较 pwd 与 pwd -P 又会把
+# macOS 的 /var -> /private/var 误判成软链接安装。
+classify_install_form() {
+  local invoke="${BASH_SOURCE[0]}" part rest stack="" skill_link
+  case "$invoke" in
+    /*) ;;
+    *) invoke="$(pwd -L)/$invoke" ;;
+  esac
+  rest="${invoke#/}"
+  while [ -n "$rest" ]; do
+    part="${rest%%/*}"
+    case "$rest" in
+      */*) rest="${rest#*/}" ;;
+      *) rest="" ;;
+    esac
+    case "$part" in
+      ""|".") ;;
+      "..")
+        case "$stack" in
+          */*) stack="${stack%/*}" ;;
+          *) stack="" ;;
+        esac
+        ;;
+      *)
+        if [ -n "$stack" ]; then
+          stack="$stack/$part"
+        else
+          stack="$part"
+        fi
+        ;;
+    esac
+  done
+  skill_link="$(dirname "$(dirname "/$stack")")"
+  if [ -L "$skill_link" ]; then
+    printf 'symlink\n'
+  else
+    printf 'directory\n'
+  fi
 }
 
 SELF="$(resolve_self "${BASH_SOURCE[0]}")" || {
@@ -38,6 +98,28 @@ while [ -n "$dir" ] && [ "$dir" != "/" ]; do
   fi
   dir="$(dirname "$dir")"
 done
+
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "安装形态诊断（dry-run，未执行任何写操作）"
+  echo "  skill 目录：$SKILL_DIR"
+  if [ "$(classify_install_form)" = "symlink" ]; then
+    echo "  形态：软链接安装（symlink 直连源码）"
+  else
+    echo "  形态：实体目录"
+  fi
+  if [ -n "$REPO_ROOT" ]; then
+    echo "  仓库根：$REPO_ROOT"
+    echo "  升级将走路径：git pull --rebase --autostash（软链接与本地改动保留）"
+  else
+    echo "  仓库根：未找到（向上未遇到同时含 .git 与 skills/jack/SKILL.md 的目录）"
+    if command -v npx >/dev/null 2>&1; then
+      echo "  升级将走路径：npx skills add JackAIStudio/jackskill -g --all"
+    else
+      echo "  升级将走路径：本机无 npx，无法自动升级"
+    fi
+  fi
+  exit 0
+fi
 
 if [ -n "$REPO_ROOT" ]; then
   # 先取远端引用再比对：没有新提交时就不必动工作区，脏工作区也能正常结束

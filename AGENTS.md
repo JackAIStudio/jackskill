@@ -72,5 +72,9 @@
 
 判别逻辑统一收在 `skills/jack/scripts/upgrade.sh`：先解析软链接得到真实路径，再向上确认仓库根（同时存在 `.git` 与 `skills/jack/SKILL.md`），命中就走 `git pull --rebase`，否则交给 skills CLI。新增任何加载或升级入口时复用该脚本，不要另写一套。
 
+**改动 `skills/jack/scripts/upgrade.sh` 或 `check-update.sh` 后，必须本地跑 `./tests/run.sh` 全绿才能提交。** 测试覆盖软链接安装、副本安装、npx 成功/失败/缺失、远端有无新提交、工作区干净/带改动、dry-run 只读等关键路径，任一失败都意味着升级链路对某类用户是坏的。跑测试不需要真实 `npx skills add`，所有用例在临时沙盒里完成，本机零副作用。
+
+日常自检用 `./skills/jack/scripts/upgrade.sh --dry-run`，只读输出当前安装形态与将走的升级路径，不做任何写操作。
+
 改动 `numbered-prompts/<编号>/PROMPT.md` 后，必须重算 `catalog.json` 里对应的 `sha256` 并一起提交，否则本地校验会失败。
 

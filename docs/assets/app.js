@@ -58,7 +58,7 @@ function collectRate(p) {
 function platKeys(v) {
   return ORDER.filter((k) => v.platforms[k]);
 }
-/** 这条平台记录有没有真实数据。五个指标全 0 的是待补录的占位记录，不算。 */
+/** 这条平台记录有没有真实数据。五个指标全 0 的是平台没给数据的记录，不算。 */
 function hasData(p) {
   return Boolean(p) && !p.empty;
 }
@@ -188,7 +188,7 @@ function renderStamp() {
 /* ---------------- 平台表现 ---------------- */
 
 function renderPlatforms() {
-  // 只统计采到数的记录。待补录的占位记录（五个指标全 0）如果混进来，
+  // 只统计采到数的记录。平台没给数据的记录（五个指标全 0）如果混进来，
   // 会把中位播放整个拉下来——抖音那 21 条就把它从 623 拉到了 480。
   const rows = ORDER.map((key) => {
     const all = DATA.videos.map((v) => v.platforms[key]).filter(Boolean);
@@ -219,7 +219,7 @@ function renderPlatforms() {
       ${rows.map((r) => `
         <tr>
           <td><span class="plat-name"><i class="pdot" style="background:${r.color}"></i>${r.label}</span></td>
-          <td title="${r.blanks ? `另有 ${r.blanks} 期待补录的占位记录，不计入` : "每一期都采到了数"}">${fmtInt(r.n)}</td>
+          <td title="${r.blanks ? `另有 ${r.blanks} 期平台没给数据的记录，不计入` : "每一期都采到了数"}">${fmtInt(r.n)}</td>
           <td>${fmtCompact(r.totalViews)}</td>
           <td>${fmtCompact(r.medianViews)}</td>
           <td>${(r.eng * 100).toFixed(2)}%</td>
@@ -237,9 +237,9 @@ function renderPlatforms() {
 
   const blanks = sum(rows.map((r) => r.blanks));
   $("platNote").textContent =
-    `收录期数只算采到数据的期。数据源里另有 ${fmtInt(blanks)} 条待补录的占位记录（五个指标全 0），` +
-    `它们不进这一张表的任何一列。「全部作品」那行的 ${fmtInt(DATA.count)} 是全站总期数，不是上面四行相加——` +
-    `同一期可能发在多个平台。`;
+    `收录期数只算采到数据的期。另有 ${fmtInt(blanks)} 条记录平台侧不提供数据（五个指标全是 0，` +
+    `多为作品被限制公开或已删除），它们不进这一张表的任何一列。` +
+    `「全部作品」那行的 ${fmtInt(DATA.count)} 是全站总期数，不是上面四行相加——同一期可能发在多个平台。`;
 }
 
 /* ---------------- 时间线 ---------------- */
@@ -262,7 +262,7 @@ function monthList() {
 const TREND_MODES = [
   { id: "median", label: "月度中位播放" },
   { id: "total",  label: "月度总播放" },
-  // 叫「收录」不叫「发布」：只数采到数的期，待补录的占位记录不算，
+  // 叫「收录」不叫「发布」：只数采到数的期，平台没给数据的记录不算，
   // 三个模式用的是同一批记录，不然三条线各说各的人口。
   { id: "count",  label: "月度收录期数" },
 ];
@@ -392,10 +392,10 @@ function renderTrend(mode) {
   }
 
   const note = mode === "count"
-    ? "只数采到数的期，待补录的占位记录不算。断线的地方就是那个月该平台没有数据——早期平台没接入，不是没发。"
+    ? "只数采到数的期，平台没给数据的记录不算。断线的地方就是那个月该平台没有数据——早期平台没接入，不是没发。"
     : mode === "total"
     ? "总播放会被爆款和期数同时影响，看趋势建议切回中位播放。（纵轴为对数刻度）"
-    : "中位数：把那个月该平台所有视频的播放量排序取中间值，单条爆款拉不动它。待补录的占位记录不算。（纵轴为对数刻度）";
+    : "中位数：把那个月该平台所有视频的播放量排序取中间值，单条爆款拉不动它。平台没给数据的记录不算。（纵轴为对数刻度）";
   $("trendLegend").innerHTML =
     ORDER.map((k) => `<span><i class="plat-dot" style="background:${PLAT[k].color};display:inline-block"></i>${PLAT[k].label}</span>`).join("") +
     `<span class="legend-note">${note}</span>`;
@@ -480,7 +480,7 @@ function platCollectThreshold() {
 // 「列上写着收藏、排的是播放」这种对不上的情况。
 function platValue(v, k) {
   const p = v.platforms[k];
-  // -1 = 没有可比的值（这一期没发到这个平台，或者只有待补录的占位记录），
+  // -1 = 没有可比的值（这一期没发到这个平台，或者只有平台没给数据的记录），
   // 排序时沉到最后，而不是被当成 0 混在真实数据里。
   return hasData(p) ? p[state.platMetric] || 0 : -1;
 }
@@ -661,7 +661,7 @@ function renderTable() {
         // 占位记录（五个指标全 0）不显示成 0——那会读成「这期在抖音真的 0 播放」。
         // 显示成「—」，和「没发到这个平台」同一格，靠悬浮提示区分。
         if (!hasData(p)) {
-          const t = `${PLAT[k].label} · ${v.date}\n这一期有记录，但五个指标全是 0（待补录的占位记录），不是真的 0 播放`;
+          const t = `${PLAT[k].label} · ${v.date}\n这一期有记录，但五个指标全是 0（平台没给数据的记录），不是真的 0 播放`;
           return `<td class="col-num col-platnum none" title="${esc(t)}">—</td>`;
         }
         const rate = p.views ? (collectRate(p) * 100).toFixed(1) + "%" : "—";
@@ -680,7 +680,7 @@ function renderTable() {
       const eng = live.length
         ? `赞 ${fmtInt(v.summary.likes)} · 藏 ${fmtInt(v.summary.collects)} · 转 ${fmtInt(v.summary.shares)} · 评 ${fmtInt(v.summary.comments)}`
         : keys.length
-        ? "这一期还没有采到数据，只有待补录的占位记录"
+        ? "这一期平台没给数据（作品被限制公开或已删除）"
         : "无平台数据";
 
       // 平台标题（抖音那串 #话题）和主题常常不一样，搜索也扫它们。
@@ -728,10 +728,10 @@ function openDrawer(v) {
     // 占位记录照常占一行——读者该看见「这期在抖音有记录但没采到数」，
     // 只是数值一律给「—」，不假装成 0。
     if (!hasData(p)) {
-      const t = "这一期有记录，但五个指标全是 0（待补录的占位记录），不是真的 0 播放";
+      const t = "这一期有记录，但五个指标全是 0（平台没给数据的记录），不是真的 0 播放";
       return `<tr class="dim">
       <td><span class="plat-name"><i class="pdot" style="background:${PLAT[k].color}"></i>${PLAT[k].label}</span></td>
-      <td colspan="6" title="${esc(t)}">待补录，没有数据</td>
+      <td colspan="6" title="${esc(t)}">平台未提供数据</td>
     </tr>`;
     }
     const tip = `收藏率 = 收藏 ${fmtInt(p.collects)} ÷ 播放 ${fmtInt(p.views)}`;
@@ -767,8 +767,8 @@ function openDrawer(v) {
   const platMeta = liveN === keys.length
     ? `${keys.length} 个平台`
     : liveN
-    ? `${liveN} 个平台有数据（另有 ${keys.length - liveN} 个只有待补录的记录）`
-    : `${keys.length} 个平台记录，都待补录，还没有数据`;
+    ? `${liveN} 个平台有数据（另有 ${keys.length - liveN} 个平台没给数据的记录）`
+    : `${keys.length} 个平台记录，平台都没给数据`;
 
   $("drawerBody").innerHTML = `
     <h3>${esc(v.topic)}</h3>
@@ -781,7 +781,7 @@ function openDrawer(v) {
       </table>
       <h4>原片</h4>
       <div class="src-links">${links}</div>`
-    : `<p class="empty">这一期在数据源里没有任何平台数据，大概率是待补录的占位记录。</p>`}
+    : `<p class="empty">这一期在数据源里没有任何平台数据，大概率是平台没给数据的记录。</p>`}
     ${transcript}`;
 
   $("drawer").hidden = false;

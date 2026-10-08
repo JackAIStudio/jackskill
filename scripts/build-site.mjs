@@ -89,7 +89,7 @@ const videos = records
       if (!p) continue;
       const entry = { title: p.title || rec.topic, url: p.url || "" };
       for (const m of METRICS) entry[m] = Number(p[m]) || 0;
-      // 五个指标全是 0 = 这一期在这个平台没采到数据（待补录的占位记录）。
+      // 五个指标全是 0 = 这一期在这个平台没采到数据（平台没给数据的记录）。
       // 这里显式标出来，页面才不会把它当成「真的 0 播放」算进中位数——
       // 早先没有这个标记，抖音的中位播放被 21 条空记录从 623 拉到 480。
       entry.empty = METRICS.every((m) => !entry[m]);
@@ -146,7 +146,7 @@ const livePlatform = Object.fromEntries(
 console.log(`已生成 ${path.relative(REPO_ROOT, OUT_FILE)}`);
 console.log(`- 期数: ${payload.count}（${payload.dateRange[0]} ~ ${payload.dateRange[1]}）`);
 console.log(`- 含逐字稿: ${withTranscript} 期`);
-// 两个数都给：页面上的「收录期数」用的是后者，差出来的就是待补录的占位记录。
+// 两个数都给：页面上的「收录期数」用的是后者，差出来的就是平台没给数据的记录。
 console.log(`- 各平台覆盖: ${PLATFORM_ORDER.map((k) => `${k} ${perPlatform[k]}`).join(" · ")}`);
 console.log(`- 各平台有数据: ${PLATFORM_ORDER.map((k) => `${k} ${livePlatform[k]}`).join(" · ")}`);
 console.log(`- 文件大小: ${(size / 1024).toFixed(1)} KB`);

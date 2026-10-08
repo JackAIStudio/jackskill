@@ -162,19 +162,38 @@ let DATA = null;
     if (!res.ok) throw new Error("HTTP " + res.status);
     DATA = await res.json();
   } catch (err) {
-    document.querySelector("main").innerHTML =
-      `<section class="section"><h2>数据没能加载</h2>
-       <p class="note">读取 <code>docs/data/videos.json</code> 失败（${esc(err.message)}）。
+    console.error(err);
+    fail("数据没能加载",
+      `读取 <code>docs/data/videos.json</code> 失败（${esc(err.message)}）。
        先跑一次 <code>node scripts/build-site.mjs</code>；本地预览请用
        <code>python3 -m http.server</code> 起个静态服务，直接双击 html 会被浏览器的
-       file:// 策略挡住。</p></section>`;
+       file:// 策略挡住。`);
     return;
   }
-  renderStamp();
-  renderPlatforms();
-  renderTrend("median");
-  initTable();
+
+  // 渲染单独兜一层。原先这四个调用在 try 外面：只要 JSON 的字段和这里对不上
+  // （改过 build-site.mjs 的输出结构就会），main 会静默中断，页面停在加载占位上
+  // 一动不动、一句提示都没有——看着像网络慢，其实早就失败了。
+  try {
+    renderStamp();
+    renderPlatforms();
+    renderTrend("median");
+    initTable();
+  } catch (err) {
+    console.error(err);
+    fail("页面没能渲染",
+      `数据读到了，但渲染中断：<code>${esc(err.message)}</code>。
+       多半是 <code>docs/data/videos.json</code> 的字段和 <code>app.js</code> 的预期对不上，
+       改了 <code>scripts/build-site.mjs</code> 的输出结构就要同步这里。
+       完整堆栈在浏览器控制台。`);
+  }
 })();
+
+/** 页面级的失败提示：整个换掉 main，不留半截页面。堆栈由调用方 console.error 留下。 */
+function fail(title, html) {
+  document.querySelector("main").innerHTML =
+    `<section class="section"><h2>${esc(title)}</h2><p class="note">${html}</p></section>`;
+}
 
 function renderStamp() {
   const [from, to] = DATA.dateRange;

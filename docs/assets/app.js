@@ -448,34 +448,6 @@ function effRate(summary) {
   return (summary[effMetricKey()] || 0) / summary.views;
 }
 
-/** 已升序排好的数组里取第 p 分位（p = 0.9 就是「前 10%」的门槛）。 */
-function quantile(sortedAsc, p) {
-  if (!sortedAsc.length) return Infinity;
-  return sortedAsc[Math.min(sortedAsc.length - 1, Math.floor((sortedAsc.length - 1) * p))];
-}
-
-// 橙色高亮 = 该指标的效率排进全站前 10%。
-// 阈值必须按当前指标现算：点赞率全站 1.96%、收藏率 1.02%、评论率 0.40%，
-// 根本不是一个量级。写死一个数就会出现「列上标着点赞率，亮的是收藏率的标准」。
-function effThreshold() {
-  const rates = DATA.videos
-    .filter((v) => v.summary.views > 0)
-    .map((v) => effRate(v.summary))
-    .sort((a, b) => a - b);
-  return quantile(rates, 0.9);
-}
-
-// 抽屉那一列永远是「分平台收藏率」，样本是每一期 × 每个平台，
-// 和表格里按整期算的口径不是一回事，所以门槛单独算一次。
-function platCollectThreshold() {
-  const rates = DATA.videos
-    .flatMap((v) => ORDER.map((k) => v.platforms[k]).filter(Boolean))
-    .filter((p) => p.views > 0)
-    .map((p) => p.collects / p.views)
-    .sort((a, b) => a - b);
-  return quantile(rates, 0.9);
-}
-
 // 平台列换成别的指标时，排序、表头、单元格必须一起跟着换，否则会出现
 // 「列上写着收藏、排的是播放」这种对不上的情况。
 function platValue(v, k) {
@@ -576,17 +548,14 @@ function renderLegend() {
     `<button type="button" data-metric="${m.key}" aria-pressed="${state.platMetric === m.key}">${m.label}</button>`
   ).join("");
 
-  // 末列的算式和橙色阈值都写在图例里。以前这两个数在页面上都没交代：
-  // 收藏率没说除以什么，3% 也没说是怎么定的，看完只能猜。
+  // 末列的算式写在图例里。以前这个数在页面上没交代：
+  // 收藏率没说除以什么，看完只能猜。
   const effKey = effMetricKey();
-  const th = effThreshold();
 
   $("platLegend").innerHTML =
     `<span class="lg-label">平台列</span><span class="metric-bar">${bar}</span>` +
     `<span class="lg-sep"></span>` +
     `<span class="lg-note">末列 <b>${effLabel()}</b> = ${metricLabel(effKey)} ÷ 播放</span>` +
-    `<span class="lg-sep"></span>` +
-    `<span class="lg-note"><b class="rate-hot">橙色</b> = 排进全站前 10%（≥ ${(th * 100).toFixed(1)}%）</span>` +
     `<span class="lg-sep"></span>` +
     `<span class="lg-note">「—」= 该平台没有数据（没发，或者还没补数）</span>`;
 
@@ -641,16 +610,14 @@ function renderTable() {
     return;
   }
 
-  // 末两列的动态量在这里算一次，别在几百行的循环里反复算阈值。
+  // 末两列的动态量在这里算一次，别在几百行的循环里反复算。
   const effKey = effMetricKey();
   const effName = effLabel();
-  const th = effThreshold();
 
   body.innerHTML = list
     .map((v) => {
       const keys = platKeys(v);
       const er = effRate(v.summary);
-      const hot = er >= th ? " rate-hot" : "";
       const erTip = `${effName} = ${metricLabel(effKey)} ${fmtInt(v.summary[effKey])} ÷ 播放 ${fmtInt(v.summary.views)}`;
 
       // 平台格显示当前选中的指标；悬浮提示始终给那一格的完整明细，
@@ -696,7 +663,7 @@ function renderTable() {
         <td class="col-num col-dim">${fmtDuration(v.duration)}</td>
         ${cells}
         <td class="col-num col-total" title="四平台${metricLabel(state.platMetric)}之和">${fmtCompact(v.summary[state.platMetric] || 0)}</td>
-        <td class="col-num${hot}" title="${esc(erTip)}">${v.summary.views ? (er * 100).toFixed(1) + "%" : "—"}</td>
+        <td class="col-num" title="${esc(erTip)}">${v.summary.views ? (er * 100).toFixed(1) + "%" : "—"}</td>
       </tr>`;
     })
     .join("");
@@ -718,9 +685,6 @@ function renderTable() {
 // 会把扫读的节奏打乱，所以明细还是回到独立的一层面板上来。
 function openDrawer(v) {
   const keys = platKeys(v);
-  // 这张小表里播放和收藏同屏，收藏率当场就能验算——所以它是全站少数几个
-  // 不用额外解释也站得住的比率。橙色门槛按「每一期 × 每个平台」的分布算。
-  const pcThreshold = platCollectThreshold();
 
   const rows = keys.map((k) => {
     const p = v.platforms[k];
@@ -742,7 +706,7 @@ function openDrawer(v) {
       <td>${fmtInt(p.collects)}</td>
       <td>${fmtInt(p.shares)}</td>
       <td>${fmtInt(p.comments)}</td>
-      <td${cr >= pcThreshold ? ' class="rate-hot"' : ""} title="${esc(tip)}">${p.views ? (cr * 100).toFixed(1) + "%" : "—"}</td>
+      <td title="${esc(tip)}">${p.views ? (cr * 100).toFixed(1) + "%" : "—"}</td>
     </tr>`;
   }).join("");
 

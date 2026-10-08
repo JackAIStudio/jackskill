@@ -131,7 +131,6 @@ table.works th.sorted { color: var(--ink); }
 table.works th .pdot { margin-right: 6px; }
 
 .pdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; vertical-align: middle; }
-.rate-hot { color: #b1601c; font-weight: 600; }
 .empty { color: var(--ink-3); font-size: 14px; padding: 20px 12px; }
 
 /* 那排彩色点没解释就等于没说，所以图例是常驻的，不是可选的装饰 */
@@ -143,7 +142,6 @@ table.works th .pdot { margin-right: 6px; }
 .plat-legend .lg-label { color: var(--ink-3); }
 .plat-legend .lg-note { color: var(--ink-3); }
 .plat-legend .lg-sep { width: 1px; height: 13px; background: var(--line); }
-.plat-legend .rate-hot { font-weight: 600; }
 
 table.plat-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.plat-table th {

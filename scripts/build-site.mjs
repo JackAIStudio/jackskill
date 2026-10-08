@@ -8,10 +8,14 @@
  *
  * 全程只读本地文件，不联网、不查任何云端。
  * 数据更新后重跑本脚本即可，页面不需要任何后端。
+ *
+ * 构建前先跑一遍 check-data.mjs：数据有硬伤就不生成页面，
+ * 免得把坏数据发到网上。
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkData } from "./check-data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
@@ -20,6 +24,21 @@ const OUT_FILE = path.join(REPO_ROOT, "docs/data/videos.json");
 
 const PLATFORM_ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
 const METRICS = ["views", "likes", "collects", "shares", "comments"];
+
+const check = checkData({ quiet: true });
+if (check.errors.length) {
+  console.error(`数据校验没过（${check.errors.length} 个错误），已中止构建：`);
+  for (const e of check.errors) console.error(`  - ${e}`);
+  console.error(`\n先跑 node scripts/check-data.mjs 看全貌。`);
+  process.exit(1);
+}
+// 提醒不拦构建，但必须打出来。以前这些是脚本静默处理掉的，
+// 现在没人兜底了，构建的人得看见。
+if (check.warnings.length) {
+  console.warn(`数据校验有 ${check.warnings.length} 条提醒（不阻止构建）：`);
+  for (const w of check.warnings) console.warn(`  - ${w}`);
+  console.warn("");
+}
 
 /** 从逐字稿 Markdown 里取出「## 逐字稿」之后的正文，保留段落结构。 */
 function extractTranscriptBody(markdown) {

@@ -70,14 +70,23 @@ a:hover { text-decoration: underline; }
 /* ---------- toolbar ---------- */
 
 .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+/* 两个控件必须等高：原生 select 的盒模型和 input 不是一套，
+   不写死同一个 height，实测差 5px，看着就分成两组了。 */
 .toolbar input[type="search"] {
   flex: 1 1 240px; min-width: 180px;
-  font: inherit; font-size: 14px; padding: 7px 12px;
+  font: inherit; font-size: 14px; height: 38px; padding: 0 12px;
   border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink);
 }
+/* 箭头自己画：浏览器原生那个 chevron 的颜色、粗细、离右边框多远都改不了，
+   和输入框的一像素描边不是一种风格。appearance:none 之后 select 退化成
+   普通盒子，padding 和 input 走同一套算法，高度也就跟着对齐了。 */
 .toolbar select {
-  font: inherit; font-size: 14px; padding: 7px 10px;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink);
+  appearance: none; -webkit-appearance: none;
+  font: inherit; font-size: 14px; height: 38px; padding: 0 32px 0 12px;
+  border: 1px solid var(--line); border-radius: 6px; background-color: var(--card); color: var(--ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%238d867c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center;
+  cursor: pointer;
 }
 .toolbar input:focus, .toolbar select:focus { outline: 2px solid rgba(47, 95, 208, 0.35); outline-offset: 1px; }
 .count { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }

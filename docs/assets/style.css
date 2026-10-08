@@ -1,0 +1,261 @@
+:root {
+  --bg: #fbfaf8;
+  --card: #ffffff;
+  --line: #e6e3dd;
+  --line-soft: #f0ede8;
+  --ink: #1b1a18;
+  --ink-2: #55514b;
+  --ink-3: #8d867c;
+  --accent: #2f5fd0;
+  /* 平台色不在这里——它们在各平台官方 logo 上，统一放在 app.js 的 PLAT 里 */
+  --radius: 8px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* 组件类里的 display 会盖掉浏览器对 [hidden] 的默认 display:none，统一兜住 */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: #f2efe9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- head ---------- */
+
+.site-head { border-bottom: 1px solid var(--line); padding: 26px 0 20px; background: var(--card); }
+.site-head h1 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  line-height: 1.4;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.stamp { margin: 0; font-size: 13px; color: var(--ink-3); font-family: var(--mono); }
+
+/* ---------- sections ---------- */
+
+.section { padding: 28px 0; border-bottom: 1px solid var(--line-soft); }
+.section:last-of-type { border-bottom: none; }
+#works { padding-top: 22px; }
+
+.section-head { margin-bottom: 16px; }
+.section-head h2 { margin: 0 0 6px; font-size: 17px; font-weight: 650; }
+.note { margin: 0; max-width: 76ch; color: var(--ink-2); font-size: 14px; }
+.note strong { color: var(--ink); font-weight: 600; }
+.hint { margin: 8px 2px 0; font-size: 13px; color: var(--ink-3); }
+
+/* ---------- toolbar ---------- */
+
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.toolbar input[type="search"] {
+  flex: 1 1 240px; min-width: 180px;
+  font: inherit; font-size: 14px; padding: 7px 12px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink);
+}
+.toolbar select {
+  font: inherit; font-size: 14px; padding: 7px 10px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink);
+}
+.toolbar input:focus, .toolbar select:focus { outline: 2px solid rgba(47, 95, 208, 0.35); outline-offset: 1px; }
+.count { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+/* ---------- tables ---------- */
+
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+/* 作品表限高，自己在框里滚，不把整页撑长。表头 sticky 在框顶。 */
+.works-scroll { max-height: min(72vh, 780px); overflow-y: auto; }
+
+table.works { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.works th {
+  text-align: left; font-weight: 560; font-size: 12px; color: var(--ink-3);
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  white-space: nowrap; background: #fcfbf9; position: sticky; top: 0; z-index: 1;
+}
+table.works td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+table.works tbody tr { cursor: pointer; }
+table.works tbody tr:hover { background: #fafaf8; }
+table.works tbody tr:last-child td { border-bottom: none; }
+.col-num { text-align: right; }
+td.col-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.col-date { width: 88px; }
+td.col-date { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+td.col-topic { min-width: 240px; }
+td.col-topic .t { color: var(--ink); }
+td.col-topic .sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.col-dim { color: var(--ink-3); }
+
+/* 每个平台一列播放量：竖着扫才能比高低 */
+.col-platnum { width: 66px; }
+td.col-platnum.none { color: #c9c3b9; }
+.col-total { width: 68px; }
+td.col-total { font-weight: 620; }
+
+/* 列头可点排序，所以要有可点的样子 */
+table.works th { cursor: pointer; user-select: none; }
+table.works th:hover { color: var(--ink); background: #f6f4f0; }
+table.works th.sorted { color: var(--ink); }
+table.works th .pdot { margin-right: 6px; }
+
+.pdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; vertical-align: middle; }
+.rate-hot { color: #b1601c; font-weight: 600; }
+.empty { color: var(--ink-3); font-size: 14px; padding: 20px 12px; }
+
+/* 那排彩色点没解释就等于没说，所以图例是常驻的，不是可选的装饰 */
+.plat-legend {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 2px 10px; font-size: 12.5px; color: var(--ink-2);
+}
+.plat-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.plat-legend .lg-label { color: var(--ink-3); }
+.plat-legend .lg-note { color: var(--ink-3); }
+.plat-legend .lg-sep { width: 1px; height: 13px; background: var(--line); }
+.plat-legend .rate-hot { font-weight: 600; }
+
+table.plat-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.plat-table th {
+  text-align: right; font-weight: 560; font-size: 12px; color: var(--ink-3);
+  padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fcfbf9; white-space: nowrap;
+}
+table.plat-table th:first-child { text-align: left; }
+table.plat-table td {
+  padding: 11px 14px; border-bottom: 1px solid var(--line-soft);
+  text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+table.plat-table td:first-child { text-align: left; }
+table.plat-table tr:last-child td { border-bottom: none; }
+table.plat-table .plat-name { display: inline-flex; align-items: center; gap: 8px; font-weight: 560; }
+table.plat-table .dim { color: var(--ink-3); }
+
+/* ---------- charts ---------- */
+
+.chart-toolbar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chart-toolbar button {
+  font: inherit; font-size: 13px; padding: 5px 12px; cursor: pointer;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: 20px;
+}
+.chart-toolbar button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chart-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.chart-box svg { display: block; width: 100%; height: auto; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .legend-note { flex-basis: 100%; color: var(--ink-3); }
+
+.grid-line { stroke: var(--line-soft); stroke-width: 1; }
+.axis-text { fill: var(--ink-3); font-size: 11px; font-family: var(--mono); }
+.series-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.series-dot { stroke: #fff; stroke-width: 1.5; }
+.hover-band { fill: transparent; }
+.hover-band:hover { fill: rgba(47, 95, 208, 0.05); }
+
+.tip {
+  position: fixed; z-index: 60; pointer-events: none;
+  background: #1b1a18; color: #fff; border-radius: 6px;
+  padding: 8px 11px; font-size: 12px; line-height: 1.65;
+  max-width: 300px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 平台指标切换 ---------- */
+
+/* 表格的形制不变，只换那四列显示哪个指标。
+   展开行试过：一行 44px 一行 400px，扫读节奏全被打断，所以明细回抽屉。 */
+.metric-bar { display: inline-flex; gap: 4px; }
+.metric-bar button {
+  font: inherit; font-size: 12.5px; padding: 3px 10px; cursor: pointer;
+  background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: 20px;
+}
+.metric-bar button:hover { background: #f6f4f0; }
+.metric-bar button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* 平台列表头两行：上行平台名，下行当前指标。表头是 sticky 的，
+   滚下去之后这几列是什么指标还得看得见。 */
+table.works th .th-plat { display: block; }
+table.works th .th-metric {
+  display: block; font-weight: 400; font-size: 11px; color: var(--ink-3); margin-top: 1px;
+}
+table.works th.sorted .th-metric { color: var(--ink-2); }
+
+/* ---------- 详情抽屉 ---------- */
+
+.drawer-mask { position: fixed; inset: 0; background: rgba(20, 19, 17, 0.32); z-index: 50; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 94vw);
+  background: var(--card); border-left: 1px solid var(--line);
+  z-index: 51; overflow-y: auto; padding: 26px 28px 60px;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.12);
+}
+.drawer-close {
+  position: sticky; top: 0; float: right; margin: -8px -12px 8px 0;
+  font: inherit; font-size: 13px; padding: 5px 12px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px; color: var(--ink-2);
+}
+.drawer h3 { margin: 0 0 6px; font-size: 19px; line-height: 1.4; font-weight: 650; }
+.drawer .d-meta { font-size: 13px; color: var(--ink-3); font-family: var(--mono); margin-bottom: 20px; }
+.drawer h4 {
+  margin: 26px 0 10px; font-size: 13px; font-weight: 620;
+  color: var(--ink-3); letter-spacing: 0.06em; text-transform: uppercase;
+}
+table.mini { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.mini th {
+  text-align: right; font-weight: 560; font-size: 12px; color: var(--ink-3);
+  padding: 7px 9px; border-bottom: 1px solid var(--line);
+}
+table.mini th:first-child { text-align: left; }
+table.mini td { padding: 8px 9px; border-bottom: 1px solid var(--line-soft); text-align: right; font-variant-numeric: tabular-nums; }
+table.mini tbody tr:last-child td { border-bottom: none; }
+table.mini td:first-child { text-align: left; }
+.plat-name { display: inline-flex; align-items: center; gap: 7px; }
+.src-links { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.src-links a { border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; background: var(--card); }
+.src-links a:hover { background: #f2f0ec; text-decoration: none; }
+.script p { margin: 0 0 14px; color: var(--ink-2); line-height: 1.85; }
+mark { background: #fdf0c8; color: inherit; padding: 0 1px; border-radius: 2px; }
+
+.site-foot { padding: 30px 0 56px; border-top: 1px solid var(--line); margin-top: 8px; }
+.site-foot p { margin: 0 0 8px; font-size: 13px; color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .site-head { padding: 20px 0 16px; }
+  .site-head h1 { font-size: 18px; }
+  .wrap { padding: 0 16px; }
+  .section { padding: 22px 0; }
+  .works-scroll { max-height: 64vh; }
+  .drawer { padding: 20px 18px 50px; }
+  .metric-bar button { padding: 3px 8px; }
+}

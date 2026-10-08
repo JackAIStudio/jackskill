@@ -127,7 +127,7 @@ function similarity(s1, s2) {
   return match / Math.max(c1.length, c2.length);
 }
 
-const episodes = [];
+let episodes = [];
 const usedItemIds = new Set();
 
 // 3.1 逐字稿锚定
@@ -248,6 +248,94 @@ for (const [date, group] of remDateGroups.entries()) {
   }
 }
 
+// 3.3 全局去重
+// 同一条视频会在库里留下多条记录，来源有三种：
+//   a. 云端对同一条视频有多个 content_item（重复抓取），其中一条有完整快照、一条是残的；
+//   b. 各平台分批入库，跨了好几天，第 3.2 步按精确日期分组，永远合不到一起；
+//   c. 一条被逐字稿锚定（3.1）、另一条由日期聚类产生（3.2），两步之间撞车。
+// 只修 3.2 的分组只解决 b，所以这里统一收一次，三种一起合掉。
+const MERGE_WINDOW_DAYS = 30;   // 超出一个月的同名作品视为两条不同的视频
+const MERGE_MIN_TITLE_CHARS = 6; // 太短的标题不做包含判断，避免「AI」并进「AI 工作台」
+
+function daysApart(a, b) {
+  return Math.abs((new Date(a) - new Date(b)) / 86400000);
+}
+
+// 判「同一条视频」用清洗后完全相同、或一个完整包含另一个。
+// 不用相似度阈值：2025 年那批英文标题的小红书内容互相能撞到 0.90~0.92
+// （「I am Chinese, like to teach you Chinese」对「Chinese Teaching : Learn To Say Hello」），
+// 而真正该合并的「好用的DeepSeek Harness插件分享|AI工作台地基搭建」对
+// 「DeepSeek Harness插件分享|AI工作台地基搭建」只有包含关系。阈值切不开这两类。
+function isSameTitle(a, b) {
+  // 比 cleanForMatching 多剥一个斜杠：同一个标题各平台会写成「codex_chatgpt」和「codex/chatgpt」。
+  // 只在这里多剥一层，不动共享的 cleanForMatching，免得改变第 3.1 步既有的匹配行为。
+  const norm = s => cleanForMatching(s).replace(/\//g, "");
+  const isContained = (x, y) => {
+    const [short, long] = x.length <= y.length ? [x, y] : [y, x];
+    return short.length >= MERGE_MIN_TITLE_CHARS && long.includes(short);
+  };
+
+  const c1 = norm(a);
+  const c2 = norm(b);
+  if (!c1 || !c2) return false;
+  if (c1 === c2 || isContained(c1, c2)) return true;
+
+  // 各平台爱把同一期写成「钩子|副标题」，副标题各写各的：
+  // 「图书馆也能口喷不打扰别人|我开发了一个支持超低声语音输入的识别工具」
+  // 对「图书馆也能口喷不打扰别人|自制超低声语音输入工具」。全串比不出来，就比竖线之前那截。
+  // 只认完全相等，不做包含：否则「把Agent接入达芬奇，根据文字和画面剪辑」会把
+  // 「把 Agent 接入达芬奇|用一个skill实现自动剪辑」并进来，那是两期不同的视频。
+  // 也要求够长：三期不同的 vlog 前截都只是「vlog」，一合就并成一条。
+  const head = s => norm(String(s).split(/[|｜]/)[0]);
+  const h1 = head(a);
+  const h2 = head(b);
+  return h1.length >= MERGE_MIN_TITLE_CHARS && h1 === h2;
+}
+
+function mergeEpisodes(list) {
+  const byDate = [...list].sort((a, b) => a.date.localeCompare(b.date));
+  const groups = [];
+
+  for (const ep of byDate) {
+    const host = groups.find(
+      g => daysApart(g.date, ep.date) <= MERGE_WINDOW_DAYS
+        && isSameTitle(g.topic, ep.topic)
+    );
+    if (!host) {
+      groups.push({ ...ep, platforms: { ...ep.platforms }, members: [ep] });
+      continue;
+    }
+    // 同一平台留播放量更高的那次快照——播放量只增不减，高的就是抓得更晚的
+    for (const [plat, data] of Object.entries(ep.platforms)) {
+      const cur = host.platforms[plat];
+      if (!cur || (data.views || 0) > (cur.views || 0)) host.platforms[plat] = data;
+    }
+    host.members.push(ep);
+  }
+
+  return groups.map(g => {
+    // 有逐字稿的那条说了算：文件名日期是人维护的，比云端首次抓到的日期更可信
+    const withTranscript = g.members.find(m => m.transcript);
+    const keeper = withTranscript || g;
+    const { members, ...rest } = g;
+    return {
+      ...rest,
+      topic: keeper.topic,
+      date: keeper.date,
+      duration_seconds: Math.max(...members.map(m => m.duration_seconds || 0)),
+      transcript: withTranscript ? withTranscript.transcript : null,
+      id: `${keeper.date}_${keeper.topic.replace(/\s+/g, "_")}`
+    };
+  });
+}
+
+const beforeDedup = episodes.length;
+episodes = mergeEpisodes(episodes);
+const mergedCount = beforeDedup - episodes.length;
+if (mergedCount > 0) {
+  console.log(`[3/4] 去重合并了 ${mergedCount} 条重复记录（同一视频被建了多期）`);
+}
+
 // 排序规则：按 date 降序，同 date 按 topic 升序
 episodes.sort((a, b) => {
   if (a.date !== b.date) return b.date.localeCompare(a.date);
@@ -318,3 +406,27 @@ console.log(`\n🎉 唯一真源落盘成功！`);
 console.log(`- 目标文件: ${OUTPUT_JSONL}`);
 console.log(`- 总视频数: ${lines} 期 (对应物理行数恰好 ${lines} 行)`);
 console.log(`- 文件大小: ${(stats.size / 1024).toFixed(1)} KB`);
+
+// 体检：一期视频匹配不到任何平台数据，几乎总是「逐字稿文件名日期 ≠ 真实发布日期」——
+// 第 3.1 步的 ±2 天窗口会因此把所有候选挡掉，然后一路静默到底。
+// 所以这里必须吵一声，否则错误只会以「页面上一排 0」的形式出现，没人知道是数据错了。
+const empty = episodes.filter(ep => Object.keys(ep.platforms).length === 0);
+if (empty.length) {
+  console.warn(`\n⚠️  ${empty.length} 期没有匹配到任何平台数据：`);
+  for (const ep of empty) console.warn(`   - ${ep.date}  ${ep.topic}`);
+  console.warn(`   逐字稿文件名里的日期如果与真实发布日期相差超过 2 天，`);
+  console.warn(`   云端记录会被匹配窗口直接挡掉（见本脚本第 3.1 步）。`);
+  console.warn(`   先核对文件名与 md 头部里的「发布日期」再重跑。`);
+}
+
+// 顺带重建静态站点的数据。
+// 页面数据必须跟唯一真源同一次生成，否则会出现「页面在说旧数据」——
+// 但它是次要产物，失败了不能拖垮数据同步本身。
+console.log(`\n重建站点数据…`);
+const build = spawnSync(process.execPath, [path.join(__dirname, "build-site.mjs")], {
+  stdio: "inherit",
+});
+if (build.status !== 0) {
+  console.warn(`⚠️  站点数据重建失败（退出码 ${build.status}）。videos.jsonl 已正常落盘，`);
+  console.warn(`   手动重跑 node scripts/build-site.mjs 即可。`);
+}

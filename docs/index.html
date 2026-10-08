@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>吴杰克 Jack · 自媒体数据全量公开</title>
+<meta name="description" content="吴杰克 Jack 在 B 站、抖音、小红书、微信视频号的真实自媒体数据与全部口播逐字稿。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231b1a18'/><text x='16' y='23' font-family='-apple-system,Segoe UI,sans-serif' font-size='19' font-weight='600' fill='%23fff' text-anchor='middle'>J</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <h1>吴杰克 Jack · 自媒体数据</h1>
+    <p class="stamp" id="stamp"></p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="works">
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="搜索标题或逐字稿全文…" autocomplete="off">
+      <select id="platFilter"></select>
+      <span class="count" id="resultCount"></span>
+    </div>
+
+    <p class="plat-legend" id="platLegend"></p>
+
+    <div class="table-wrap works-scroll">
+      <table class="works">
+        <thead id="worksHead"></thead>
+        <tbody id="worksBody"></tbody>
+      </table>
+    </div>
+    <p class="hint">点任意一行打开右侧明细：分平台数据、原片链接与当期逐字稿全文。点列头可排序，再点一次换方向。</p>
+  </section>
+
+  <section class="section" id="platforms">
+    <div class="section-head">
+      <h2>平台表现</h2>
+      <p class="note">
+        <strong>中位播放</strong>比平均播放更能代表常态——单条爆款会把平均值拉得没法看。
+        <strong>互动率</strong> = （点赞 + 收藏 + 分享 + 评论）÷ 播放，<strong>收藏率</strong> = 收藏 ÷ 播放。
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table class="plat-table" id="platTable"></table>
+    </div>
+  </section>
+
+  <section class="section" id="timeline">
+    <div class="section-head">
+      <h2>时间线</h2>
+      <p class="note">
+        平台是逐年接入的：2023 年只有 B 站，2024 年主要是小红书，2026 年才四平台齐全。
+        所以按平台各画一条线，<strong>不做总量堆叠</strong>——早期总量低是因为当时没采别的平台，
+        不是流量低。线断掉的地方就是那个月没数据。
+      </p>
+    </div>
+    <div class="chart-toolbar" id="trendToolbar"></div>
+    <div class="chart-box"><svg id="trendChart" role="img" aria-label="各平台月度趋势"></svg></div>
+    <div class="legend" id="trendLegend"></div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <p>
+      数据与逐字稿的唯一真源都在本仓库：
+      <code>data/videos.jsonl</code>、<code>transcripts/md/*.md</code>。
+      页面是构建产物，改数据后重跑 <code>node scripts/build-site.mjs</code> 即可。
+    </p>
+    <p><a href="https://github.com/JackAIStudio/jackskill">github.com/JackAIStudio/jackskill</a></p>
+  </div>
+</footer>
+
+<div class="drawer-mask" id="drawerMask" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-live="polite">
+  <button class="drawer-close" id="drawerClose" aria-label="关闭">关闭</button>
+  <div id="drawerBody"></div>
+</aside>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

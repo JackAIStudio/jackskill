@@ -29,6 +29,15 @@ const METRICS = ["views", "likes", "collects", "shares", "comments"];
 const cleanForMatching = (s) =>
   (s || "").replace(/[｜|:：，。！？!?,.~～_\-/\s]/g, "").toLowerCase();
 
+/** 取 URL 的 host；取不到就返回空串，交给调用方当「没有链接」处理。 */
+const hostOf = (u) => {
+  try {
+    return new URL(String(u).trim()).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+
 const MIN_TITLE_CHARS = 6;
 const MERGE_WINDOW_DAYS = 30;
 
@@ -59,6 +68,10 @@ export function checkData({ quiet = false } = {}) {
 
   const lines = fs.readFileSync(DATA_FILE, "utf8").split("\n").map((l) => l.trim()).filter(Boolean);
   const records = [];
+  // 这两类问题逐条收集，最后按平台汇总成一条提醒。逐条报出来有九十多条，
+  // 会把真正要看的错误淹掉；汇总里带日期，照样能定位。
+  const creatorLinks = [];
+  const emptyPlats = [];
 
   lines.forEach((line, i) => {
     const at = `第 ${i + 1} 行`;
@@ -87,6 +100,15 @@ export function checkData({ quiet = false } = {}) {
         if (!Number.isInteger(p[m]) || p[m] < 0) errors.push(`${at} ${k}.${m} 必须是非负整数：${p[m]}`);
       }
       if (!p.url) warnings.push(`${at} ${k} 没有链接`);
+
+      // 链接要么指向作品页，要么指向平台主页。指向创作者后台不行：
+      // 观众点进去只有登录墙，而页面会照着它把标签写成「看原片」。
+      const host = hostOf(p.url);
+      if (/^creator\./.test(host)) creatorLinks.push({ date: r.date, k, host, url: p.url });
+
+      // 五个指标全是 0 = 这一期在这个平台没采到数据（待补录的占位记录）。
+      // 页面已经不把它算进收录期数和任何中位数，但它确实还占着一行。
+      if (METRICS.every((m) => !p[m])) emptyPlats.push({ date: r.date, k });
     }
 
     // summary 必须等于各平台之和——这是全站所有数字的口径
@@ -124,6 +146,28 @@ export function checkData({ quiet = false } = {}) {
       warnings.push(`${at} 既没有逐字稿也没有平台数据：${r.topic}`);
     }
   });
+
+  // 按平台汇总这两类问题。带上前几个日期，够定位到具体是哪几期。
+  const summarise = (list, describe) => {
+    const byPlat = new Map();
+    for (const x of list) {
+      if (!byPlat.has(x.k)) byPlat.set(x.k, []);
+      byPlat.get(x.k).push(x);
+    }
+    for (const [k, xs] of byPlat) {
+      const dates = xs.map((x) => x.date).sort();
+      const shown = dates.slice(0, 8).join("、") + (dates.length > 8 ? ` 等 ${dates.length} 期` : "");
+      warnings.push(`${k} ${describe(xs)}：${shown}`);
+    }
+  };
+
+  summarise(creatorLinks, (xs) =>
+    `有 ${xs.length} 条链接指向创作者后台（${[...new Set(xs.map((x) => x.host))].join("、")}），`
+    + `观众点进去只有登录墙；页面已按「未收录原片链接」处理，建议换成作品直链`);
+
+  summarise(emptyPlats, (xs) =>
+    `有 ${xs.length} 条记录五个指标全是 0（待补录的占位记录），`
+    + `页面已把它们排除出收录期数和各种中位数；要么补数据，要么删掉这些平台记录`);
 
   // id 唯一
   const idCount = new Map();

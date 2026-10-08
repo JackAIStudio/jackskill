@@ -21,7 +21,7 @@
 
   <section class="section" id="works">
     <div class="toolbar">
-      <input type="search" id="q" placeholder="搜索标题或逐字稿全文…" autocomplete="off">
+      <input type="search" id="q" placeholder="搜索主题、平台标题或逐字稿全文…" autocomplete="off">
       <select id="platFilter"></select>
       <span class="count" id="resultCount"></span>
     </div>
@@ -34,6 +34,15 @@
         <tbody id="worksBody"></tbody>
       </table>
     </div>
+    <p class="hint">
+      表里最后两列跟着上面的指标一起换：<b>合计</b>是那个指标的四平台之和，
+      <b>末列</b>是把它除以播放——选点赞看点赞率，选收藏看收藏率。
+      播放视图没有「播放的效率」，所以固定看收藏率：播放量只说明多少人刷到，收藏才说明多少人觉得以后还要用。
+    </p>
+    <p class="hint">
+      搜索同时扫主题、各平台标题和逐字稿全文——抖音和视频号的标题是「主题 + #话题标签」，
+      所以搜 <code>#jackskill</code> 这类标签也能找到。命中来自平台标题时，那一行会把它显示出来。
+    </p>
     <p class="hint">点任意一行打开右侧明细：分平台数据、原片链接与当期逐字稿全文。点列头可排序，再点一次换方向。</p>
   </section>
 
@@ -48,6 +57,7 @@
     <div class="table-wrap">
       <table class="plat-table" id="platTable"></table>
     </div>
+    <p class="hint" id="platNote"></p>
   </section>
 
   <section class="section" id="timeline">
@@ -62,6 +72,79 @@
     <div class="chart-toolbar" id="trendToolbar"></div>
     <div class="chart-box"><svg id="trendChart" role="img" aria-label="各平台月度趋势"></svg></div>
     <div class="legend" id="trendLegend"></div>
+  </section>
+
+  <section class="section" id="glossary">
+    <div class="section-head">
+      <h2>口径</h2>
+      <p class="note">
+        上面每个数字怎么算出来的，都写在这里。看完这一节，页面上任何一个数你都能自己验算。
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead>
+          <tr><th>指标</th><th>算式</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>播放 / 点赞 / 收藏 / 分享 / 评论</td>
+            <td>各平台相加</td>
+            <td>作品表一行的「合计」= 四个平台那一列之和；全站数字 = 所有期相加。加总的口径由 <code>check-data.mjs</code> 每次构建时校验，对不上就不出页面。</td>
+          </tr>
+          <tr>
+            <td>互动率</td>
+            <td>（点赞 + 收藏 + 分享 + 评论）÷ 播放</td>
+            <td>每 100 次播放换来多少次互动。平台之间比这个，比比播放量有意义——播放量受平台体量影响，互动率不受。</td>
+          </tr>
+          <tr>
+            <td>点赞率 / 收藏率 / 分享率 / 评论率</td>
+            <td>该指标 ÷ 播放</td>
+            <td>作品表末列，跟着上面选的指标切换；表头小字和图例里都写着当时那一列的算式。</td>
+          </tr>
+          <tr>
+            <td>中位播放</td>
+            <td>把播放量排序，取中间那个</td>
+            <td>不用平均：单条爆款能把平均拉到失去意义，中位数拉不动。</td>
+          </tr>
+          <tr>
+            <td>橙色</td>
+            <td>—</td>
+            <td>该指标的效率排进全站前 10%。阈值按当前指标现算——点赞率和收藏率不是一个量级，共用一个数就会串。当时的具体门槛标在图例上。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-head gloss-sub">
+      <h3>三个要知道的口径边界</h3>
+    </div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead>
+          <tr><th>看到什么</th><th>什么意思</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>—</code></td>
+            <td>这一期在这个平台没有数据。两种可能：没发到这个平台，或者发了但没采到数（数据源里是五个指标全 0 的占位记录）。光标停上去会告诉你是哪一种。</td>
+          </tr>
+          <tr>
+            <td>「未收录原片链接」</td>
+            <td>这一期的链接指向创作者后台，观众点进去只有登录墙，所以不给链接。换成作品直链之后就会显示成「看原片」。</td>
+          </tr>
+          <tr>
+            <td>「平台主页」</td>
+            <td>小红书和视频号在数据源里存的是平台主页，不是某条作品——这两个平台的笔记链接受风控和 token 限制，存下来很快会失效。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="hint">
+      待补录的占位记录（五个指标全 0）不进任何统计：不算收录期数，不进中位数，也不参与排序。
+      它们仍然在作品表里占一行，因为「这一期在抖音有记录但还没补数」本身也是这个仓库的真实状态。
+    </p>
   </section>
 
 </main>

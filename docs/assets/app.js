@@ -58,10 +58,34 @@ function collectRate(p) {
 function platKeys(v) {
   return ORDER.filter((k) => v.platforms[k]);
 }
-/** 小红书与视频号在数据里存的是平台主页，不是原片直链。 */
-function isRealVideoUrl(url) {
-  if (!url) return false;
-  return !/^https?:\/\/(www\.)?(xiaohongshu\.com|channels\.weixin\.qq\.com)\/?$/.test(url.trim());
+/** 这条平台记录有没有真实数据。五个指标全 0 的是待补录的占位记录，不算。 */
+function hasData(p) {
+  return Boolean(p) && !p.empty;
+}
+/** 只有真采到数的平台。统计和中位数一律用这个，不用 platKeys。 */
+function dataKeys(v) {
+  return ORDER.filter((k) => hasData(v.platforms[k]));
+}
+
+// 链接分三类，标签必须跟着变：
+//   video  作品页        → 「看原片」
+//   home   平台主页      → 「平台主页」（小红书和视频号在数据里存的就是主页）
+//   none   创作者后台     → 不给链接。观众点进去只有登录墙，给了他也没用。
+// 早先只排除了两个精确的主页域名，于是 92 条抖音记录的 creator.douyin.com
+// 被当成了作品直链，标签写着「看原片」。
+const PLATFORM_HOME_HOSTS = new Set(["xiaohongshu.com", "www.xiaohongshu.com", "channels.weixin.qq.com"]);
+
+function urlKind(url) {
+  if (!url) return "none";
+  let u;
+  try {
+    u = new URL(url.trim());
+  } catch {
+    return "none";
+  }
+  if (/^creator\./i.test(u.hostname)) return "none";
+  if (PLATFORM_HOME_HOSTS.has(u.hostname) && !u.pathname.replace(/\/+$/, "")) return "home";
+  return "video";
 }
 
 function highlight(text, q) {
@@ -70,6 +94,23 @@ function highlight(text, q) {
   const needle = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   if (!needle) return safe;
   return safe.replace(new RegExp(needle, "gi"), (m) => `<mark>${m}</mark>`);
+}
+
+// 搜索命中的平台标题。主题里本来就含 q 的那些不算——那已经在标题上高亮了，
+// 再重复一遍只是把行撑高。跨平台重复的同一条标题也去掉。
+function matchedPlatTitles(v, q) {
+  if (!q) return [];
+  const needle = q.toLowerCase();
+  if ((v.topic || "").toLowerCase().includes(needle)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const k of ORDER) {
+    const t = v.platforms[k] && v.platforms[k].title;
+    if (!t || !t.toLowerCase().includes(needle) || seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
 }
 
 /* ---------------- tooltip ---------------- */
@@ -138,8 +179,11 @@ function renderStamp() {
 /* ---------------- 平台表现 ---------------- */
 
 function renderPlatforms() {
+  // 只统计采到数的记录。待补录的占位记录（五个指标全 0）如果混进来，
+  // 会把中位播放整个拉下来——抖音那 21 条就把它从 623 拉到了 480。
   const rows = ORDER.map((key) => {
-    const list = DATA.videos.filter((v) => v.platforms[key]).map((v) => v.platforms[key]);
+    const all = DATA.videos.map((v) => v.platforms[key]).filter(Boolean);
+    const list = all.filter(hasData);
     const views = list.map((p) => p.views);
     const totalViews = sum(views);
     const totalEng = sum(list.map((p) => p.likes + p.collects + p.shares + p.comments));
@@ -148,6 +192,7 @@ function renderPlatforms() {
       label: PLAT[key].label,
       color: PLAT[key].color,
       n: list.length,
+      blanks: all.length - list.length,
       totalViews,
       medianViews: median(views),
       eng: totalViews ? totalEng / totalViews : 0,
@@ -165,7 +210,7 @@ function renderPlatforms() {
       ${rows.map((r) => `
         <tr>
           <td><span class="plat-name"><i class="pdot" style="background:${r.color}"></i>${r.label}</span></td>
-          <td>${fmtInt(r.n)}</td>
+          <td title="${r.blanks ? `另有 ${r.blanks} 期待补录的占位记录，不计入` : "每一期都采到了数"}">${fmtInt(r.n)}</td>
           <td>${fmtCompact(r.totalViews)}</td>
           <td>${fmtCompact(r.medianViews)}</td>
           <td>${(r.eng * 100).toFixed(2)}%</td>
@@ -173,13 +218,19 @@ function renderPlatforms() {
         </tr>`).join("")}
       <tr class="dim">
         <td>全部作品</td>
-        <td>${fmtInt(DATA.count)}</td>
-        <td>${fmtCompact(sum(rows.map((r) => r.totalViews)))}</td>
+        <td title="全站收录的总期数。不是上面四行相加——同一期可能发在多个平台">${fmtInt(DATA.count)}</td>
+        <td title="四平台播放量之和">${fmtCompact(sum(rows.map((r) => r.totalViews)))}</td>
         <td class="dim">—</td>
         <td class="dim">—</td>
         <td class="dim">—</td>
       </tr>
     </tbody>`;
+
+  const blanks = sum(rows.map((r) => r.blanks));
+  $("platNote").textContent =
+    `收录期数只算采到数据的期。数据源里另有 ${fmtInt(blanks)} 条待补录的占位记录（五个指标全 0），` +
+    `它们不进这一张表的任何一列。「全部作品」那行的 ${fmtInt(DATA.count)} 是全站总期数，不是上面四行相加——` +
+    `同一期可能发在多个平台。`;
 }
 
 /* ---------------- 时间线 ---------------- */
@@ -202,7 +253,9 @@ function monthList() {
 const TREND_MODES = [
   { id: "median", label: "月度中位播放" },
   { id: "total",  label: "月度总播放" },
-  { id: "count",  label: "月度发布期数" },
+  // 叫「收录」不叫「发布」：只数采到数的期，待补录的占位记录不算，
+  // 三个模式用的是同一批记录，不然三条线各说各的人口。
+  { id: "count",  label: "月度收录期数" },
 ];
 
 function renderTrend(mode) {
@@ -213,7 +266,9 @@ function renderTrend(mode) {
     const mk = (v.date || "").slice(0, 7);
     const b = buckets.get(mk);
     if (!b) continue;
-    for (const k of platKeys(v)) b[k].push(v.platforms[k]);
+    // 只放采到数的记录。占位记录（全 0）会把这个月的中位数拉到 0，
+    // 而对数轴上的 0 画在最低网格线上，看着像「有一点播放」。
+    for (const k of dataKeys(v)) b[k].push(v.platforms[k]);
   }
 
   const series = ORDER.map((key) => ({
@@ -328,10 +383,10 @@ function renderTrend(mode) {
   }
 
   const note = mode === "count"
-    ? "断线的地方就是那个月该平台没有数据——早期平台没接入，不是没发。"
+    ? "只数采到数的期，待补录的占位记录不算。断线的地方就是那个月该平台没有数据——早期平台没接入，不是没发。"
     : mode === "total"
     ? "总播放会被爆款和期数同时影响，看趋势建议切回中位播放。（纵轴为对数刻度）"
-    : "中位数：把那个月该平台所有视频的播放量排序取中间值，单条爆款拉不动它。（纵轴为对数刻度）";
+    : "中位数：把那个月该平台所有视频的播放量排序取中间值，单条爆款拉不动它。待补录的占位记录不算。（纵轴为对数刻度）";
   $("trendLegend").innerHTML =
     ORDER.map((k) => `<span><i class="plat-dot" style="background:${PLAT[k].color};display:inline-block"></i>${PLAT[k].label}</span>`).join("") +
     `<span class="legend-note">${note}</span>`;
@@ -350,13 +405,17 @@ function niceMax(v) {
 
 // 列的唯一定义处：表头和数据行都从这里生成，加一列只改这里。
 // 分平台播放量各占一列——竖着扫才能比较，塞进主题下面那行小字是比不出来的。
+//
+// 最后两列跟着上面的指标走，值在 renderHead / renderTable 里现算：
+//   合计 = 当前指标的四平台之和（以前这里写死 views，所以切到点赞时它还在显示播放）
+//   效率 = 当前指标 ÷ 播放（播放视图下退回收藏率，见 effMetricKey）
 const COLS = [
   { key: "date",        label: "日期",   cls: "col-date" },
   { key: "topic",       label: "主题",   cls: "col-topic" },
   { key: "duration",    label: "时长",   cls: "col-num" },
   ...ORDER.map((k) => ({ key: k, label: PLAT[k].short, cls: "col-num col-platnum", plat: k })),
-  { key: "views",       label: "合计",   cls: "col-num col-total" },
-  { key: "collectRate", label: "收藏率", cls: "col-num" },
+  { key: "total",       label: "合计",   cls: "col-num col-total" },
+  { key: "rate",        label: "效率",   cls: "col-num col-rate" },
 ];
 
 let state = { q: "", filter: "all", platMetric: "views", sort: { key: "date", dir: "desc" }, filtered: [] };
@@ -366,17 +425,61 @@ function metricLabel(key) {
   return m ? m.label : "播放";
 }
 
+// 效率列算的是哪个指标。播放视图下没有「播放的效率」，所以退回收藏率：
+// 播放量只说明多少人刷到，收藏才说明多少人觉得以后还要用。
+function effMetricKey() {
+  return state.platMetric === "views" ? "collects" : state.platMetric;
+}
+function effLabel() {
+  return metricLabel(effMetricKey()) + "率";
+}
+/** 效率 = 当前指标 ÷ 播放。分母是 0 就给 0，不给 NaN 或 Infinity。 */
+function effRate(summary) {
+  if (!summary || !summary.views) return 0;
+  return (summary[effMetricKey()] || 0) / summary.views;
+}
+
+/** 已升序排好的数组里取第 p 分位（p = 0.9 就是「前 10%」的门槛）。 */
+function quantile(sortedAsc, p) {
+  if (!sortedAsc.length) return Infinity;
+  return sortedAsc[Math.min(sortedAsc.length - 1, Math.floor((sortedAsc.length - 1) * p))];
+}
+
+// 橙色高亮 = 该指标的效率排进全站前 10%。
+// 阈值必须按当前指标现算：点赞率全站 1.96%、收藏率 1.02%、评论率 0.40%，
+// 根本不是一个量级。写死一个数就会出现「列上标着点赞率，亮的是收藏率的标准」。
+function effThreshold() {
+  const rates = DATA.videos
+    .filter((v) => v.summary.views > 0)
+    .map((v) => effRate(v.summary))
+    .sort((a, b) => a - b);
+  return quantile(rates, 0.9);
+}
+
+// 抽屉那一列永远是「分平台收藏率」，样本是每一期 × 每个平台，
+// 和表格里按整期算的口径不是一回事，所以门槛单独算一次。
+function platCollectThreshold() {
+  const rates = DATA.videos
+    .flatMap((v) => ORDER.map((k) => v.platforms[k]).filter(Boolean))
+    .filter((p) => p.views > 0)
+    .map((p) => p.collects / p.views)
+    .sort((a, b) => a - b);
+  return quantile(rates, 0.9);
+}
+
 // 平台列换成别的指标时，排序、表头、单元格必须一起跟着换，否则会出现
 // 「列上写着收藏、排的是播放」这种对不上的情况。
 function platValue(v, k) {
   const p = v.platforms[k];
-  return p ? p[state.platMetric] || 0 : -1;
+  // -1 = 没有可比的值（这一期没发到这个平台，或者只有待补录的占位记录），
+  // 排序时沉到最后，而不是被当成 0 混在真实数据里。
+  return hasData(p) ? p[state.platMetric] || 0 : -1;
 }
 
 function sortValue(v, key) {
   if (ORDER.includes(key)) return platValue(v, key);
-  if (key === "views") return v.summary.views;
-  if (key === "collectRate") return collectRate(v.summary);
+  if (key === "total") return v.summary[state.platMetric] || 0;
+  if (key === "rate") return effRate(v.summary);
   if (key === "duration") return v.duration;
   return v.date;
 }
@@ -389,14 +492,27 @@ function renderHead() {
   $("worksHead").innerHTML = `<tr>${COLS.map((c) => {
     const active = state.sort.key === c.key;
     const arrow = active ? (state.sort.dir === "asc" ? " ▲" : " ▼") : "";
-    // 平台列的表头写成两行：上面平台名，下面当前指标。
-    // 指标必须跟着表头一起滚动（表头是 sticky 的），不然滚下去就忘了这几列是什么。
+    const cls = `${c.cls}${active ? " sorted" : ""}`;
+    // 平台列、合计列、效率列都跟着指标走，所以表头一律两行：
+    // 上行写这一列是谁，下行写它装的是哪个量、怎么算出来的。
+    // 表头是 sticky 的，指标必须跟着一起滚动，不然滚下去就忘了这几列是什么。
     if (c.plat) {
-      return `<th class="${c.cls}${active ? " sorted" : ""}" data-key="${c.key}">`
+      return `<th class="${cls}" data-key="${c.key}">`
         + `<span class="th-plat"><i class="pdot" style="background:${PLAT[c.plat].color}"></i>${c.label}</span>`
         + `<span class="th-metric">${metric}${arrow}</span></th>`;
     }
-    return `<th class="${c.cls}${active ? " sorted" : ""}" data-key="${c.key}">${c.label}${arrow}</th>`;
+    if (c.key === "total") {
+      return `<th class="${cls}" data-key="${c.key}">`
+        + `<span class="th-plat">${c.label}</span>`
+        + `<span class="th-metric">${metric}${arrow}</span></th>`;
+    }
+    // 效率列的名字随指标现算，COLS 里那个 label 只是占位
+    if (c.key === "rate") {
+      return `<th class="${cls}" data-key="${c.key}">`
+        + `<span class="th-plat">${effLabel()}${arrow}</span>`
+        + `<span class="th-metric">${metricLabel(effMetricKey())} ÷ 播放</span></th>`;
+    }
+    return `<th class="${cls}" data-key="${c.key}">${c.label}${arrow}</th>`;
   }).join("")}</tr>`;
 
   $("worksHead").querySelectorAll("th").forEach((th) => {
@@ -451,12 +567,19 @@ function renderLegend() {
     `<button type="button" data-metric="${m.key}" aria-pressed="${state.platMetric === m.key}">${m.label}</button>`
   ).join("");
 
+  // 末列的算式和橙色阈值都写在图例里。以前这两个数在页面上都没交代：
+  // 收藏率没说除以什么，3% 也没说是怎么定的，看完只能猜。
+  const effKey = effMetricKey();
+  const th = effThreshold();
+
   $("platLegend").innerHTML =
     `<span class="lg-label">平台列</span><span class="metric-bar">${bar}</span>` +
     `<span class="lg-sep"></span>` +
-    `<span class="lg-note">「—」= 该平台没有这期</span>` +
+    `<span class="lg-note">末列 <b>${effLabel()}</b> = ${metricLabel(effKey)} ÷ 播放</span>` +
     `<span class="lg-sep"></span>` +
-    `<span class="lg-note"><b class="rate-hot">橙色</b> = 收藏率 ≥ 3%</span>`;
+    `<span class="lg-note"><b class="rate-hot">橙色</b> = 排进全站前 10%（≥ ${(th * 100).toFixed(1)}%）</span>` +
+    `<span class="lg-sep"></span>` +
+    `<span class="lg-note">「—」= 该平台没有数据（没发，或者还没补数）</span>`;
 
   $("platLegend").querySelectorAll("button[data-metric]").forEach((b) => {
     b.addEventListener("click", () => {
@@ -472,11 +595,15 @@ function applyFilters() {
   const q = state.q.toLowerCase();
   const [kind, value] = state.filter.split(":");
   let list = DATA.videos.filter((v) => {
-    if (kind === "plat" && !v.platforms[value]) return false;
+    // 「有抖音数据」要的是有数据，不是有那条占位记录
+    if (kind === "plat" && !hasData(v.platforms[value])) return false;
     if (kind === "tr" && (value === "yes") !== Boolean(v.transcript)) return false;
     if (!q) return true;
     if (v.topic.toLowerCase().includes(q)) return true;
     if (v.transcript && v.transcript.paragraphs.join("").toLowerCase().includes(q)) return true;
+    // 各平台标题也要搜。抖音和视频号那条标题是「主题 + #话题标签」，
+    // 搜「#jackskill」这类标签以前是搜不到的。
+    if (Object.values(v.platforms).some((p) => (p.title || "").toLowerCase().includes(q))) return true;
     return false;
   });
 
@@ -505,17 +632,29 @@ function renderTable() {
     return;
   }
 
+  // 末两列的动态量在这里算一次，别在几百行的循环里反复算阈值。
+  const effKey = effMetricKey();
+  const effName = effLabel();
+  const th = effThreshold();
+
   body.innerHTML = list
     .map((v) => {
       const keys = platKeys(v);
-      const cr = collectRate(v.summary);
-      const hot = cr >= 0.03 ? " rate-hot" : "";
+      const er = effRate(v.summary);
+      const hot = er >= th ? " rate-hot" : "";
+      const erTip = `${effName} = ${metricLabel(effKey)} ${fmtInt(v.summary[effKey])} ÷ 播放 ${fmtInt(v.summary.views)}`;
 
       // 平台格显示当前选中的指标；悬浮提示始终给那一格的完整明细，
       // 所以换了指标也不用担心看不到别的数
       const cells = ORDER.map((k) => {
         const p = v.platforms[k];
         if (!p) return `<td class="col-num col-platnum none">—</td>`;
+        // 占位记录（五个指标全 0）不显示成 0——那会读成「这期在抖音真的 0 播放」。
+        // 显示成「—」，和「没发到这个平台」同一格，靠悬浮提示区分。
+        if (!hasData(p)) {
+          const t = `${PLAT[k].label} · ${v.date}\n这一期有记录，但五个指标全是 0（待补录的占位记录），不是真的 0 播放`;
+          return `<td class="col-num col-platnum none" title="${esc(t)}">—</td>`;
+        }
         const rate = p.views ? (collectRate(p) * 100).toFixed(1) + "%" : "—";
         const tip = `${PLAT[k].label} · ${v.date}
 播放 ${fmtInt(p.views)}
@@ -525,17 +664,30 @@ function renderTable() {
         return `<td class="col-num col-platnum" title="${esc(tip)}">${fmtCompact(p[state.platMetric])}</td>`;
       }).join("");
 
-      const eng = keys.length
+      // 这一行的小字说的是「这一期真实采到了什么」，所以看的是有数据的平台，
+      // 不是有记录的平台。只有占位记录的期（全站 2 期）不能写成「赞 0 · 藏 0」——
+      // 那是「没采到数」，不是「互动是 0」。
+      const live = dataKeys(v);
+      const eng = live.length
         ? `赞 ${fmtInt(v.summary.likes)} · 藏 ${fmtInt(v.summary.collects)} · 转 ${fmtInt(v.summary.shares)} · 评 ${fmtInt(v.summary.comments)}`
+        : keys.length
+        ? "这一期还没有采到数据，只有待补录的占位记录"
         : "无平台数据";
 
-      return `<tr data-id="${esc(v.id)}"${keys.length ? "" : ' class="is-empty"'}>
+      // 平台标题（抖音那串 #话题）和主题常常不一样，搜索也扫它们。
+      // 命中了就得在行里露出来，不然搜索结果看着像凭空多出来的。
+      const hits = matchedPlatTitles(v, state.q);
+      const hitLine = hits.length
+        ? `<div class="sub sub-hit">平台标题命中：${hits.map((t) => highlight(t, state.q)).join("　／　")}</div>`
+        : "";
+
+      return `<tr data-id="${esc(v.id)}"${live.length ? "" : ' class="is-empty"'}>
         <td class="col-date">${v.date}</td>
-        <td class="col-topic"><div class="t">${highlight(v.topic, state.q)}</div><div class="sub">${esc(eng)}</div></td>
+        <td class="col-topic"><div class="t">${highlight(v.topic, state.q)}</div><div class="sub">${esc(eng)}</div>${hitLine}</td>
         <td class="col-num col-dim">${fmtDuration(v.duration)}</td>
         ${cells}
-        <td class="col-num col-total">${fmtCompact(v.summary.views)}</td>
-        <td class="col-num${hot}">${v.summary.views ? (cr * 100).toFixed(1) + "%" : "—"}</td>
+        <td class="col-num col-total" title="四平台${metricLabel(state.platMetric)}之和">${fmtCompact(v.summary[state.platMetric] || 0)}</td>
+        <td class="col-num${hot}" title="${esc(erTip)}">${v.summary.views ? (er * 100).toFixed(1) + "%" : "—"}</td>
       </tr>`;
     })
     .join("");
@@ -557,10 +709,23 @@ function renderTable() {
 // 会把扫读的节奏打乱，所以明细还是回到独立的一层面板上来。
 function openDrawer(v) {
   const keys = platKeys(v);
+  // 这张小表里播放和收藏同屏，收藏率当场就能验算——所以它是全站少数几个
+  // 不用额外解释也站得住的比率。橙色门槛按「每一期 × 每个平台」的分布算。
+  const pcThreshold = platCollectThreshold();
 
   const rows = keys.map((k) => {
     const p = v.platforms[k];
     const cr = collectRate(p);
+    // 占位记录照常占一行——读者该看见「这期在抖音有记录但没采到数」，
+    // 只是数值一律给「—」，不假装成 0。
+    if (!hasData(p)) {
+      const t = "这一期有记录，但五个指标全是 0（待补录的占位记录），不是真的 0 播放";
+      return `<tr class="dim">
+      <td><span class="plat-name"><i class="pdot" style="background:${PLAT[k].color}"></i>${PLAT[k].label}</span></td>
+      <td colspan="6" title="${esc(t)}">待补录，没有数据</td>
+    </tr>`;
+    }
+    const tip = `收藏率 = 收藏 ${fmtInt(p.collects)} ÷ 播放 ${fmtInt(p.views)}`;
     return `<tr>
       <td><span class="plat-name"><i class="pdot" style="background:${PLAT[k].color}"></i>${PLAT[k].label}</span></td>
       <td>${fmtInt(p.views)}</td>
@@ -568,14 +733,19 @@ function openDrawer(v) {
       <td>${fmtInt(p.collects)}</td>
       <td>${fmtInt(p.shares)}</td>
       <td>${fmtInt(p.comments)}</td>
-      <td${cr >= 0.03 ? ' class="rate-hot"' : ""}>${p.views ? (cr * 100).toFixed(1) + "%" : "—"}</td>
+      <td${cr >= pcThreshold ? ' class="rate-hot"' : ""} title="${esc(tip)}">${p.views ? (cr * 100).toFixed(1) + "%" : "—"}</td>
     </tr>`;
   }).join("");
 
+  // 三分类：作品页给链接，平台主页给链接，创作者后台不给——
+  // 那是自己的后台，观众点进去只有登录墙，挂着它比不挂更糟。
   const links = keys.map((k) => {
     const p = v.platforms[k];
-    const real = isRealVideoUrl(p.url);
-    return `<a href="${esc(p.url)}" target="_blank" rel="noopener">${real ? "看原片" : "平台主页"} · ${PLAT[k].label}</a>`;
+    const kind = urlKind(p.url);
+    if (kind === "none") {
+      return `<span class="src-none" title="${esc(p.url || "数据源里没有这一期的链接")}">未收录原片链接 · ${PLAT[k].label}</span>`;
+    }
+    return `<a href="${esc(p.url)}" target="_blank" rel="noopener">${kind === "video" ? "看原片" : "平台主页"} · ${PLAT[k].label}</a>`;
   }).join("");
 
   const transcript = v.transcript
@@ -583,13 +753,21 @@ function openDrawer(v) {
        <div class="script">${v.transcript.paragraphs.map((p) => `<p>${highlight(p, state.q)}</p>`).join("")}</div>`
     : `<h4>口播逐字稿</h4><p class="empty">这一期没有收录逐字稿。</p>`;
 
+  // 「几个平台」要说清是「有记录的」还是「有数据的」，这两件事在这份数据里不一样。
+  const liveN = dataKeys(v).length;
+  const platMeta = liveN === keys.length
+    ? `${keys.length} 个平台`
+    : liveN
+    ? `${liveN} 个平台有数据（另有 ${keys.length - liveN} 个只有待补录的记录）`
+    : `${keys.length} 个平台记录，都待补录，还没有数据`;
+
   $("drawerBody").innerHTML = `
     <h3>${esc(v.topic)}</h3>
-    <div class="d-meta">${v.date} · ${fmtDuration(v.duration)} · ${keys.length} 个平台</div>
+    <div class="d-meta">${v.date} · ${fmtDuration(v.duration)} · ${platMeta}</div>
     ${keys.length ? `
       <h4>分平台明细</h4>
       <table class="mini">
-        <thead><tr><th>平台</th><th>播放</th><th>点赞</th><th>收藏</th><th>分享</th><th>评论</th><th>收藏率</th></tr></thead>
+        <thead><tr><th>平台</th><th>播放</th><th>点赞</th><th>收藏</th><th>分享</th><th>评论</th><th>收藏率<br><span class="th-metric">收藏 ÷ 播放</span></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <h4>原片</h4>

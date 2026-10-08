@@ -111,6 +111,9 @@ td.col-date { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); 
 td.col-topic { min-width: 240px; }
 td.col-topic .t { color: var(--ink); }
 td.col-topic .sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+/* 一个有效平台都没有的期：整行压暗，别和数据行抢注意力。
+   这种期仍然要留在表里（「有记录但还没补数」也是真实状态），只是不该看着像有数据。 */
+table.works tbody tr.is-empty td.col-topic .t { color: var(--ink-3); }
 .col-dim { color: var(--ink-3); }
 
 /* 每个平台一列播放量：竖着扫才能比高低 */
@@ -118,6 +121,8 @@ td.col-topic .sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
 td.col-platnum.none { color: #c9c3b9; }
 .col-total { width: 68px; }
 td.col-total { font-weight: 620; }
+/* 效率列的字比播放数长一点（「1.4%」），窄了会换行 */
+.col-rate { width: 86px; }
 
 /* 列头可点排序，所以要有可点的样子 */
 table.works th { cursor: pointer; user-select: none; }
@@ -238,6 +243,8 @@ table.mini th {
 }
 table.mini th:first-child { text-align: left; }
 table.mini td { padding: 8px 9px; border-bottom: 1px solid var(--line-soft); text-align: right; font-variant-numeric: tabular-nums; }
+/* 抽屉里「收藏率」下面那行算式，和作品表表头小字同一套写法 */
+table.mini th .th-metric { display: block; font-weight: 400; font-size: 11px; color: var(--ink-3); margin-top: 1px; }
 table.mini tbody tr:last-child td { border-bottom: none; }
 table.mini td:first-child { text-align: left; }
 .plat-name { display: inline-flex; align-items: center; gap: 7px; }
@@ -246,6 +253,33 @@ table.mini td:first-child { text-align: left; }
 .src-links a:hover { background: #f2f0ec; text-decoration: none; }
 .script p { margin: 0 0 14px; color: var(--ink-2); line-height: 1.85; }
 mark { background: #fdf0c8; color: inherit; padding: 0 1px; border-radius: 2px; }
+
+/* ---------- 口径表 ---------- */
+
+/* 说明表，和上面几张数字表是两回事：这里的单元格要能换行。
+   数字表全是 nowrap，因为那些格子装的是同一个量、要竖着扫；
+   这两张装的是句子，挤成一行就读不了了。 */
+table.gloss { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.gloss th {
+  text-align: left; font-weight: 560; font-size: 12px; color: var(--ink-3);
+  padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fcfbf9; white-space: nowrap;
+}
+table.gloss td {
+  padding: 10px 14px; border-bottom: 1px solid var(--line-soft);
+  vertical-align: top; color: var(--ink-2); line-height: 1.7;
+}
+table.gloss tbody tr:last-child td { border-bottom: none; }
+table.gloss td:first-child { color: var(--ink); white-space: nowrap; }
+.gloss-sub { margin: 24px 0 12px; }
+.gloss-sub h3 { margin: 0; font-size: 15px; font-weight: 620; }
+
+/* 搜索命中的那条平台标题。它和主题不一样，得让人看得出是在哪儿命中的 */
+.sub-hit { color: var(--ink-2); }
+/* 链接指向创作者后台时不给链接，但也不能什么都不说 */
+.src-none {
+  border: 1px dashed var(--line); border-radius: 6px; padding: 4px 10px;
+  color: var(--ink-3); font-size: 13px;
+}
 
 .site-foot { padding: 30px 0 56px; border-top: 1px solid var(--line); margin-top: 8px; }
 .site-foot p { margin: 0 0 8px; font-size: 13px; color: var(--ink-3); }
@@ -258,4 +292,6 @@ mark { background: #fdf0c8; color: inherit; padding: 0 1px; border-radius: 2px; 
   .works-scroll { max-height: 64vh; }
   .drawer { padding: 20px 18px 50px; }
   .metric-bar button { padding: 3px 8px; }
+  /* 窄屏上第一列的 nowrap 会把整张表顶出去 */
+  table.gloss td:first-child { white-space: normal; }
 }

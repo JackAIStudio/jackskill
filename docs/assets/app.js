@@ -68,24 +68,33 @@ function dataKeys(v) {
 }
 
 // 链接分三类，标签必须跟着变：
-//   video  作品页        → 「看原片」
-//   home   平台主页      → 「平台主页」（小红书和视频号在数据里存的就是主页）
-//   none   创作者后台     → 不给链接。观众点进去只有登录墙，给了他也没用。
-// 早先只排除了两个精确的主页域名，于是 92 条抖音记录的 creator.douyin.com
-// 被当成了作品直链，标签写着「看原片」。
-const PLATFORM_HOME_HOSTS = new Set(["xiaohongshu.com", "www.xiaohongshu.com", "channels.weixin.qq.com"]);
+//   video  作品页    → 「看原片」
+//   home   平台主页   → 「平台主页」（小红书和视频号在数据里存的就是主页）
+//   none   其余一切   → 不给链接。观众点进去只有登录墙，给了他也没用。
+//
+// 判据是白名单，不是黑名单。这已经是第二次栽在黑名单上了：
+//   第一版只排除 xiaohongshu.com 和 channels.weixin.qq.com 两个精确的主页域名，
+//   于是 92 条 creator.douyin.com 被当成作品直链；
+//   改成「排除 creator.* + 空路径的主页」之后，
+//   channels.weixin.qq.com/platform/post/list 又漏了进来——那是视频号创作者后台。
+// 白名单的失效方向是「本来能打开却说不确定」，比反过来安全。漏掉的形态由
+// check-data.mjs 报出来，再补进下面两个数组。
+const VIDEO_URL = [
+  /^https?:\/\/(www\.)?bilibili\.com\/video\/BV[0-9A-Za-z]+/i,
+  /^https?:\/\/(www\.)?douyin\.com\/video\/\d+/i,
+  /^https?:\/\/(www\.)?xiaohongshu\.com\/explore\/[0-9a-z]+/i,
+];
+const HOME_URL = [
+  /^https?:\/\/(www\.)?xiaohongshu\.com\/?$/i,
+  /^https?:\/\/channels\.weixin\.qq\.com\/?$/i,
+];
 
 function urlKind(url) {
-  if (!url) return "none";
-  let u;
-  try {
-    u = new URL(url.trim());
-  } catch {
-    return "none";
-  }
-  if (/^creator\./i.test(u.hostname)) return "none";
-  if (PLATFORM_HOME_HOSTS.has(u.hostname) && !u.pathname.replace(/\/+$/, "")) return "home";
-  return "video";
+  const u = (url || "").trim();
+  if (!u) return "none";
+  if (VIDEO_URL.some((re) => re.test(u))) return "video";
+  if (HOME_URL.some((re) => re.test(u))) return "home";
+  return "none";
 }
 
 function highlight(text, q) {

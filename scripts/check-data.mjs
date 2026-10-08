@@ -29,14 +29,23 @@ const METRICS = ["views", "likes", "collects", "shares", "comments"];
 const cleanForMatching = (s) =>
   (s || "").replace(/[｜|:：，。！？!?,.~～_\-/\s]/g, "").toLowerCase();
 
-/** 取 URL 的 host；取不到就返回空串，交给调用方当「没有链接」处理。 */
-const hostOf = (u) => {
-  try {
-    return new URL(String(u).trim()).hostname.toLowerCase();
-  } catch {
-    return "";
-  }
-};
+// 数据里允许出现的两种链接形态：某条作品的直链，和平台主页。
+// 和 docs/assets/app.js 里的 VIDEO_URL / HOME_URL 是同一套判据，改一处要改两处——
+// 那边决定页面标「看原片」还是「平台主页」，这边负责在数据攒下第三种形态之前报出来。
+const VIDEO_URL = [
+  /^https?:\/\/(www\.)?bilibili\.com\/video\/BV[0-9A-Za-z]+/i,
+  /^https?:\/\/(www\.)?douyin\.com\/video\/\d+/i,
+  /^https?:\/\/(www\.)?xiaohongshu\.com\/explore\/[0-9a-z]+/i,
+];
+const HOME_URL = [
+  /^https?:\/\/(www\.)?xiaohongshu\.com\/?$/i,
+  /^https?:\/\/channels\.weixin\.qq\.com\/?$/i,
+];
+
+/** 给汇总提醒用：一批链接里都有哪些 host。 */
+const hostsIn = (xs) => [...new Set(xs.map((x) => {
+  try { return new URL(x.url).hostname; } catch { return x.url; }
+}))].join("、");
 
 const MIN_TITLE_CHARS = 6;
 const MERGE_WINDOW_DAYS = 30;
@@ -68,10 +77,11 @@ export function checkData({ quiet = false } = {}) {
 
   const lines = fs.readFileSync(DATA_FILE, "utf8").split("\n").map((l) => l.trim()).filter(Boolean);
   const records = [];
-  // 这两类问题逐条收集，最后按平台汇总成一条提醒。逐条报出来有九十多条，
+  // 这几类问题逐条收集，最后按平台汇总成一条提醒。逐条报出来有九十多条，
   // 会把真正要看的错误淹掉；汇总里带日期，照样能定位。
-  const creatorLinks = [];
+  const unusableLinks = [];
   const emptyPlats = [];
+  const workLinks = new Map();
 
   lines.forEach((line, i) => {
     const at = `第 ${i + 1} 行`;
@@ -101,10 +111,21 @@ export function checkData({ quiet = false } = {}) {
       }
       if (!p.url) warnings.push(`${at} ${k} 没有链接`);
 
-      // 链接要么指向作品页，要么指向平台主页。指向创作者后台不行：
-      // 观众点进去只有登录墙，而页面会照着它把标签写成「看原片」。
-      const host = hostOf(p.url);
-      if (/^creator\./.test(host)) creatorLinks.push({ date: r.date, k, host, url: p.url });
+      // 链接要么指向某条作品，要么指向平台主页。两边都不是的（创作者后台、
+      // 后台管理页……）观众点进去只有登录墙，而页面只能把它标成「未收录原片链接」。
+      // 判据是白名单，和 docs/assets/app.js 里的 VIDEO_URL / HOME_URL 是同一套：
+      // 那边决定页面写「看原片」还是「平台主页」，这边保证数据里不会悄悄攒下
+      // 一批两边都不认的链接。改判据记得两处一起改。
+      const u = (p.url || "").trim();
+      if (u && !VIDEO_URL.some((re) => re.test(u)) && !HOME_URL.some((re) => re.test(u))) {
+        unusableLinks.push({ date: r.date, k, url: u });
+      }
+      // 一条作品链接只该属于一期。两条记录指向同一个作品，多半是同一条视频
+      // 记了两遍——按标题相似度查不出来（各平台标题本来就不一样），按链接能查到。
+      if (u && VIDEO_URL.some((re) => re.test(u))) {
+        if (!workLinks.has(u)) workLinks.set(u, []);
+        workLinks.get(u).push(`${r.date}「${r.topic}」`);
+      }
 
       // 五个指标全是 0 = 这一期在这个平台没采到数据（待补录的占位记录）。
       // 页面已经不把它算进收录期数和任何中位数，但它确实还占着一行。
@@ -161,13 +182,23 @@ export function checkData({ quiet = false } = {}) {
     }
   };
 
-  summarise(creatorLinks, (xs) =>
-    `有 ${xs.length} 条链接指向创作者后台（${[...new Set(xs.map((x) => x.host))].join("、")}），`
-    + `观众点进去只有登录墙；页面已按「未收录原片链接」处理，建议换成作品直链`);
+  summarise(unusableLinks, (xs) =>
+    `有 ${xs.length} 条链接既不是作品直链也不是平台主页（${hostsIn(xs)}），`
+    + `观众点进去多半只有登录墙；页面已按「未收录原片链接」处理，建议换成作品直链或平台主页`);
 
   summarise(emptyPlats, (xs) =>
     `有 ${xs.length} 条记录五个指标全是 0（待补录的占位记录），`
     + `页面已把它们排除出收录期数和各种中位数；要么补数据，要么删掉这些平台记录`);
+
+  // 同一个作品链接被两条记录引用。按标题相似度查不出这类重复——各平台标题
+  // 本来就不一样（同一条视频在 B 站叫「A」、在小红书叫「B」是常态），
+  // 但作品链接骗不了人：一条链接只属于一期。
+  for (const [url, owners] of workLinks) {
+    if (owners.length > 1) {
+      warnings.push(`同一条作品链接被 ${owners.length} 条记录引用，多半是同一条视频记了两遍：`
+        + `${owners.join(" 与 ")}（${url}）`);
+    }
+  }
 
   // id 唯一
   const idCount = new Map();

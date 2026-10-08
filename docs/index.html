@@ -31,7 +31,12 @@
     <div class="table-wrap works-scroll">
       <table class="works">
         <thead id="worksHead"></thead>
-        <tbody id="worksBody"></tbody>
+        <!-- 数据到位前先占住表格的形状。这段 HTML 是静态的，脚本那边还在下 700KB
+             的 JSON，中间几秒如果 tbody 是空的，整张表会塌成一条线，看着像坏了。
+             colspan 9 = app.js 里 COLS 的列数，加列时这里跟着改。 -->
+        <tbody id="worksBody">
+          <tr><td colspan="9" class="empty">正在加载数据…</td></tr>
+        </tbody>
       </table>
     </div>
     <p class="hint">

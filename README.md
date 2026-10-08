@@ -85,6 +85,8 @@ npx -y skills add JackAIStudio/jackskill -g --all
 
 ## 数据站（可视化）
 
+线上地址：**https://jackaistudio.github.io/jackskill/**（GitHub Pages，发布 `main` 分支的 `docs/` 目录）
+
 上面这些数据不用写代码也能看。`docs/` 目录是一个纯静态页面，一打开就是**全部作品**的总表（表格限高、自己在框里滚）。表格下面是四平台表现对照表、一条按平台分开的月度趋势线，最后是一节**口径**——页面上每个比率怎么算出来的都写在那里。
 
 作品表里**每个平台占一列**——竖着扫才能比出高低，把四个数字塞进主题下面那行小字里是比不出来的。那四列显示哪个指标由表头上方的「平台列」切换：播放 / 点赞 / 收藏 / 分享 / 评论。**换指标不换列数**，表格的形制始终不变，扫读的节奏不会被打断；表头是两行的（上行平台名、下行当前指标），滚下去也知道这几列是什么。**点列头排序**（再点一次换方向），所以「哪几期在抖音最能打」点一下抖音列头就出来了——排序只留这一套机制，不再放排序下拉，免得两套机制打架。
@@ -121,7 +123,7 @@ npx -y skills add JackAIStudio/jackskill -g --all
 - **数据来源**：`docs/data/videos.json` 是构建产物，由 `data/videos.jsonl` 与 `transcripts/md/` 生成，不是第二份真源。
 - **重建**：`node scripts/build-site.mjs`。构建前会先校验数据，有硬伤就中止，不会把坏数据发出去。
 - **本地预览**：`cd docs && python3 -m http.server`，然后打开 `http://localhost:8000`。直接双击 `index.html` 不行，浏览器会按 file:// 策略拦掉数据读取。
-- **上线**：仓库 Settings → Pages，Source 选 `Deploy from a branch`，分支 `main`、目录 `/docs`。
+- **上线**：已发布在 https://jackaistudio.github.io/jackskill/ 。配置是 Settings → Pages，Source 选 `Deploy from a branch`，分支 `main`、目录 `/docs`；push 到 `main` 后约 20~60 秒自动重建。
 
 页面刻意不做的事情，和这里的数据一样重要：
 

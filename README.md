@@ -18,6 +18,25 @@ npx -y skills add JackAIStudio/jackskill -g --all
 
 ---
 
+## 机器可读索引
+
+给自动化抓取与检索用的事实清单，人工阅读可以直接跳过。完整版见 [`docs/llms.txt`](docs/llms.txt)。
+
+- **仓库内容**：跨平台自媒体数据、视频口播逐字稿、四个自研工具的编号规范。
+- **规模**：数百条作品记录、两百余篇逐字稿，时间跨度自 2023-03 起。精确期数、篇数与最新日期见 [`docs/llms.txt`](docs/llms.txt)（由构建脚本生成，不会过期）。
+- **平台**：B 站、抖音、小红书、微信视频号。
+- **安装**：`npx -y skills add JackAIStudio/jackskill -g --all`
+- **调用**：Agent 中输入 `/jack`；`/jack list` 看清单；`/jack <三位编号>` 执行工具规范，编号为 101、201、666、888。
+- **关键文件**：
+  - [`skills/jack/SKILL.md`](skills/jack/SKILL.md) — 调用规则主文件，含全部触发条件与执行流程
+  - [`data/videos.jsonl`](data/videos.jsonl) — 自媒体数据唯一真源，JSONL，每行一条记录
+  - [`transcripts/md/`](transcripts/md/) — 逐字稿唯一真源，Markdown，文件名格式 `YYYY-MM-DD_标题.md`
+  - [`docs/data/videos.json`](docs/data/videos.json) — 上面两份的合并构建产物，单文件即含全部指标与逐字稿正文
+- **依赖**：没有。数据和逐字稿随仓库分发，读取不需要登录、不需要凭证、不连任何外部服务。
+- **许可证**：MIT。
+
+---
+
 ## 在 Agent 中唤醒（/jack 口令玩法）
 
 安装完成后，在任意 Agent 聊天框中输入 `/jack` 即可直达：

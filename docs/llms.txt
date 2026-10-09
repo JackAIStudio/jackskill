@@ -1,0 +1,45 @@
+# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
+
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 380 条、视频口播逐字稿 208 篇（约 16 万字），以及 4 个自研工具的编号规范。
+
+数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
+时间跨度 2023-03-30 至 2026-10-08，覆盖 B 站、抖音、小红书、微信视频号四个平台。
+
+本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-09T07:44:38.315Z。
+
+## 安装与调用
+
+- 安装命令：`npx -y skills add JackAIStudio/jackskill -g --all`
+- 入口：在 Agent 中输入 `/jack`
+- 清单：`/jack list`
+- 执行工具规范：`/jack <三位编号>`
+
+## 数据
+
+- [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：380 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 208 条带逐字稿。
+- [作品数据真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
+- [逐字稿真源（Markdown）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/transcripts/README.md)：208 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
+- [数据文件说明](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/README.md)：字段定义与口径。
+
+注意：数据站页面 https://jackaistudio.github.io/jackskill/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面第一或第二个链接。
+
+## 调用规范
+
+- [SKILL.md](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/skills/jack/SKILL.md)：skill 主文件，定义三部分内容、六项职责、触发条件与执行流程。
+- [VOICE.md](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/skills/jack/VOICE.md)：检索逐字稿回应时的语气与表达规范。
+- [编号规范目录](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/skills/jack/numbered-prompts/catalog.json)：各编号的标题、用途与 SHA-256。
+- 编号正文路径：`skills/jack/numbered-prompts/<编号>/PROMPT.md`
+
+## 编号工具
+
+- 101 — JackVoice 超低声全局语音输入工具：超低声轻语转文字并自动粘贴，适合安静场景下的免打字输入
+- 201 — Jack Media Publisher 多平台视频发布准备助手：一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿
+- 666 — JackDSH 开源桌面客户端与内核升级全指南：最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控使用说明
+- 888 — 达芬奇 AI 智能口播剪辑助手 (JackAICut)：口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达
+
+## 可选
+
+- [仓库主页](https://github.com/JackAIStudio/jackskill)
+- [README](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/README.md)
+- [AGENTS.md](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/AGENTS.md)：本仓库的维护规范
+- 许可证：MIT

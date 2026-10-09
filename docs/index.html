@@ -7,6 +7,7 @@
 <meta name="description" content="吴杰克 Jack 在 B 站、抖音、小红书、微信视频号的真实自媒体数据与全部口播逐字稿。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231b1a18'/><text x='16' y='23' font-family='-apple-system,Segoe UI,sans-serif' font-size='19' font-weight='600' fill='%23fff' text-anchor='middle'>J</text></svg>">
 <link rel="stylesheet" href="assets/style.css">
+<link rel="alternate" type="text/markdown" href="llms.txt" title="机器可读索引">
 </head>
 <body>
 
@@ -18,6 +19,26 @@
 </header>
 
 <main class="wrap">
+
+  <!-- 不执行 JavaScript 的抓取工具在这页上什么都拿不到：表格、图表、搜索
+       全是渲染出来的。这段给它们留一条路，指向真正装着数据的几个文件。
+       正常浏览器开着 JS，看不到这段。 -->
+  <noscript>
+    <section class="section">
+      <div class="section-head">
+        <h2>数据与索引</h2>
+        <p class="note">
+          本站的表格、图表与搜索由 JavaScript 渲染，当前浏览器未启用 JavaScript，
+          所以看不到这些内容。数据本身是普通文件，可以直接取：
+        </p>
+      </div>
+      <p class="note">
+        <a href="data/videos.json">data/videos.json</a> —— 单文件含全部作品指标与逐字稿正文。<br>
+        <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl">data/videos.jsonl</a> —— 数据真源，每行一条记录。<br>
+        <a href="llms.txt">llms.txt</a> —— 机器可读索引，列出本仓库全部可抓取资源。
+      </p>
+    </section>
+  </noscript>
 
   <section class="section" id="works">
     <div class="toolbar">
@@ -157,6 +178,10 @@
       数据与逐字稿的唯一真源都在本仓库：
       <code>data/videos.jsonl</code>、<code>transcripts/md/*.md</code>。
       页面是构建产物，改数据后重跑 <code>node scripts/build-site.mjs</code> 即可。
+    </p>
+    <p>
+      给程序的入口：<a href="llms.txt">llms.txt</a>（机器可读索引）、
+      <a href="data/videos.json">data/videos.json</a>（全部指标与逐字稿的单文件版本）。
     </p>
     <p><a href="https://github.com/JackAIStudio/jackskill">github.com/JackAIStudio/jackskill</a></p>
   </div>

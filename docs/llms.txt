@@ -1,11 +1,11 @@
 # JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
-> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 380 条、视频口播逐字稿 208 篇（约 16 万字），以及 4 个自研工具的编号规范。
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 381 条、视频口播逐字稿 208 篇（约 16 万字），以及 4 个自研工具的编号规范。
 
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
 时间跨度 2023-03-30 至 2026-10-08，覆盖 B 站、抖音、小红书、微信视频号四个平台。
 
-本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-09T07:44:38.315Z。
+本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-09T12:23:56.351Z。
 
 ## 安装与调用
 
@@ -16,7 +16,7 @@
 
 ## 数据
 
-- [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：380 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 208 条带逐字稿。
+- [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：381 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 208 条带逐字稿。
 - [作品数据真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
 - [逐字稿真源（Markdown）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/transcripts/README.md)：208 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
 - [数据文件说明](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/README.md)：字段定义与口径。

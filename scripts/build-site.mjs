@@ -32,6 +32,7 @@ const CATALOG_FILE = path.join(REPO_ROOT, "skills/jack/numbered-prompts/catalog.
 
 const SITE_URL = "https://jackaistudio.github.io/jackskill";
 const RAW_URL = "https://raw.githubusercontent.com/JackAIStudio/jackskill/main";
+const REPO_URL = "https://github.com/JackAIStudio/jackskill";
 
 const PLATFORM_ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
 const METRICS = ["views", "likes", "collects", "shares", "comments"];
@@ -207,7 +208,7 @@ const llms = `# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
 - [作品数据（单文件全集）](${SITE_URL}/data/videos.json)：${payload.count} 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 ${withTranscript} 条带逐字稿。
 - [作品数据真源（JSONL）](${RAW_URL}/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
-- [逐字稿真源（Markdown）](${RAW_URL}/transcripts/README.md)：${withTranscript} 个文件，文件名格式 \`YYYY-MM-DD_标题.md\`，\`## 逐字稿\` 之后是口播正文。
+- [逐字稿目录（Markdown 真源）](${REPO_URL}/tree/main/transcripts/md)：${withTranscript} 个文件，文件名格式 \`YYYY-MM-DD_标题.md\`，\`## 逐字稿\` 之后是口播正文。
 - [数据文件说明](${RAW_URL}/data/README.md)：字段定义与口径。
 
 注意：数据站页面 ${SITE_URL}/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面第一或第二个链接。

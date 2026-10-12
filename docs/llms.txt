@@ -5,7 +5,7 @@
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
 时间跨度 2023-03-30 至 2026-10-12，覆盖 B 站、抖音、小红书、微信视频号四个平台。
 
-本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-12T13:28:55.937Z。
+本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-12T13:36:18.874Z。
 
 ## 安装与调用
 
@@ -18,7 +18,7 @@
 
 - [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：384 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 212 条带逐字稿。
 - [作品数据真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
-- [逐字稿真源（Markdown）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/transcripts/README.md)：212 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
+- [逐字稿目录（Markdown 真源）](https://github.com/JackAIStudio/jackskill/tree/main/transcripts/md)：212 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
 - [数据文件说明](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/README.md)：字段定义与口径。
 
 注意：数据站页面 https://jackaistudio.github.io/jackskill/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面第一或第二个链接。

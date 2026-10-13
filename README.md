@@ -141,7 +141,7 @@ npx -y skills add JackAIStudio/jackskill -g --all
 
 - **数据来源**：`docs/data/videos.json` 是构建产物，由 `data/videos.jsonl` 与 `transcripts/md/` 生成，不是第二份真源。
 - **重建**：`node scripts/build-site.mjs`。构建前会先校验数据，有硬伤就中止，不会把坏数据发出去。
-- **本地预览**：`cd docs && python3 -m http.server`，然后打开 `http://localhost:8000`。直接双击 `index.html` 不行，浏览器会按 file:// 策略拦掉数据读取。
+- **本地预览**：`node scripts/preview.mjs`。真源有改动就先构建，然后从 `docs/` 起一个只绑 `127.0.0.1` 的静态服务器并打开浏览器（默认 `http://127.0.0.1:8000`，端口被占用就往后找）。强制重建用 `--build`，跳过构建用 `--no-build`，换端口用 `-p 9000`，只起服务不开浏览器用 `--no-open`；macOS 上双击仓库根目录的 `preview.command` 是同一件事。直接双击 `docs/index.html` 仍然不行：页面用 fetch 读同目录的 `data/videos.json`，file:// 下这次读取会被浏览器拦掉，跟数据坏没坏无关。
 - **上线**：已发布在 https://jackaistudio.github.io/jackskill/ 。配置是 Settings → Pages，Source 选 `Deploy from a branch`，分支 `main`、目录 `/docs`；push 到 `main` 后约 20~60 秒自动重建。
 
 页面刻意不做的事情，和这里的数据一样重要：
@@ -166,6 +166,8 @@ npx -y skills add JackAIStudio/jackskill -g --all
 node scripts/check-data.mjs    # 校验唯一真源，出错退出码 1
 node scripts/build-site.mjs    # 生成页面数据（会先自动校验一次）
 ```
+
+只想看看改完的页面长什么样，跑 `node scripts/preview.mjs` 一条命令就够：真源有改动它会先构建，然后起本地服务并打开浏览器。浏览器里的效果就是线上那份，本地不需要任何后端。
 
 `check-data.mjs` 守的是这些不变量：
 

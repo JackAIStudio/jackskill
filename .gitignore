@@ -8,3 +8,9 @@ private/
 .local/
 .workbuddy-ai/
 .workbuddy/
+
+# 抓封面时的原图暂存与半成品：图要的是压到 800px 那一份，
+# 原图只在处理过程中存在，处理完就该消失，不要进仓库。
+docs/covers/**/.raw/
+*.part
+docs/covers/**/_*tmp*

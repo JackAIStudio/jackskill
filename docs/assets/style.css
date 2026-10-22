@@ -288,6 +288,32 @@ table.gloss td:first-child { color: var(--ink); white-space: nowrap; }
   color: var(--ink-3); font-size: 13px;
 }
 
+/* 封面：三种比例各自独立上传，不是同一张图裁的。
+   横图给宽、竖图给窄，用 object-fit 保比例不裁切。 */
+.covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 10px 0 22px;
+}
+.covers .cover { margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.covers .cover a { display: block; line-height: 0; }
+.covers .cover img {
+  width: 100%; height: auto; display: block;
+  border-radius: 7px; border: 1px solid var(--line-soft);
+  background: var(--bg-soft);
+}
+.covers .cover.is-missing .cover-ph {
+  display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 4 / 3; border-radius: 7px;
+  border: 1px dashed var(--line); color: var(--ink-3);
+  font-size: 12.5px; text-align: center; padding: 8px;
+  background: var(--bg-soft);
+}
+.covers .cover figcaption { display: flex; flex-direction: column; gap: 2px; }
+.covers .cover figcaption b { font-size: 13px; font-weight: 600; color: var(--ink); }
+.covers .cover figcaption span { font-size: 11.5px; color: var(--ink-3); line-height: 1.45; }
+
 .site-foot { padding: 30px 0 56px; border-top: 1px solid var(--line); margin-top: 8px; }
 .site-foot p { margin: 0 0 8px; font-size: 13px; color: var(--ink-3); }
 

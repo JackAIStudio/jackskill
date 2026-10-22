@@ -29,6 +29,10 @@ const DATA_FILE = path.join(REPO_ROOT, "data/videos.jsonl");
 const OUT_FILE = path.join(REPO_ROOT, "docs/data/videos.json");
 const LLMS_FILE = path.join(REPO_ROOT, "docs/llms.txt");
 const CATALOG_FILE = path.join(REPO_ROOT, "skills/jack/numbered-prompts/catalog.json");
+// 封面清单：covers/<日期>_<主题>/ 下按比例存图，index.json 记着每期有哪些。
+// 真源是 covers/ 目录里那些图本身；清单只是索引，丢了重跑 fetch-covers.py 就有。
+const COVERS_INDEX = path.join(REPO_ROOT, "docs/covers/index.json");
+const COVERS_DIR = path.join(REPO_ROOT, "docs/covers");
 
 const SITE_URL = "https://jackaistudio.github.io/jackskill";
 const RAW_URL = "https://raw.githubusercontent.com/JackAIStudio/jackskill/main";
@@ -101,6 +105,57 @@ function readRecords() {
 const records = readRecords();
 const warnings = [];
 
+/**
+ * 读封面索引。缺清单不报错——早期没有封面，站点照常构建，只是不显示。
+ * 每个文件的真实存在性在这里核一遍：清单说有、磁盘上没有的，
+ * 页面会挂一张破图，不如现在就指出来。
+ */
+function readCovers() {
+  if (!fs.existsSync(COVERS_INDEX)) return new Map();
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(COVERS_INDEX, "utf8"));
+  } catch (err) {
+    warnings.push(`covers/index.json 不是合法 JSON：${err.message}`);
+    return new Map();
+  }
+  const SITE_DIR = path.join(REPO_ROOT, "docs");
+  const map = new Map();
+  for (const item of raw.items || []) {
+    if (!item.id) continue;
+    // dir 的基准目录是 docs/（站点根），不是仓库根：
+    // 写成 "covers/<目录>" 或 "docs/covers/<目录>" 都要认。
+    // 先按 docs/ 解析，落空再按仓库根解析一次，两种写法都兼容。
+    const relDir = item.dir || path.join("covers", item.id);
+    let dirAbs = path.resolve(SITE_DIR, relDir);
+    if (!fs.existsSync(dirAbs)) {
+      const fromRepo = path.resolve(REPO_ROOT, relDir);
+      if (fs.existsSync(fromRepo)) dirAbs = fromRepo;
+    }
+    const kept = {};
+    for (const [ratio, meta] of Object.entries(item.covers || {})) {
+      if (!meta?.file) continue;
+      const fileAbs = path.join(dirAbs, meta.file);
+      if (!fs.existsSync(fileAbs)) {
+        warnings.push(
+          `${item.date} 的 ${ratio} 封面清单里有、磁盘上没有：${path.relative(REPO_ROOT, fileAbs)}`,
+        );
+        continue;
+      }
+      // 页面从 docs/ 出发取图，src 必须是相对 docs/ 的路径。
+      kept[ratio] = {
+        src: path.relative(SITE_DIR, fileAbs).split(path.sep).join("/"),
+        size: meta.size || null,
+        source: meta.source || null,
+      };
+    }
+    if (Object.keys(kept).length) map.set(item.id, kept);
+  }
+  return map;
+}
+
+const coversById = readCovers();
+
 const videos = records
   .map((rec) => {
     const platforms = {};
@@ -135,6 +190,9 @@ const videos = records
       summary,
       platforms,
       transcript,
+      // 封面：{ "4x3": {src, size, source}, "3x4": ..., "16x9": ... }
+      // 没抓到的比例不出现，页面据此显示「缺」而不是一张破图。
+      covers: coversById.get(rec.id) || null,
     };
   })
   .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));

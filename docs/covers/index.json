@@ -1,0 +1,703 @@
+{
+  "generatedAt": "2026-10-22T19:36:48+0800",
+  "source": "covers/<日期>_<主题>/",
+  "ratios": [
+    "4x3",
+    "3x4",
+    "16x9"
+  ],
+  "count": 20,
+  "items": [
+    {
+      "id": "2026-10-20_送外卖送到眼睛花了，结果发现是饿了",
+      "date": "2026-10-20",
+      "topic": "送外卖送到眼睛花了，结果发现是饿了",
+      "dir": "covers/2026-10-20_送外卖送到眼睛花了，结果发现是饿了",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "ratio": "4x3",
+          "source": "xiaohongshu"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-18_我能为你提供价值，请你雇佣我为你工作",
+      "date": "2026-10-18",
+      "topic": "我能为你提供价值，请你雇佣我为你工作",
+      "dir": "covers/2026-10-18_我能为你提供价值，请你雇佣我为你工作",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "ratio": "4x3",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-18_实测用AI开发安卓APP会比苹果更方便一些",
+      "date": "2026-10-18",
+      "topic": "实测用AI开发安卓APP会比苹果更方便一些",
+      "dir": "covers/2026-10-18_实测用AI开发安卓APP会比苹果更方便一些",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-16_AI博主创业失败，送外卖还债第二天",
+      "date": "2026-10-16",
+      "topic": "AI博主创业失败，送外卖还债第二天",
+      "dir": "covers/2026-10-16_AI博主创业失败，送外卖还债第二天",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-15_DeepSeek送了我100多赠金，看看你有没有",
+      "date": "2026-10-15",
+      "topic": "DeepSeek送了我100多赠金，看看你有没有",
+      "dir": "covers/2026-10-15_DeepSeek送了我100多赠金，看看你有没有",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-14_小米手机连_Mac，比_iPhone_还好用？",
+      "date": "2026-10-14",
+      "topic": "小米手机连 Mac，比 iPhone 还好用？",
+      "dir": "covers/2026-10-14_小米手机连 Mac，比 iPhone 还好用？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-12_AI博主创业失败，买红米手机送外卖还债",
+      "date": "2026-10-12",
+      "topic": "AI博主创业失败，买红米手机送外卖还债",
+      "dir": "covers/2026-10-12_AI博主创业失败，买红米手机送外卖还债",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-12_AI_博主创业失败，送外卖还债第一天",
+      "date": "2026-10-12",
+      "topic": "AI 博主创业失败，送外卖还债第一天",
+      "dir": "covers/2026-10-12_AI 博主创业失败，送外卖还债第一天",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-11_负债_6.8_个，我被迫出海了",
+      "date": "2026-10-11",
+      "topic": "负债 6.8 个，我被迫出海了",
+      "dir": "covers/2026-10-11_负债 6.8 个，我被迫出海了",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-10_看完孙哥的播客，我负债6.8个反而自由了？",
+      "date": "2026-10-10",
+      "topic": "看完孙哥的播客，我负债6.8个反而自由了？",
+      "dir": "covers/2026-10-10_看完孙哥的播客，我负债6.8个反而自由了？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
+      "date": "2026-10-08",
+      "topic": "我在朋友圈公布了创业失败，亲人们很不理解",
+      "dir": "covers/2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-08_我们该如何验证AI说的对不对",
+      "date": "2026-10-08",
+      "topic": "我们该如何验证AI说的对不对",
+      "dir": "covers/2026-10-08_我们该如何验证AI说的对不对",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
+      "date": "2026-10-08",
+      "topic": "可视化自己的自媒体数据，让所有人都能参考",
+      "dir": "covers/2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-07_创业失败，我反而笑嘻了？说说我买到的教训",
+      "date": "2026-10-07",
+      "topic": "创业失败，我反而笑嘻了？说说我买到的教训",
+      "dir": "covers/2026-10-07_创业失败，我反而笑嘻了？说说我买到的教训",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-06_公开我的自媒体视频数据和逐字稿",
+      "date": "2026-10-06",
+      "topic": "公开我的自媒体视频数据和逐字稿",
+      "dir": "covers/2026-10-06_公开我的自媒体视频数据和逐字稿",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-04_开源一个语音输入+备忘录二合一工具",
+      "date": "2026-10-04",
+      "topic": "开源一个语音输入+备忘录二合一工具",
+      "dir": "covers/2026-10-04_开源一个语音输入+备忘录二合一工具",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-03_把Agent接入达芬奇，根据文字和画面剪辑",
+      "date": "2026-10-03",
+      "topic": "把Agent接入达芬奇，根据文字和画面剪辑",
+      "dir": "covers/2026-10-03_把Agent接入达芬奇，根据文字和画面剪辑",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-01_我把自己开源了",
+      "date": "2026-10-01",
+      "topic": "我把自己开源了",
+      "dir": "covers/2026-10-01_我把自己开源了",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-09-30_学AI根本不用那么复杂",
+      "date": "2026-09-30",
+      "topic": "学AI根本不用那么复杂",
+      "dir": "covers/2026-09-30_学AI根本不用那么复杂",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-09-29_不要一开始就折腾国外的AI模型和工具",
+      "date": "2026-09-29",
+      "topic": "不要一开始就折腾国外的AI模型和工具",
+      "dir": "covers/2026-09-29_不要一开始就折腾国外的AI模型和工具",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "ratio": "4x3",
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "ratio": "3x4",
+          "source": "xiaohongshu"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "ratio": "16x9",
+          "source": "bilibili"
+        }
+      }
+    }
+  ]
+}

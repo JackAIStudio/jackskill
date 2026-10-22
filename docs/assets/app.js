@@ -700,6 +700,39 @@ function renderTable() {
 
 /* ---------------- 详情抽屉 ---------------- */
 
+// 封面按比例展示。三种比例的用途不一样，标签写清楚，
+// 免得看的人以为是同一张图裁出来的——它们是分别上传的三张。
+const COVER_RATIOS = [
+  { key: "4x3", label: "横屏 4:3", note: "小红书 / 抖音横封 / B 站首页推荐 / 视频号分享卡片" },
+  { key: "3x4", label: "竖屏 3:4", note: "抖音竖封 / 视频号个人主页卡片" },
+  { key: "16x9", label: "横屏 16:9", note: "B 站个人空间" },
+];
+
+function renderCovers(v) {
+  const covers = v.covers;
+  if (!covers) return "";
+
+  const cells = COVER_RATIOS.map((r) => {
+    const c = covers[r.key];
+    if (!c) {
+      return `<figure class="cover is-missing">
+        <div class="cover-ph">这一期没有这个比例的封面</div>
+        <figcaption><b>${r.label}</b><span>${r.note}</span></figcaption>
+      </figure>`;
+    }
+    const dim = c.size ? `${c.size[0]}×${c.size[1]}` : "";
+    return `<figure class="cover">
+      <a href="${esc(c.src)}" target="_blank" rel="noopener">
+        <img src="${esc(c.src)}" alt="${esc(v.topic)} · ${r.label}" loading="lazy" />
+      </a>
+      <figcaption><b>${r.label}</b><span>${dim}${dim ? " · " : ""}${r.note}</span></figcaption>
+    </figure>`;
+  }).join("");
+
+  return `<h4>封面（${Object.keys(covers).length} / ${COVER_RATIOS.length} 种比例）</h4>
+    <div class="covers">${cells}</div>`;
+}
+
 // 表格负责「比」，抽屉负责「看」。展开行试过，一行 44px 一行 400px
 // 会把扫读的节奏打乱，所以明细还是回到独立的一层面板上来。
 function openDrawer(v) {
@@ -753,9 +786,12 @@ function openDrawer(v) {
     ? `${liveN} 个平台有数据（另有 ${keys.length - liveN} 个平台没给数据的记录）`
     : `${keys.length} 个平台记录，平台都没给数据`;
 
+  const coverBlock = renderCovers(v);
+
   $("drawerBody").innerHTML = `
     <h3>${esc(v.topic)}</h3>
     <div class="d-meta">${v.date} · ${fmtDuration(v.duration)} · ${platMeta}</div>
+    ${coverBlock}
     ${keys.length ? `
       <h4>分平台明细</h4>
       <table class="mini">

@@ -76,25 +76,33 @@ def main() -> int:
 
     print(f"\n累计 {len(items)} 个作品（按 id 去重）")
 
+    # 用作品 id 当 key，不用标题。
+    #
+    # 标题在抖音上经常被改短：仓库主题写「DeepSeek出了个新东西，这回是真能
+    # 帮你干活|deepseek harness上手体验」，抖音只写前半句。按标题匹配时，
+    # 只要改过一个字整条就对不上，那期的横竖两张封面全漏掉。作品 id 与视频
+    # 一一对应，标题怎么改都不影响。标题仍然留着，只是不再当索引用。
     out = {}
     for a in items.values():
+        aid = str(a.get("aweme_id") or a.get("item_id") or "")
+        if not aid:
+            continue
         title = a.get("item_title") or a.get("desc") or ""
-        # 标题去掉 #话题，跟其它平台的清单能对上
         clean = re.sub(r"\s*#[^\s#]+", "", title).strip()
         vert = (a.get("Cover") or {}).get("url_list") or []
         horiz = (a.get("horizontal_cover") or {}).get("url_list") or []
-        entry = {}
+        covers = {}
         if horiz:
-            entry["4x3"] = {"url": horiz[0], "source": "douyin"}
+            covers["4x3"] = {"url": horiz[0], "source": "douyin"}
         if vert:
-            entry["3x4"] = {"url": vert[0], "source": "douyin"}
-        if entry:
-            out[clean] = entry
+            covers["3x4"] = {"url": vert[0], "source": "douyin"}
+        if covers:
+            out[aid] = {"title": clean, "covers": covers}
 
     Path(args.out).write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"写出 {len(out)} 个标题 → {args.out}")
+    print(f"写出 {len(out)} 个作品（按 aweme_id 索引）→ {args.out}")
 
-    both = sum(1 for v in out.values() if "4x3" in v and "3x4" in v)
+    both = sum(1 for v in out.values() if len(v.get("covers") or {}) == 2)
     print(f"横竖齐全: {both}/{len(out)}")
     return 0
 

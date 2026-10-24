@@ -700,13 +700,31 @@ function renderTable() {
 
 /* ---------------- 详情抽屉 ---------------- */
 
-// 封面按比例展示。三种比例的用途不一样，标签写清楚，
-// 免得看的人以为是同一张图裁出来的——它们是分别上传的三张。
+// 封面按槽位展示。4:3 / 3:4 / 16:9 是制作封面时的规格，上传后平台会按
+// 自己的展示框裁切，真实比例可能略有出入（B 站早年那批就是 3:2）。
+// 槽位名照旧，旁边把实测比例标出来，不拿规格冒充实际。
 const COVER_RATIOS = [
   { key: "4x3", label: "横屏 4:3", note: "小红书 / 抖音横封 / B 站首页推荐 / 视频号分享卡片" },
   { key: "3x4", label: "竖屏 3:4", note: "抖音竖封 / 视频号个人主页卡片" },
   { key: "16x9", label: "横屏 16:9", note: "B 站个人空间" },
 ];
+
+// 把实测宽高说成人话：800×450 是 16:9，800×500 是 3:2。
+function shapeText(size) {
+  if (!size) return "";
+  const [w, h] = size;
+  const r = w / h;
+  const named = [
+    [16 / 9, "16:9"],
+    [4 / 3, "4:3"],
+    [3 / 2, "3:2"],
+    [3 / 4, "3:4"],
+    [9 / 16, "9:16"],
+    [1, "1:1"],
+  ].find(([v]) => Math.abs(r - v) / v < 0.02);
+  const approx = named ? named[1] : `约 ${r.toFixed(2)}:1`;
+  return `${w}×${h}（${approx}）`;
+}
 
 function renderCovers(v) {
   const covers = v.covers;
@@ -720,7 +738,7 @@ function renderCovers(v) {
         <figcaption><b>${r.label}</b><span>${r.note}</span></figcaption>
       </figure>`;
     }
-    const dim = c.size ? `${c.size[0]}×${c.size[1]}` : "";
+    const dim = shapeText(c.size);
     return `<figure class="cover">
       <a href="${esc(c.src)}" target="_blank" rel="noopener">
         <img src="${esc(c.src)}" alt="${esc(v.topic)} · ${r.label}" loading="lazy" />

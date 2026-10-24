@@ -147,6 +147,11 @@ function readCovers() {
         src: path.relative(SITE_DIR, fileAbs).split(path.sep).join("/"),
         size: meta.size || null,
         source: meta.source || null,
+        // slot 是这张图占的槽位（4:3 / 3:4 / 16:9，也是文件名），
+        // shape 是它真实的比例。平台会按自己的展示框裁切，所以两者
+        // 未必一致——不一致是事实，照实显示，不要拿槽位名冒充真实比例。
+        slot: meta.slot || ratio,
+        shape: meta.shape || null,
       };
     }
     if (Object.keys(kept).length) map.set(item.id, kept);

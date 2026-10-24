@@ -78,6 +78,39 @@ node scripts/check-data.mjs
 - 某期既没有逐字稿也没有任何平台数据
 - 某平台没有链接
 
+## 指标怎么更新
+
+`data/videos.jsonl` 里的数字不会自己变，得有人定期从四个平台读回来写进去。用 `scripts/refresh-stats.py`：
+
+```bash
+# B 站：公开接口，免登录，一次刷全部
+python3 scripts/refresh-stats.py --platform bilibili
+
+# 另外三个平台：先在已登录的浏览器里 observe 列表页，把输出存成文件
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page.txt
+
+# 先看会改什么，不落盘
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt --dry-run
+```
+
+刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
+
+**B 站不需要开浏览器。** `api.bilibili.com/x/web-interface/view?bvid=` 免登录返回 `view/like/favorite/share/reply`，和创作者后台一致，而且字段有名字，不存在看错列的问题。
+
+**另外三个平台的后台列表页，数字没有表头，只能靠位置判断。** 列序各不相同，写在脚本的 `PLATFORM_SPEC` 里：
+
+| 平台 | 列序 |
+| :--- | :--- |
+| 抖音 | 播放 点赞 评论 分享 收藏 |
+| 小红书 | 观看 评论 点赞 收藏 分享 |
+| 微信视频号 | 播放 点赞 评论 分享 收藏 |
+
+小红书那条最反直觉（收藏在分享前面），是拿五期旧数据反推验证出来的——只有这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」，每一条都会错位。**改列序之前先拿旧数据反推验证一遍。**
+
+脚本还挡掉几件事：抖音「1.3万」这类近似值不会覆盖区间内已有的精确值；「减少作品推荐」的作品读不到数字就保留旧快照，不会写成 0；播放量掉超 20% 会报出来而不写入，因为那多半是读错了行。
+
 ## 两件值得记住的事
 
 **日期是最容易出错的地方。** 一次批量整理逐字稿时，29 篇的文件名和头部被统一写成了同一天，真实发布日却散在两个月里。结果页面上一整批作品挤在同一天、播放量全是 0——因为文件名日期一旦写错，那一期就再也对不上真实数据了。校验能查出「两处日期不一致」，但查不出「两处日期一起写错」，那个只能靠人对。

@@ -304,15 +304,84 @@ def test_zero_stays_zero() -> None:
     check("limited" not in r["platforms"]["douyin"], "平台返回 0 不应加 limited 标记")
 
 
+# ---------------------------------------------------------------------------
+# 抖音走 work_list 的 statistics：精确值，且能认出「平台不给看」
+# ---------------------------------------------------------------------------
+
+# 转义过的原始 JSON 片段（和 observe 出来的形态一致）：
+# 一条正常的（2124 播放），一条 self_see=true 的（平台不给数）。
+DY_JSON = (
+    r'\"desc\":\"用Codex来获取、整理和分析浏览器网页数据\",'
+    r'\"create_time\":1785148780,'
+    r'\"statistics\":{\"aweme_id\":\"7667155598017957160\",\"collect_count\":18,'
+    r'\"comment_count\":2,\"digg_count\":33,\"forward_count\":0,'
+    r'\"live_watch_count\":0,\"play_count\":2124,\"share_count\":1},'
+    r'\"status\":{\"allow_comment\":true,\"is_delete\":false,\"is_private\":false,'
+    r'\"is_prohibited\":false,\"self_see\":false,\"with_goods\":false},'
+    r'\"desc\":\"解决CodeX每次会话都要经过5次reconnecting\",'
+    r'\"create_time\":1784700000,'
+    r'\"statistics\":{\"aweme_id\":\"7663119071394712872\",\"collect_count\":0,'
+    r'\"comment_count\":0,\"digg_count\":0,\"play_count\":0,\"share_count\":0},'
+    r'\"status\":{\"is_delete\":false,\"is_private\":false,'
+    r'\"is_prohibited\":false,\"self_see\":true}'
+)
+
+
+def test_dy_json_parse() -> None:
+    items = rs.parse_dy_json(DY_JSON)
+    check(len(items) == 2, f"statistics 应解析出 2 条，实际 {len(items)}")
+
+    normal = next((i for i in items if i.get("aweme_id") == "7667155598017957160"), None)
+    check(normal is not None, "应解析出正常那条")
+    if normal:
+        check(normal.get("blocked") is not True, "self_see=false 的不该被标 blocked")
+        # 顺序必须是 播放 点赞 评论 分享 收藏
+        check(normal["raw"] == ["2124", "33", "2", "1", "18"],
+              f"statistics 取值或顺序不对：{normal['raw']}")
+
+    hidden = next((i for i in items if i.get("aweme_id") == "7663119071394712872"), None)
+    check(hidden is not None, "应解析出仅自己可见那条")
+    if hidden:
+        check(hidden.get("blocked") is True, "self_see=true 应标 blocked（平台不给数）")
+        check(hidden.get("raw") is None, "仅自己可见不应给数字")
+        check(hidden.get("reason") == "仅自己可见", f"原因不对：{hidden.get('reason')!r}")
+
+    # 空输入不能崩，也不能瞎编
+    check(rs.parse_dy_json("") == [], "空文本应解析出 0 条")
+    check(rs.parse_dy_json("StaticText \"播放\"") == [], "列表页文本应解析出 0 条（交给 parse_dy）")
+
+
+def test_match_by_work_id() -> None:
+    rows = [
+        {"id": "a", "date": "2026-09-10", "topic": "WorkBuddy 接入 GPT",
+         "platforms": {"douyin": {"url": "https://www.douyin.com/video/7683968316486028559"}}},
+        {"id": "b", "date": "2026-09-10", "topic": "把 Agent 接入达芬奇",
+         "platforms": {"douyin": {"url": "https://www.douyin.com/video/7683611440728542490"}}},
+    ]
+    # 同一天两条，标题还都对不上时，id 是唯一可靠的判据
+    hit = rs.match_row(rows, "douyin", "2026-09-10", "完全不一样的标题",
+                       work_id="7683611440728542490")
+    check(hit is not None and hit["id"] == "b", "应优先按作品 id 匹配")
+    # 给了 id 但库里没有：不能退化成猜日期
+    miss = rs.match_row(rows, "douyin", "2026-09-10", "WorkBuddy 接入 GPT",
+                        work_id="9999999999999999999")
+    check(miss is None, "id 对不上时不该退回标题匹配（那会张冠李戴）")
+    # 不给 id 时，老路照常工作
+    by_title = rs.match_row(rows, "douyin", "2026-09-10", "WorkBuddy 接入 GPT")
+    check(by_title is not None and by_title["id"] == "a", "没有 id 时应退回标题匹配")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
         test_xhs_parse,
         test_wx_parse,
         test_dy_parse,
+        test_dy_json_parse,
         test_parse_count,
         test_apply_values,
         test_match_row,
+        test_match_by_work_id,
         test_mark_limited,
         test_zero_stays_zero,
     ]:
@@ -323,7 +392,7 @@ def main() -> int:
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"PASS: {checks} 项检查全部通过（列序、三平台解析、近似值、匹配）")
+    print(f"PASS: {checks} 项检查全部通过（列序、四平台解析、近似值、id 匹配）")
     return 0
 
 

@@ -377,6 +377,90 @@ def parse_dy(raw: str) -> list[dict]:
     return items
 
 
+DY_STAT_KEYS = {
+    "play_count": "views",
+    "digg_count": "likes",
+    "comment_count": "comments",
+    "share_count": "shares",
+    "collect_count": "collects",
+}
+
+# 记录本身的状态。紧跟在 statistics 后面，和它属于同一条作品。
+#   is_delete / is_prohibited / self_see / is_private 为 true 时，平台不会给真实播放
+DY_HIDDEN_FLAGS = {
+    "is_delete": "已删除",
+    "is_prohibited": "已下架",
+    "self_see": "仅自己可见",
+    "is_private": "已设为私密",
+}
+
+
+def parse_dy_json(raw: str) -> list[dict]:
+    """抖音：从 work_list 接口的原始 JSON 里取 statistics，精确值，不靠列序。
+
+    比列表页可靠得多，原因有三：
+      - statistics 里字段有名字（play_count 等），不存在看错列；
+      - 全是精确整数，没有「1.3万」这类四舍五入；
+      - 同一条记录里还带着 status，能区分「真的 0」和「平台不给看」。
+
+    **别用同一个 JSON 里别处的 view_count** —— 那是话题标签的计数，
+    不是播放量，按它抓会把每条读成 0 或者乱数。
+
+    锚点是 `"statistics":{"aweme_id":"<id>"`：它同时给出作品 id 和五个指标，
+    紧跟着的 `"status":{...}` 给出可见性。两段都在同一条记录里，位置稳定。
+
+    返回值和 parse_dy 一致，所以上层逻辑不用改：`raw` 是五个精确数字的字符串，
+    或者 `blocked=True` 表示平台不给数（这时保留最后读数，打 limited）。
+    """
+    items = []
+    pattern = re.compile(
+        r'\\"statistics\\":\{\\"aweme_id\\":\\"(\d+)\\"(.*?)\},\\"status\\":\{(.*?)\}'
+    )
+    for m in pattern.finditer(raw):
+        aid, stat_body, status_body = m.group(1), m.group(2), m.group(3)
+
+        values: dict[str, str] = {}
+        for field, key in DY_STAT_KEYS.items():
+            vm = re.search(r'\\"' + field + r'\\":(\d+)', stat_body)
+            if vm:
+                values[key] = vm.group(1)
+
+        # 标题和日期：从这条记录往前找最近的一份。desc 里带话题标签，
+        # 和仓库里的 topic 不一定完全一致，靠上层的归一化匹配兜底。
+        pre = raw[max(0, m.start() - 30000):m.start()]
+        dm = list(re.finditer(r'\\"desc\\":\\"(.*?)\\"', pre))
+        title = _unescape(dm[-1].group(1)) if dm else ""
+        cm = list(re.finditer(r'\\"create_time\\":(\d{9,10})', pre))
+        when = ""
+        if cm:
+            when = time.strftime("%Y-%m-%d", time.localtime(int(cm[-1].group(1))))
+
+        hidden = next(
+            (why for flag, why in DY_HIDDEN_FLAGS.items()
+             if re.search(r'\\"' + flag + r'\\":true', status_body)),
+            None,
+        )
+
+        if len(values) == 5 and not hidden:
+            items.append({
+                "title": title,
+                "date": when,
+                "raw": [values[k] for k in PLATFORM_SPEC["douyin"]],
+                "aweme_id": aid,
+            })
+        else:
+            # 平台不给数：被删/下架/仅自己可见，或者字段不全。
+            items.append({
+                "title": title,
+                "date": when,
+                "raw": None,
+                "blocked": True,
+                "reason": hidden or "平台不给数据",
+                "aweme_id": aid,
+            })
+    return items
+
+
 PARSERS = {"xiaohongshu": parse_xhs, "wechat_channels": parse_wx, "douyin": parse_dy}
 
 
@@ -384,12 +468,30 @@ PARSERS = {"xiaohongshu": parse_xhs, "wechat_channels": parse_wx, "douyin": pars
 # 匹配与写入
 # --------------------------------------------------------------------------
 
-def match_row(rows: list[dict], platform: str, date: str, title: str) -> dict | None:
-    """先按日期缩小范围，再按归一化标题匹配。
+def _work_id(row: dict, platform: str) -> str:
+    """记录里存的这条作品 id（抖音的 aweme_id）。取不到就返回空串。"""
+    url = (row.get("platforms", {}).get(platform, {}) or {}).get("url") or ""
+    tail = url.rstrip("/").split("/")[-1]
+    return tail if tail.isdigit() else ""
 
-    同一日期可能有多期（一天发两条很常见），所以必须再比标题。
-    标题对不上时退一步做包含匹配——各平台标题会带话题标签、会被改短。
+
+def match_row(
+    rows: list[dict], platform: str, date: str, title: str, work_id: str = ""
+) -> dict | None:
+    """先按作品 id 精确匹配，对不上再按日期 + 归一化标题。
+
+    **作品 id 优先，因为它没有歧义。** 同一天发两条是常事，标题还会被平台
+    改写（加话题标签、截短），而 id 永远指向同一条作品。抖音走 work_list
+    接口时能拿到 aweme_id，就用它。
+
+    日期 + 标题是给小红书、视频号那两条路的：它们读的是列表页，拿不到 id。
+    同一日期可能有多期，所以必须再比标题；标题对不上时退一步做包含匹配。
     """
+    if work_id:
+        for r in rows:
+            if _work_id(r, platform) == work_id:
+                return r
+        return None  # 给了 id 却没找到，说明这条不在库里，别退化成猜
     same_day = [r for r in rows if r["date"] == date]
     if not same_day:
         return None
@@ -496,6 +598,13 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
     for p in paths:
         raw = Path(p).read_text(encoding="utf-8", errors="replace")
         got = parser(raw)
+        # 抖音优先走 work_list 接口的原始 JSON：字段有名字、全是精确值。
+        # 解析不出来（给的是列表页文本）再退回按列序读。
+        if platform == "douyin":
+            precise = parse_dy_json(raw)
+            if precise:
+                print(f"  {Path(p).name}: 按 statistics 精确解析出 {len(precise)} 条", file=sys.stderr)
+                got = precise
         print(f"  {Path(p).name}: 解析出 {len(got)} 条", file=sys.stderr)
         items.extend(got)
 
@@ -506,7 +615,7 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
 
     matched = skipped = 0
     for it in items:
-        row = match_row(rows, platform, it["date"], it["title"])
+        row = match_row(rows, platform, it["date"], it["title"], it.get("aweme_id", ""))
         if row is None:
             print(f"  ? 未匹配到仓库记录：{it['date']} {it['title'][:30]}", file=sys.stderr)
             skipped += 1

@@ -122,7 +122,7 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.19.1"
 | 平台 | 来源 | 可靠性 |
 | :--- | :--- | :--- |
 | B 站 | 公开接口 `api.bilibili.com/x/web-interface/view?bvid=` | 免登录、字段有名字、精确值 |
-| 抖音 | 创作者后台列表页 | 要登录态，靠列序，上万是近似值 |
+| 抖音 | `work_list` 接口的 `statistics` 对象 | 要登录态，字段有名字、精确值 |
 | 小红书 | 创作者后台列表页 | 要登录态，靠列序，最容易看错 |
 | 微信视频号 | 创作者后台列表页 | 要登录态，**列表要先滚动才渲染** |
 
@@ -130,15 +130,31 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.19.1"
 
 ### 列序（脚本里已写死，别现场猜）
 
-另外三个平台的后台接口要登录态和签名，`curl` 打不通，只能在已登录的浏览器里读。读回来的是一段纯文本，数字**没有表头**，只能靠位置判断：
+小红书和视频号的后台接口要登录态和签名，`curl` 打不通，只能在已登录的浏览器里读。读回来的是一段纯文本，数字**没有表头**，只能靠位置判断：
 
 ```
-抖音          播放  点赞  评论  分享  收藏
 小红书        观看  评论  点赞  收藏  分享    ← 收藏在分享前面，最反直觉
 微信视频号    播放  点赞  评论  分享  收藏
 ```
 
-小红书这条是拿五期旧数据反推验证出来的：只有「观看/评论/点赞/收藏/分享」这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」，每一条都会错位。**这三条列序写在 `scripts/refresh-stats.py` 的 `PLATFORM_SPEC` 里，改之前先拿旧数据反推验证一遍。**
+小红书这条是拿五期旧数据反推验证出来的：只有「观看/评论/点赞/收藏/分享」这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」，每一条都会错位。**这两条列序写在 `scripts/refresh-stats.py` 的 `PLATFORM_SPEC` 里，改之前先拿旧数据反推验证一遍。**
+
+### 抖音走接口，不走列表页
+
+`creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=20&max_cursor=<ms>&scene=star_atlas&device_platform=android` 返回原始 JSON，`statistics` 里字段有名字：
+
+```
+play_count   digg_count   comment_count   share_count   collect_count
+播放          点赞         评论            分享          收藏
+```
+
+全是精确整数，不用猜列序，也没有「1.3万」这类四舍五入。**同一个 JSON 里别处还有 `view_count`，那是话题标签的计数**——按它抓会把每条读成 0 或乱数。脚本的 `parse_dy_json()` 只认 `statistics`，认不出才退回列表页解析。
+
+**配对用 `aweme_id`，不要用日期或标题**：同一天发两条是常事，标题还会被平台改写（加话题标签、截短）。`match_row()` 拿到 id 就只按 id 匹配，对不上就报「未匹配」，不会退化成猜日期。
+
+**`status` 里的 `self_see` 是「仅自己可见」，必须当成「平台不给数」而不是 0。** 实测 80 条里 `self_see=true` 的 8 条 `play_count` 全是 0，而 `self_see=false` 的 72 条全部大于 0——没有例外。这类作品照实打 `limited`（保留最后读数），不能记成 0 播放。同一处还有 `is_delete` / `is_prohibited` / `is_private`，脚本一并认。
+
+核对有没有漏记录，看接口返回的 `total`（等于后台作品总数），和 `data/videos.jsonl` 里该平台的记录数比。翻页传上一页返回的 `max_cursor`，`has_more: false` 表示到底。
 
 ### 怎么做
 
@@ -148,11 +164,11 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.19.1"
 python3 scripts/refresh-stats.py --platform bilibili
 ```
 
-**第二步，另外三个平台**——在已登录的浏览器里打开后台，`observe` 一次，把输出存成文本文件，交给脚本解析：
+**第二步，另外三个平台**——在已登录的浏览器里打开，把输出存成文本文件，交给脚本解析：
 
-| 平台 | 后台地址 | 备注 |
+| 平台 | 打开哪里 | 备注 |
 | :--- | :--- | :--- |
-| 抖音 | `creator.douyin.com/creator-micro/content/manage` | 卡片里是「标签 + 数值」成对出现，比裸数字好认 |
+| 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?...` | 原始 JSON，字段有名字，优先走这条 |
 | 小红书 | `creator.xiaohongshu.com/new/note-manager` | 裸数字，最依赖列序 |
 | 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**，否则只有导航栏 |
 
@@ -160,6 +176,8 @@ python3 scripts/refresh-stats.py --platform bilibili
 python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt
 python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt /tmp/xhs-2.txt
 ```
+
+抖音那个 JSON 很长，`observe` 会把它截断成一行。**存文件要拿到完整响应**（spill 文件或 `snapshot` 的原始文本），截断的 JSON 解析出来会少记录。
 
 先加 `--dry-run` 看会改什么，确认无误再落盘。
 
@@ -177,8 +195,8 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 
 | 平台给的东西 | 含义 | 怎么记 |
 | :--- | :--- | :--- |
-| 数字 `0` | 平台明确告诉你没人看 | 记 0，不加任何标记 |
-| 横杠 `-` | 平台不给数了（限流 / 退回 / 删除） | **保留最后读数**，另加 `limited` 标记 |
+| 数字 `0`，且作品正常可见 | 平台明确告诉你没人看 | 记 0，不加任何标记 |
+| 横杠 `-` / `self_see` / 已删除 | 平台不给数了 | **保留最后读数**，另加 `limited` 标记 |
 
 第二种不能清零。被限流之前那些播放是真实发生过的，清零等于把「这期其实跑过 164 次」这个事实删掉。但也不能干留着不说明——那样看着像还在慢慢涨。所以保留数字，另记一笔：
 
@@ -191,9 +209,11 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 
 `lastRead` 是最后一次读到数字的日期，不是发现限流的日期——前者能证明，后者只能猜。
 
+`reason` 写平台给的原话：`减少作品推荐`、`仅自己可见`、`已删除`、`已下架`、`作品已不可见`。**「仅自己可见」是最容易看错的一种**：后台的 `play_count` 明明写着 0，看着像真没人看，其实是作品只对作者可见，平台根本不给统计。按 0 记就把「这条没被推过」写成了「这条推了但没人看」，是两件完全不同的事。
+
 **读数据时，带 `limited` 的期次不能和正常期次比转化率。** 它的分子冻在限流那天，分母还在动，算出来必然偏低。复盘时要单独说「这期被限流了，数据停在 X 月 X 日」，而不是把它混进平均值。
 
-没有 `limited` 标记、五个指标全是 0 的，就是平台真的返回了 0，照实记，不解释。
+没有 `limited` 标记、五个指标全是 0 的，才是平台真的返回了 0，照实记，不解释。
 
 ### 脚本替你挡掉的四件事
 
@@ -206,7 +226,7 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 
 - **视频号登录态会过期**，过期时二维码在 iframe 里，`observe` 只看到「加载失败」，得截图才看得见码，要本人扫。这是唯一必须人参与的一步。
 - **抖音「导出数据」按钮点不动**，也不会落盘到 Downloads。别在这上面反复试。
-- **抖音有十几期五个指标全是 0**，平台明确返回 0（不是 `-`），按口径就是 0。`check-data` 会提醒一句，不算错。
+- **抖音的 `play_count: 0` 有两种，别混。** 一种是作品正常可见、真的没人看，记 0；另一种是 `self_see=true`（仅自己可见），平台压根不给统计，得打 `limited`。判据就是同一个 `status` 对象里的 `self_see`——实测 80 条里它和「播放是否大于 0」完全对应，没有例外。
 - **B 站 `62002` / `62012` 不是一回事，别混着当成限流重试。** 两个都拿不到接口数据，但页面能打开，处置也不一样：
 
   | code | 含义 | 怎么办 |
@@ -302,7 +322,7 @@ python3 scripts/fetch-covers.py --verify
 - **视频号的图只能当场在浏览器里看，命令行拉不到。** 图片地址里 `encfilekey` 要服务端结合登录态解密，`curl` 一律 `400`（`X-retmsg: decrypt encfilekey failed`）；刚生成的地址立刻下载、或在新标签直接打开，也是 `ERR_INVALID_RESPONSE`。别在这上面反复试 curl。
 - **抖音的图有签名有效期**（`x-expires`），清单要现抓现用，过期就是 403。别把带签名的地址写进仓库或逐字稿。
 - **B 站后台的 `cover43`**（2560×1920，比小红书那版更清楚）只在 `member.bilibili.com/x/vupre/web/archive/view?bvid=` 里，且必须登录、必须逐条请求；公开接口拿不到自己的这一张。只有确实需要高清素材时才值得跑一轮。
-- **作品被平台下架或删除的，封面就真的没有了。** 比如 2026-09-10《WorkBuddy 接入 GPT、Gemini、Grok》，它的抖音作品 id 不在账号 131 条作品里，平台侧已不存在，只剩 B 站的 16:9。这是真实缺失，不要凑数。
+- **作品被平台下架或删除的，封面就真的没有了。** 比如 2026-09-10《WorkBuddy 接入 GPT、Gemini、Grok》，它的抖音作品 id 不在账号 132 条作品里，平台侧已不存在，只剩 B 站的 16:9。这是真实缺失，不要凑数。
 
 ### 分寸
 

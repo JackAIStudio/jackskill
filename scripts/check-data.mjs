@@ -150,7 +150,9 @@ export function checkData({ quiet = false } = {}) {
 
       // 五个指标全是 0 = 这一期在这个平台没采到数据（平台没给数据的记录）。
       // 页面已经不把它算进收录期数和任何中位数，但它确实还占着一行。
-      if (METRICS.every((m) => !p[m])) emptyPlats.push({ date: r.date, k });
+      // 带 limited 的不算：那是「平台不给数，但限流前读到过」，已经单独标了原因，
+      // 混进这里会被说成「没标记」，两边的口径就打架了。
+      if (METRICS.every((m) => !p[m]) && !p.limited) emptyPlats.push({ date: r.date, k });
     }
 
     // summary 必须等于各平台之和——这是全站所有数字的口径
@@ -210,9 +212,9 @@ export function checkData({ quiet = false } = {}) {
   summarise(emptyPlats, (xs) => {
     const plats = [...new Set(xs.map((x) => x.k))].join("、");
     return `有 ${xs.length} 条记录五个指标全是 0（${plats}）。`
-      + `这是平台实际返回的 0，不是漏录：这些作品在后台的状态是`
-      + `「不适宜公开 / 减少作品推荐 / 限制自己可见 / 已删除」，平台侧就不给数。`
-      + `按口径，0 就是 0，不加标记也不删记录；页面已把它们排除出收录期数和各种中位数`;
+      + `按口径，0 就是 0：平台返回 0 就照实记 0，不加标记也不删记录。`
+      + `读不到的另外走 limited（记原因和最后读数），不混在这里。`
+      + `页面已把它们排除出收录期数和各种中位数`;
   });
 
   // 同一个作品链接被两条记录引用。按标题相似度查不出这类重复——各平台标题

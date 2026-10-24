@@ -268,23 +268,40 @@ def test_match_row() -> None:
 # 拿不到数据 → 清零，不保留旧快照
 # ---------------------------------------------------------------------------
 
-def test_zero_out() -> None:
+def test_mark_limited() -> None:
+    # 平台显示 "-"：保留最后读数，打 limited 标记，不清零
     r = _row(views=164, likes=0, collects=1, shares=0, comments=0)
-    diffs, why = rs.zero_out(r, "douyin", dry_run=False)
-    check(why is None, f"清零不应报错：{why}")
+    diffs, why = rs.mark_limited(r, "douyin", "减少作品推荐", dry_run=False)
     d = r["platforms"]["douyin"]
-    check(all(d[k] == 0 for k in rs.METRICS), f"平台不给数据时应全部清零，实际 {d}")
-    check(len(diffs) == 2, f"应只报告真正变了的两个字段，实际 {diffs}")
+    check(why is None, f"打标记不应报错：{why}")
+    check(d["views"] == 164, "限流时不能清零——164 是限流前真实跑过的量")
+    check(d.get("limited", {}).get("reason") == "减少作品推荐", "应记下限流原因")
+    check(bool(d.get("limited", {}).get("lastRead")), "应记下最后读数日期")
+    check(len(diffs) == 1, f"首次打标记应产生一条变更，实际 {diffs}")
 
-    # 已经是 0 的不用再报
-    r2 = _row(views=0, likes=0, collects=0, shares=0, comments=0)
-    diffs, why = rs.zero_out(r2, "douyin", dry_run=False)
-    check(why is None and diffs == [], "本来就是 0 的不应产生变更")
+    # 重复跑不应重复报
+    diffs2, _ = rs.mark_limited(r, "douyin", "减少作品推荐", dry_run=False)
+    check(diffs2 == [], "同样的标记重复打不应产生变更")
 
     # dry-run 不能真写
     r3 = _row(views=164)
-    rs.zero_out(r3, "douyin", dry_run=True)
-    check(r3["platforms"]["douyin"]["views"] == 164, "dry-run 不应写入")
+    rs.mark_limited(r3, "douyin", "减少作品推荐", dry_run=True)
+    check("limited" not in r3["platforms"]["douyin"], "dry-run 不应写入")
+
+    # 平台重新给数了，标记要摘掉
+    r4 = _row(views=164)
+    r4["platforms"]["douyin"]["limited"] = {"reason": "减少作品推荐", "lastRead": "2026-10-19"}
+    cleared = rs.clear_limited(r4, "douyin", dry_run=False)
+    check(cleared, "解除标记应产生变更记录")
+    check("limited" not in r4["platforms"]["douyin"], "平台重新给数后应摘掉 limited")
+
+
+def test_zero_stays_zero() -> None:
+    # 平台明确返回 0（不是 "-"）：就是 0，不加任何标记
+    r = _row(views=0, likes=0, collects=0, shares=0, comments=0)
+    diffs, why = rs.apply_values(r, "douyin", ["0", "0", "0", "0", "0"], dry_run=False)
+    check(why is None and diffs == [], "全 0 且与库内一致时不应产生变更")
+    check("limited" not in r["platforms"]["douyin"], "平台返回 0 不应加 limited 标记")
 
 
 def main() -> int:
@@ -296,7 +313,8 @@ def main() -> int:
         test_parse_count,
         test_apply_values,
         test_match_row,
-        test_zero_out,
+        test_mark_limited,
+        test_zero_stays_zero,
     ]:
         fn()
 

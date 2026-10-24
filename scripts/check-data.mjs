@@ -111,6 +111,27 @@ export function checkData({ quiet = false } = {}) {
       }
       if (!p.url) warnings.push(`${at} ${k} 没有链接`);
 
+      // limited：平台不给数了（页面上是 `-`），这里存的是限流前的最后读数。
+      // 可选字段，只在真的限流时出现；平台返回 0 的情况不加这个键。
+      if ("limited" in p) {
+        const lim = p.limited;
+        if (!lim || typeof lim !== "object") {
+          errors.push(`${at} ${k}.limited 必须是对象`);
+        } else {
+          if (!lim.reason || typeof lim.reason !== "string") {
+            errors.push(`${at} ${k}.limited.reason 缺失或不是字符串`);
+          }
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(lim.lastRead || "")) {
+            errors.push(`${at} ${k}.limited.lastRead 必须是 YYYY-MM-DD：${lim.lastRead}`);
+          }
+          for (const key of Object.keys(lim)) {
+            if (!["reason", "lastRead"].includes(key)) {
+              errors.push(`${at} ${k}.limited 有不认识的字段：${key}`);
+            }
+          }
+        }
+      }
+
       // 链接要么指向某条作品，要么指向平台主页。两边都不是的（创作者后台、
       // 后台管理页……）观众点进去只有登录墙，而页面只能把它标成「未收录原片链接」。
       // 判据是白名单，和 docs/assets/app.js 里的 VIDEO_URL / HOME_URL 是同一套：
@@ -186,11 +207,13 @@ export function checkData({ quiet = false } = {}) {
     `有 ${xs.length} 条链接既不是作品直链也不是平台主页（${hostsIn(xs)}），`
     + `观众点进去多半只有登录墙；页面已按「未收录原片链接」处理，建议换成作品直链或平台主页`);
 
-  summarise(emptyPlats, (xs) =>
-    `有 ${xs.length} 条记录五个指标全是 0。这些不是「还没补录」——`
-    + `从抖音创作者后台逐条核过，这批作品的状态是「不适宜公开 / 减少作品推荐 / 限制自己可见 / 已删除」，`
-    + `平台侧根本不提供数据，补不出来。页面已把它们排除出收录期数和各种中位数；`
-    + `记录留着是因为「这一期发过、但被平台限流了」本身也是真实状态。删不删由人定`);
+  summarise(emptyPlats, (xs) => {
+    const plats = [...new Set(xs.map((x) => x.k))].join("、");
+    return `有 ${xs.length} 条记录五个指标全是 0（${plats}）。`
+      + `这是平台实际返回的 0，不是漏录：这些作品在后台的状态是`
+      + `「不适宜公开 / 减少作品推荐 / 限制自己可见 / 已删除」，平台侧就不给数。`
+      + `按口径，0 就是 0，不加标记也不删记录；页面已把它们排除出收录期数和各种中位数`;
+  });
 
   // 同一个作品链接被两条记录引用。按标题相似度查不出这类重复——各平台标题
   // 本来就不一样（同一条视频在 B 站叫「A」、在小红书叫「B」是常态），

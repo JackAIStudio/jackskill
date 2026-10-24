@@ -769,8 +769,12 @@ function openDrawer(v) {
     </tr>`;
     }
     const tip = `收藏率 = 收藏 ${fmtInt(p.collects)} ÷ 播放 ${fmtInt(p.views)}`;
-    return `<tr>
-      <td><span class="plat-name"><i class="pdot" style="background:${PLAT[k].color}"></i>${PLAT[k].label}</span></td>
+    // 平台不给数了：数字是限流前的最后读数。标出来，别让人拿它跟正常期次比。
+    const limTag = p.limited
+      ? `<div class="sub">限流于 ${esc(p.limited.lastRead || "")}，数字停在限流前</div>`
+      : "";
+    return `<tr${p.limited ? ' class="dim"' : ""}>
+      <td><span class="plat-name"><i class="pdot" style="background:${PLAT[k].color}"></i>${PLAT[k].label}</span>${limTag}</td>
       <td>${fmtInt(p.views)}</td>
       <td>${fmtInt(p.likes)}</td>
       <td>${fmtInt(p.collects)}</td>

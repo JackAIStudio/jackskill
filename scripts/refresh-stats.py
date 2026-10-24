@@ -56,6 +56,7 @@ import time
 import unicodedata
 import urllib.error
 import urllib.request
+from datetime import date
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -314,8 +315,8 @@ def parse_dy(raw: str) -> list[dict]:
     认标签（播放/点赞/评论/分享/收藏），不认位置——标签是稳定的，位置不是。
 
     状态为「减少作品推荐」的作品，五个指标在页面上是「-」不是数字。这类
-    仍然返回一条记录，只是 metrics 是空的、带 blocked 标记，交给上层清零：
-    **平台不给数据，这里就是没有，不拿旧快照顶着。**
+    仍然返回一条记录，带 blocked 标记和原因，交给上层打 limited：保留最后
+    读数，说明这个数停在什么时候。**不清零——限流前那些播放真实发生过。**
     """
     # 按文档顺序取所有 StaticText / button 的文本，顺序不能丢——
     # 标题在日期前、指标在日期后，全靠相对位置判断。
@@ -355,14 +356,24 @@ def parse_dy(raw: str) -> list[dict]:
                     continue
             j += 1
 
+        # 状态行（「减少作品推荐」等）在日期前，用来判断这期为什么没有数字
+        status = ""
+        for j in range(idx, min(len(tokens), idx + 4)):
+            if tokens[j] in ("减少作品推荐", "不适宜公开", "限制自己可见", "已删除"):
+                status = tokens[j]
+                break
+
         if title and len(found) == 5:
             items.append(
                 {"title": title, "date": date, "raw": [found[k] for k in PLATFORM_SPEC["douyin"]]}
             )
         elif title and not found:
-            # 一个数都没读到：平台不给（减少推荐 / 限制可见 / 已删除）。
-            # 仍然交出去，让上层把这期清零——不是跳过、不是留着旧数。
-            items.append({"title": title, "date": date, "raw": None, "blocked": True})
+            # 一个数都没读到：平台不给。仍然交出去，让上层打 limited 标记，
+            # 保留最后读数——不是清零（那会丢掉限流前真实跑过的量）。
+            items.append(
+                {"title": title, "date": date, "raw": None, "blocked": True,
+                 "reason": status or "平台不给数据"}
+            )
     return items
 
 
@@ -435,22 +446,47 @@ def apply_values(row: dict, platform: str, raw_values: list[str], *, dry_run: bo
     return diffs, None
 
 
-def zero_out(row: dict, platform: str, *, dry_run: bool) -> tuple[list[str], str | None]:
-    """平台不给数据时，把这期这个平台清零。
+def mark_limited(row: dict, platform: str, reason: str, *, dry_run: bool) -> tuple[list[str], str | None]:
+    """平台不给数据（页面上是 `-`）时，保留最后读数并打上 limited 标记。
 
-    这是本项目的口径：**拿不到就是 0 或没有，不拿旧快照顶着。** 旧快照会
-    让「这期被限流了」看起来像「这期还在慢慢涨」，越放越假。清零之后，
-    数据页上看到的就是平台实际给的东西。
+    **区分两件事：**
+      - 平台返回 0   → 就是 0，不加标记
+      - 平台返回 `-` → 这期被限流/退回，数字不再更新
+
+    第二种如果直接清零，就把「限流前真实跑过的量」丢了。10-15 那期在限流
+    前确实有 164 次播放，那是真的发生过的事实。所以保留原值，另记
+    `limited: {reason, lastRead}`，说明这个数停在什么时候。
+
+    读的时候，带 limited 的期次不能和正常期次比转化率——它的分母是冻住的。
     """
     plat = row["platforms"].get(platform)
     if plat is None:
         return [], "该期没有这个平台的键"
 
-    diffs = [f"{k} {plat[k]}→0" for k in METRICS if plat.get(k, 0) != 0]
+    old = plat.get("limited")
+    last_read = old.get("lastRead") if old else None
+    if not last_read:
+        # 没有历史标记时，用这次跑批的日期当最后读数日
+        last_read = date.today().isoformat()
+
+    new = {"reason": reason, "lastRead": last_read}
+    if old == new:
+        return [], None
+
+    diffs = [f"limited: {old} → {new}"] if old else [f"标记 limited（{reason}，最后读数 {last_read}）"]
     if not dry_run:
-        for k in METRICS:
-            plat[k] = 0
+        plat["limited"] = new
     return diffs, None
+
+
+def clear_limited(row: dict, platform: str, *, dry_run: bool) -> list[str]:
+    """平台重新给数据了，把 limited 标记摘掉。"""
+    plat = row["platforms"].get(platform)
+    if plat is None or "limited" not in plat:
+        return []
+    if not dry_run:
+        plat.pop("limited", None)
+    return ["解除 limited（平台重新给数了）"]
 
 
 def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry_run: bool) -> list[str]:
@@ -476,15 +512,17 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
             skipped += 1
             continue
         if it.get("blocked"):
-            # 平台不给数据 → 清零，不跳过
-            diffs, why = zero_out(row, platform, dry_run=dry_run)
+            # 平台不给数据 → 保留最后读数并打 limited 标记，不清零
+            diffs, why = mark_limited(
+                row, platform, it.get("reason", "平台不给数据"), dry_run=dry_run
+            )
             if why:
                 print(f"  ! 跳过 {it['date']} {it['title'][:20]}：{why}", file=sys.stderr)
                 skipped += 1
                 continue
             matched += 1
             if diffs:
-                log.append(f"{it['date']} {row['topic'][:24]}: 平台不给数据，清零（" + ", ".join(diffs) + "）")
+                log.append(f"{it['date']} {row['topic'][:24]}: " + ", ".join(diffs))
             continue
         diffs, why = apply_values(row, platform, it["raw"], dry_run=dry_run)
         if why:
@@ -492,6 +530,9 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
             skipped += 1
             continue
         matched += 1
+        # 这次读到真数了，如果之前标过 limited 就摘掉
+        cleared = clear_limited(row, platform, dry_run=dry_run)
+        diffs = cleared + diffs
         if diffs:
             log.append(f"{it['date']} {row['topic'][:24]}: " + ", ".join(diffs))
 

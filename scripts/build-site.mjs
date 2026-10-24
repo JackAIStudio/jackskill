@@ -173,6 +173,11 @@ const videos = records
       // 这里显式标出来，页面才不会把它当成「真的 0 播放」算进中位数——
       // 早先没有这个标记，抖音的中位播放被 21 条空记录从 623 拉到 480。
       entry.empty = METRICS.every((m) => !entry[m]);
+      // 平台不给数了（页面上是 `-`）：数字是限流前的最后读数，不是当下的。
+      // 页面上要标出来，读的人才知道这期不能拿来和正常期次比转化率。
+      if (p.limited) {
+        entry.limited = { reason: p.limited.reason, lastRead: p.limited.lastRead };
+      }
       platforms[key] = entry;
     }
 

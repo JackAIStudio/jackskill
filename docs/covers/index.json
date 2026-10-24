@@ -1,13 +1,119 @@
 {
-  "generatedAt": "2026-10-23T04:35:39+0800",
+  "generatedAt": "2026-10-24T23:10:20+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 226,
+  "count": 228,
   "items": [
+    {
+      "id": "2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "date": "2026-10-22",
+      "topic": "创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "dir": "covers/2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-10-22_在达芬奇中剪辑长视频的思路和方法",
+      "date": "2026-10-22",
+      "topic": "在达芬奇中剪辑长视频的思路和方法",
+      "dir": "covers/2026-10-22_在达芬奇中剪辑长视频的思路和方法",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
     {
       "id": "2026-10-20_送外卖送到眼睛花了，结果发现是饿了",
       "date": "2026-10-20",

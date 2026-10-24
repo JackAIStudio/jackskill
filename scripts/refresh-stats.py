@@ -313,9 +313,9 @@ def parse_dy(raw: str) -> list[dict]:
     和另外两个平台一样以日期为锚：往前找标题，往后找五组指标。往后找的时候
     认标签（播放/点赞/评论/分享/收藏），不认位置——标签是稳定的，位置不是。
 
-    状态为「减少作品推荐」的作品，五个指标在页面上是「-」不是数字，
-    这里会自然收不齐 5 个，于是跳过、保留库里的旧快照。这是对的：
-    平台不给数据，不等于数据变成 0。
+    状态为「减少作品推荐」的作品，五个指标在页面上是「-」不是数字。这类
+    仍然返回一条记录，只是 metrics 是空的、带 blocked 标记，交给上层清零：
+    **平台不给数据，这里就是没有，不拿旧快照顶着。**
     """
     # 按文档顺序取所有 StaticText / button 的文本，顺序不能丢——
     # 标题在日期前、指标在日期后，全靠相对位置判断。
@@ -359,6 +359,10 @@ def parse_dy(raw: str) -> list[dict]:
             items.append(
                 {"title": title, "date": date, "raw": [found[k] for k in PLATFORM_SPEC["douyin"]]}
             )
+        elif title and not found:
+            # 一个数都没读到：平台不给（减少推荐 / 限制可见 / 已删除）。
+            # 仍然交出去，让上层把这期清零——不是跳过、不是留着旧数。
+            items.append({"title": title, "date": date, "raw": None, "blocked": True})
     return items
 
 
@@ -431,6 +435,24 @@ def apply_values(row: dict, platform: str, raw_values: list[str], *, dry_run: bo
     return diffs, None
 
 
+def zero_out(row: dict, platform: str, *, dry_run: bool) -> tuple[list[str], str | None]:
+    """平台不给数据时，把这期这个平台清零。
+
+    这是本项目的口径：**拿不到就是 0 或没有，不拿旧快照顶着。** 旧快照会
+    让「这期被限流了」看起来像「这期还在慢慢涨」，越放越假。清零之后，
+    数据页上看到的就是平台实际给的东西。
+    """
+    plat = row["platforms"].get(platform)
+    if plat is None:
+        return [], "该期没有这个平台的键"
+
+    diffs = [f"{k} {plat[k]}→0" for k in METRICS if plat.get(k, 0) != 0]
+    if not dry_run:
+        for k in METRICS:
+            plat[k] = 0
+    return diffs, None
+
+
 def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry_run: bool) -> list[str]:
     parser = PARSERS[platform]
     log: list[str] = []
@@ -452,6 +474,17 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
         if row is None:
             print(f"  ? 未匹配到仓库记录：{it['date']} {it['title'][:30]}", file=sys.stderr)
             skipped += 1
+            continue
+        if it.get("blocked"):
+            # 平台不给数据 → 清零，不跳过
+            diffs, why = zero_out(row, platform, dry_run=dry_run)
+            if why:
+                print(f"  ! 跳过 {it['date']} {it['title'][:20]}：{why}", file=sys.stderr)
+                skipped += 1
+                continue
+            matched += 1
+            if diffs:
+                log.append(f"{it['date']} {row['topic'][:24]}: 平台不给数据，清零（" + ", ".join(diffs) + "）")
             continue
         diffs, why = apply_values(row, platform, it["raw"], dry_run=dry_run)
         if why:

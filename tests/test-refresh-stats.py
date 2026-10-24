@@ -179,7 +179,9 @@ def test_dy_parse() -> None:
     check(it2 is not None and it2["raw"][0] == "1.3万", "抖音应保留「1.3万」原样交给上层判断")
 
     blocked = rs.parse_dy(DY_BLOCKED)
-    check(blocked == [], "「减少作品推荐」的作品应解析不出数字，保留旧快照")
+    check(len(blocked) == 1, "「减少作品推荐」的作品应仍被识别出来，只是没有数字")
+    check(blocked and blocked[0].get("blocked") is True, "被限流的作品应带 blocked 标记")
+    check(blocked and blocked[0]["raw"] is None, "被限流的作品不应有数字")
 
 
 # ---------------------------------------------------------------------------
@@ -262,6 +264,29 @@ def test_match_row() -> None:
     check(hit is not None and hit["date"] == "2026-10-18", "当天只有一期时，应认下这一期")
 
 
+# ---------------------------------------------------------------------------
+# 拿不到数据 → 清零，不保留旧快照
+# ---------------------------------------------------------------------------
+
+def test_zero_out() -> None:
+    r = _row(views=164, likes=0, collects=1, shares=0, comments=0)
+    diffs, why = rs.zero_out(r, "douyin", dry_run=False)
+    check(why is None, f"清零不应报错：{why}")
+    d = r["platforms"]["douyin"]
+    check(all(d[k] == 0 for k in rs.METRICS), f"平台不给数据时应全部清零，实际 {d}")
+    check(len(diffs) == 2, f"应只报告真正变了的两个字段，实际 {diffs}")
+
+    # 已经是 0 的不用再报
+    r2 = _row(views=0, likes=0, collects=0, shares=0, comments=0)
+    diffs, why = rs.zero_out(r2, "douyin", dry_run=False)
+    check(why is None and diffs == [], "本来就是 0 的不应产生变更")
+
+    # dry-run 不能真写
+    r3 = _row(views=164)
+    rs.zero_out(r3, "douyin", dry_run=True)
+    check(r3["platforms"]["douyin"]["views"] == 164, "dry-run 不应写入")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
@@ -271,6 +296,7 @@ def main() -> int:
         test_parse_count,
         test_apply_values,
         test_match_row,
+        test_zero_out,
     ]:
         fn()
 

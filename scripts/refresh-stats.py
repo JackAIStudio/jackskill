@@ -216,6 +216,101 @@ def refresh_bilibili(rows: list[dict], *, delay: float, dry_run: bool) -> list[s
 
 
 # --------------------------------------------------------------------------
+# 全局配对：后台列表页 302 条，仓库 302 条，逐条按「当天」找会漏掉一大片
+# --------------------------------------------------------------------------
+
+# 平台侧发布日期和仓库 topic 的日期经常差一天（早上录、晚上发，或者跨时区），
+# 标题还会被改写（「我做了一个」→「我开发了个」）。所以配对不能只认当天。
+MATCH_MAX_GAP_DAYS = 40      # 超出这个天数的两期不可能是同一条
+MATCH_MIN_SIMILARITY = 0.55  # 标题相似度下限
+MATCH_MARGIN = 0.06          # 最佳候选要甩开第二名多少才认
+
+
+def _similar(a: str, b: str) -> float:
+    import difflib
+
+    return difflib.SequenceMatcher(None, norm(a), norm(b)).ratio()
+
+
+def pair_items_to_rows(
+    rows: list[dict], platform: str, items: list[dict]
+) -> tuple[list[tuple[dict, dict]], list[dict]]:
+    """把读回来的作品和仓库记录做**一对一**配对，返回 (配好的对, 没配上的作品)。
+
+    为什么要全局配对，而不是像以前那样只看同一天：列表页读回来的标题经常和
+    仓库 topic 差一天（2026-09-10 对 09-09、08-30 对 08-29），外加平台会改写
+    标题（「我做了一个达芬奇插件」→「我开发了个达芬奇插件」）。只按当天匹配时
+    这些会全部落到「未匹配」，数字一直停在旧快照上，而页面上早就变了。
+
+    两条约束防止张冠李戴：
+      - **日期必须接近**：超过 40 天的两期不可能是同一条；
+      - **一对一**：一条作品只能配一条记录，按分数从高到低贪心分配，
+        必须同时甩开「同一条作品的第二名」和「同一记录的竞争者」一定余量。
+    """
+    target_rows = [r for r in rows if platform in r.get("platforms", {})]
+    if not target_rows or not items:
+        return [], list(items)
+
+    scored: list[tuple[float, dict, dict]] = []
+    for it in items:
+        try:
+            item_date = date.fromisoformat(it["date"])
+        except (KeyError, ValueError):
+            continue
+        for r in target_rows:
+            try:
+                row_date = date.fromisoformat(r["date"])
+            except (KeyError, ValueError):
+                continue
+            gap = abs((row_date - item_date).days)
+            if gap > MATCH_MAX_GAP_DAYS:
+                continue
+            t, rt = norm(it["title"]), norm(r["topic"])
+            score = _similar(it["title"], r["topic"])
+            if t and rt:
+                if t == rt:
+                    score = 1.0
+                elif (t in rt or rt in t) and min(len(t), len(rt)) >= 6:
+                    score = max(score, 0.9)
+            # 同一天、差一天，比「标题也一样但差了 20 天」更可信
+            score += 0.04 if gap == 0 else (0.02 if gap == 1 else 0.0)
+            scored.append((score, it, r))
+
+    scored.sort(key=lambda x: -x[0])
+
+    used_items: set[int] = set()
+    used_rows: set[str] = set()
+    pairs: list[tuple[dict, dict]] = []
+    for score, it, r in scored:
+        key = id(it)
+        if key in used_items or r["id"] in used_rows:
+            continue
+        if score < MATCH_MIN_SIMILARITY:
+            continue
+        # 同一条作品的更强候选还没被占走 → 让给它。
+        # 比的是「基础分」，不含 0/1 天那点加分；否则标题完全一样的两条
+        # （只差一天）会永远互相让位，谁都配不上。基础分打平时按分数排序
+        # 已保证日期更近的在前，直接认它。
+        base = score - (0.04 if it["date"] == r["date"] else 0.02)
+        rivals = [
+            s - (0.04 if it2["date"] == r2["date"] else 0.02)
+            for s, it2, r2 in scored
+            if it2 is it and r2["id"] != r["id"] and r2["id"] not in used_rows
+        ]
+        if rivals:
+            top = max(rivals)
+            tied = abs(top - base) < 1e-9
+            if not tied and base < top + MATCH_MARGIN:
+                continue
+        used_items.add(key)
+        used_rows.add(r["id"])
+        pairs.append((r, it))
+
+    unmatched = [it for it in items if id(it) not in used_items]
+    return pairs, unmatched
+
+
+# --------------------------------------------------------------------------
 # 三个后台：解析 observe 出来的页面文本
 # --------------------------------------------------------------------------
 
@@ -268,18 +363,26 @@ def parse_wx(raw: str) -> list[dict]:
 
     列表不滚动的话只有导航栏，滚一下才渲染出数据；所以空结果是常态，
     让调用方重新滚一次，不要当成「这期没数据」。
+
+    标题里带「年」是常事（「都2026年了，还在用传统方式剪口播？」），所以
+    排除上一层候选时只能按「这一行是不是日期」判断，不能按「含不含年」——
+    按含年判断会把这类标题整条丢掉。
     """
     items = []
     lines = [_unescape(x).strip() for x in STATIC.findall(raw)]
+    date_re = re.compile(r"\d{4}年\d{1,2}月\d{1,2}日")
     i = 0
     while i < len(lines):
         if re.fullmatch(r"\d{4}年\d{2}月\d{2}日 \d{2}:\d{2}", lines[i]):
             title = ""
             for j in range(i - 1, max(-1, i - 4), -1):
                 cand = lines[j]
-                if cand and not re.fullmatch(r"[\d.]+[万亿]?", cand) and "年" not in cand:
-                    title = cand
-                    break
+                if not cand:
+                    continue
+                if re.fullmatch(r"[\d.]+[万亿]?", cand) or date_re.search(cand):
+                    continue
+                title = cand
+                break
             nums = []
             k = i + 1
             while k < len(lines) and len(nums) < 5:
@@ -290,7 +393,7 @@ def parse_wx(raw: str) -> list[dict]:
                     k += 1
                 else:
                     break
-            if title and len(nums) == 5:
+            if len(nums) == 5:
                 d = re.match(r"(\d{4})年(\d{2})月(\d{2})日", lines[i])
                 items.append(
                     {"title": title, "date": f"{d.group(1)}-{d.group(2)}-{d.group(3)}", "raw": nums}
@@ -614,12 +717,26 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
         return log
 
     matched = skipped = 0
-    for it in items:
-        row = match_row(rows, platform, it["date"], it["title"], it.get("aweme_id", ""))
-        if row is None:
-            print(f"  ? 未匹配到仓库记录：{it['date']} {it['title'][:30]}", file=sys.stderr)
-            skipped += 1
-            continue
+    # 抖音的 work_list 带 aweme_id，id 是唯一可靠的判据，保持逐条精确匹配；
+    # 小红书、视频号的列表页拿不到 id，只能按标题配，必须全局一对一配对，
+    # 否则标题被平台改写、或者晚一天发的那一批会全部落到「未匹配」。
+    if platform == "douyin":
+        pairs = []
+        leftovers = []
+        for it in items:
+            row = match_row(rows, platform, it["date"], it["title"], it.get("aweme_id", ""))
+            if row is None:
+                leftovers.append(it)
+            else:
+                pairs.append((row, it))
+    else:
+        pairs, leftovers = pair_items_to_rows(rows, platform, items)
+
+    for it in leftovers:
+        print(f"  ? 未匹配到仓库记录：{it['date']} {it['title'][:30]}", file=sys.stderr)
+        skipped += 1
+
+    for row, it in pairs:
         if it.get("blocked"):
             # 平台不给数据 → 保留最后读数并打 limited 标记，不清零
             diffs, why = mark_limited(

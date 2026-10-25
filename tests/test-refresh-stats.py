@@ -371,6 +371,83 @@ def test_match_by_work_id() -> None:
     check(by_title is not None and by_title["id"] == "a", "没有 id 时应退回标题匹配")
 
 
+# ---------------------------------------------------------------------------
+# 全局一对一配对：平台日期差一天、标题被改写时也要配上
+# ---------------------------------------------------------------------------
+
+def test_pair_items_to_rows() -> None:
+    rows = [
+        {"id": "2017-09-09_把Agent接入达芬奇", "date": "2026-09-09",
+         "topic": "把 Agent 接入达芬奇|用一个skill实现自动剪辑",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+        {"id": "2017-09-10_WorkBuddy", "date": "2026-09-10",
+         "topic": "WorkBuddy 接入 GPT、Gemini、Grok",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+        {"id": "2017-08-29_避免宕机", "date": "2026-08-29",
+         "topic": "如何避免dsh宕机？让AI工作台稳定运行的方法",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+        {"id": "2017-08-30_掌上Agent", "date": "2026-08-30",
+         "topic": "掌上Agent|自制dsh远程控制插件（已开源）",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+    ]
+    items = [
+        # 日期差一天、标题被改写，只看当天会漏
+        {"title": "把Agent接入达芬奇,用skill实现自动剪辑", "date": "2026-09-10", "raw": ["1"]},
+        {"title": "如何避免dsh宕机？AI工作台稳定运行的诀窍", "date": "2026-08-30", "raw": ["1"]},
+        # 标题完全不同：宁可报未匹配，也不能硬塞给同一天的另一条
+        {"title": "完全不存在的主题", "date": "2026-09-10", "raw": ["1"]},
+    ]
+    pairs, unmatched = rs.pair_items_to_rows(rows, "xiaohongshu", items)
+    got = {r["id"] for r, _ in pairs}
+    check("2017-09-09_把Agent接入达芬奇" in got, "差一天 + 标题改写时应配上正确的记录")
+    check("2017-08-29_避免宕机" in got, "差一天的「dsh宕机」应配对到 08-29 那期")
+    check("2017-09-10_WorkBuddy" not in got, "标题不同不能张冠李戴")
+    check(len(unmatched) == 1, f"配不上的应如实留在未匹配里，实际 {len(unmatched)}")
+
+    # 一条作品只能配一条记录：同标题的两条不会被同一条作品重复占用
+    dup_rows = [
+        {"id": "d1", "date": "2026-04-12", "topic": "用达芬奇5秒钟剪完一个片子是种什么体验？",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+        {"id": "d2", "date": "2026-04-13", "topic": "用达芬奇5秒钟剪完一个片子是种什么体验？",
+         "platforms": {"xiaohongshu": {"views": 1}}},
+    ]
+    dup_items = [{"title": "用达芬奇5秒钟剪完一个片子是种什么体验？", "date": "2026-04-12", "raw": ["1"]}]
+    pairs2, _ = rs.pair_items_to_rows(dup_rows, "xiaohongshu", dup_items)
+    check(len(pairs2) == 1 and pairs2[0][0]["id"] == "d1", "一条作品只配一条记录，且优先当天")
+
+    # 日期太远的根本不参与打分
+    far_rows = [{"id": "f1", "date": "2026-01-01", "topic": "同一个标题",
+                 "platforms": {"xiaohongshu": {"views": 1}}}]
+    pairs3, unmatched3 = rs.pair_items_to_rows(
+        far_rows, "xiaohongshu",
+        [{"title": "同一个标题", "date": "2026-09-01", "raw": ["1"]}],
+    )
+    check(not pairs3 and len(unmatched3) == 1, "差 40 天以上的不配对")
+
+
+# ---------------------------------------------------------------------------
+# 视频号：标题里带「年」不能被当成日期行丢掉
+# ---------------------------------------------------------------------------
+
+def test_wx_title_with_year() -> None:
+    raw = (
+        'StaticText "都2026年了，还在用传统方式剪口播？"\n'
+        'StaticText "2026年04月19日 23:23"\n'
+        'StaticText "已声明原创"\n'
+        'StaticText "作者修改过视频信息"\n'
+        'StaticText "1395"\n'
+        'StaticText "10"\n'
+        'StaticText "5"\n'
+        'StaticText "18"\n'
+        'StaticText "22"\n'
+    )
+    got = rs.parse_wx(raw)
+    check(len(got) == 1, f"标题含「年」的视频号作品应能解析出来，实际 {len(got)} 条")
+    if got:
+        check(got[0]["title"].startswith("都2026年了"), "标题应完整保留，不能被吞掉")
+        check(got[0]["raw"] == ["1395", "10", "5", "18", "22"], "五个数字应按列序读全")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
@@ -382,6 +459,8 @@ def main() -> int:
         test_apply_values,
         test_match_row,
         test_match_by_work_id,
+        test_pair_items_to_rows,
+        test_wx_title_with_year,
         test_mark_limited,
         test_zero_stays_zero,
     ]:
@@ -392,7 +471,7 @@ def main() -> int:
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"PASS: {checks} 项检查全部通过（列序、四平台解析、近似值、id 匹配）")
+    print(f"PASS: {checks} 项检查全部通过（列序、四平台解析、近似值、id 匹配、全局一对一配对）")
     return 0
 
 

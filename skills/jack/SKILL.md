@@ -27,7 +27,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.25.6"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.26.1"
 ```
 
 执行规则：
@@ -141,7 +141,7 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.25.6"
 
 ### 抖音走接口，不走列表页
 
-`creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=20&max_cursor=<ms>&scene=star_atlas&device_platform=android` 返回原始 JSON，`statistics` 里字段有名字：
+`creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<ms>&scene=star_atlas&device_platform=android` 返回原始 JSON，`statistics` 里字段有名字：
 
 ```
 play_count   digg_count   comment_count   share_count   collect_count
@@ -170,7 +170,7 @@ python3 scripts/refresh-stats.py --platform bilibili
 
 | 平台 | 打开哪里 | 备注 |
 | :--- | :--- | :--- |
-| 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?...` | 原始 JSON，字段有名字，优先走这条 |
+| 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?...&count=100...` | 原始 JSON，字段有名字，优先走这条 |
 | 小红书 | `creator.xiaohongshu.com/new/note-manager` | 裸数字，最依赖列序 |
 | 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**，否则只有导航栏 |
 
@@ -180,6 +180,10 @@ python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt /tmp
 ```
 
 抖音那个 JSON 很长，`observe` 会把它截断成一行。**存文件要拿到完整响应**（spill 文件或 `snapshot` 的原始文本），截断的 JSON 解析出来会少记录。
+
+`count` 用 **100**，不要用 20。接口照收，133 条只需翻 4 页而不是 7 页。翻页传上一页返回的 `max_cursor`，直到 `has_more: false`。
+
+**解析器四种形态都认，不用手工处理**：引号带不带反斜杠（spill 文件是普通引号，列表页文本是 `\"`）、冒号后带不带空格（`"a":1` 与 `"a": 1`）。直接把文件原样喂进去即可，`--in` 会自动剥离 `<pre>` 外壳。以前只认「转义 + 紧凑」一种，照文档拿 spill 文件来解析会静默得到 0 条。
 
 先加 `--dry-run` 看会改什么，确认无误再落盘。
 
@@ -213,6 +217,16 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 
 `reason` 写平台给的原话：`减少作品推荐`、`仅自己可见`、`已删除`、`已下架`、`作品已不可见`。**「仅自己可见」是最容易看错的一种**：后台的 `play_count` 明明写着 0，看着像真没人看，其实是作品只对作者可见，平台根本不给统计。按 0 记就把「这条没被推过」写成了「这条推了但没人看」，是两件完全不同的事。
 
+**「减少作品推荐」和「拿不到数」是两件事，别混。** 后台标着「减少作品推荐」的作品，`statistics` 常常照样给精确数字——它只是被压了推荐，不是不给统计。判据永远是**五个指标读没读成 `-`**，不是后台有没有挂限流标签：
+
+| 后台状态 | 接口给的数 | 怎么记 |
+| :--- | :--- | :--- |
+| 减少作品推荐 | 五个精确数字 | **照实记数，不打 `limited`** |
+| 减少作品推荐 | 五个 `-` | 保留最后读数，打 `limited` |
+| 仅自己可见（`self_see`） | 全是 0 | 保留最后读数，打 `limited` |
+
+实测过一条：后台挂着「减少作品推荐」，接口给了 171 → 189，那它就是在缓慢增长，照常记 189。给它打上 `limited` 反而等于说了句假话。
+
 **读数据时，带 `limited` 的期次不能和正常期次比转化率。** 它的分子冻在限流那天，分母还在动，算出来必然偏低。复盘时要单独说「这期被限流了，数据停在 X 月 X 日」，而不是把它混进平均值。
 
 没有 `limited` 标记、五个指标全是 0 的，才是平台真的返回了 0，照实记，不解释。
@@ -244,8 +258,39 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 ### 分寸
 
 - **只刷近期是不够的。** 老作品会长期涨（实测 09-26 那期从 2906 涨到 5770），只刷最近十几期会让长期数据一直偏小。B 站既然能批量跑，就整批刷。
+- **小红书、视频号刷不全，如实说明。** 这两个平台只能靠列表页，第一屏十几条，下面的要一直往下滚。抖音能翻页拿全 133 条，它们不能。结果就是：303 条小红书记录里，241 条是 8 月之前的旧快照。刷完要跟人说清「这次只更新了最近 N 条，老期次还是旧数」，别让人以为整库都是今天的。要真正刷完就得一直滚到底，一次几十屏，值不值得由人定。
 - **数据是快照，不是实时。** 刷完之后页面上写的还是那天的数，别把「我刷过了」说成「这是此刻的数」。
 - **别为了让数字好看而挑平台。** 四个平台一起刷，缺哪个就如实缺着。
+
+## 收录新一期
+
+用户发来新视频的逐字稿或封面时走这里。**字段规则的真源是仓库里的 `data/README.md`，别凭记忆填。**
+
+1. **逐字稿**放 `transcripts/md/YYYY-MM-DD_标题.md`，头部三行照抄现有格式：视频原片、发布日期、视频时长。原片只写 B 站与抖音的永久直链，小红书和视频号写平台主页。
+2. **数据行**加进 `data/videos.jsonl`，最新的在最前面。
+3. **封面**放 `docs/covers/<日期>_<主题>/`，三个槽位各一张，再更新 `docs/covers/index.json`。
+4. 收尾跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`。
+
+### `id` 是推导出来的，不是自己起的
+
+```
+id = date + "_" + topic 里的空白换成下划线
+```
+
+`2026-10-26` + `AI博主不上班 送外卖 逃避工作` → `2026-10-26_AI博主不上班_送外卖_逃避工作`
+
+**最容易错的一处**：`id` 里不留空格。`topic` 保留原样带空格，只有 `id` 换成下划线。写错时 `check-data.mjs` 会直接报「id 与『日期_标题』不符」并给出正确答案，照抄即可。逐字稿的**文件名**则保留空格（`2026-10-26_AI博主不上班 送外卖 逃避工作.md`）——文件名和 `id` 不是一回事。
+
+### 三个平台的 `url` 写法不一样
+
+- **B 站、抖音**：作品永久直链（`https://www.bilibili.com/video/BV.../`、`https://www.douyin.com/video/<数字id>`）。
+- **小红书、视频号**：只写平台主页（`https://www.xiaohongshu.com`、`https://channels.weixin.qq.com`）。它们的笔记链接带风控和 Session，几天就失效，写进去等于留一堆死链。
+
+### 用户直接给封面图时
+
+自己给的图比平台抓的清楚，直接用，别去抓一遍。但**三个槽位必须来自同一期**——曾经把 A 期的 4:3 和 B 期的 3:4 拼进一张对比图，看着完全合理，结论是错的。
+
+处理时压到长边 800、JPEG q78（跟 `fetch-covers.py` 的 `press()` 一致），索引里 `source` 写 `manual`。索引条目要写全 `size` / `slot` / `shape`，`shape` 用 `shape_of(w, h)` 算，别手填。写完跑 `python3 scripts/fetch-covers.py --verify` 体检。
 
 ## 封面模式
 
@@ -285,8 +330,9 @@ docs/covers/index.json    # 索引，构建站点时并入 docs/data/videos.json
 
 ```bash
 # 1) 先在浏览器里把抖音 work_list 逐页翻完，页面文本存盘
-#    打开 creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=20&max_cursor=<cursor>&scene=star_atlas&device_platform=android
+#    打开 creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<cursor>&scene=star_atlas&device_platform=android
 #    每页用 bsk_inspect snapshot 落成文件，从尾部取下一个 max_cursor 继续
+#    count 用 100：133 条只需翻 4 页，用 20 要翻 7 页
 
 # 2) 离线解析成按 aweme_id 索引的清单
 python3 scripts/parse-dy-dump.py --in /tmp/dy-p1.txt /tmp/dy-p2.txt ... --out /tmp/dy-covers.json

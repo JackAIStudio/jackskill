@@ -308,10 +308,14 @@ def test_zero_stays_zero() -> None:
 # 抖音走 work_list 的 statistics：精确值，且能认出「平台不给看」
 # ---------------------------------------------------------------------------
 
-# 转义过的原始 JSON 片段（和 observe 出来的形态一致）：
-# 一条正常的（2124 播放），一条 self_see=true 的（平台不给数）。
+# 抖音的 JSON 在不同环节会被存成不同形态，解析器必须都认：
+#   转义（列表页 StaticText）／未转义（spill 文件、<pre> 内层）；
+#   紧凑（`"a":1`）／带空格（`"a": 1`）。
+# 以前只认「转义 + 紧凑」，照文档拿 spill 文件来解析会得到 0 条。
+# 下面两份 fixture 内容相同，只是序列化形态不同，用来钉住这个容错。
 DY_JSON = (
     r'\"desc\":\"用Codex来获取、整理和分析浏览器网页数据\",'
+    r'\"duration\":172100,'
     r'\"create_time\":1785148780,'
     r'\"statistics\":{\"aweme_id\":\"7667155598017957160\",\"collect_count\":18,'
     r'\"comment_count\":2,\"digg_count\":33,\"forward_count\":0,'
@@ -319,11 +323,35 @@ DY_JSON = (
     r'\"status\":{\"allow_comment\":true,\"is_delete\":false,\"is_private\":false,'
     r'\"is_prohibited\":false,\"self_see\":false,\"with_goods\":false},'
     r'\"desc\":\"解决CodeX每次会话都要经过5次reconnecting\",'
+    r'\"duration\":79400,'
     r'\"create_time\":1784700000,'
     r'\"statistics\":{\"aweme_id\":\"7663119071394712872\",\"collect_count\":0,'
     r'\"comment_count\":0,\"digg_count\":0,\"play_count\":0,\"share_count\":0},'
     r'\"status\":{\"is_delete\":false,\"is_private\":false,'
     r'\"is_prohibited\":false,\"self_see\":true}'
+)
+
+# 同一份内容，未转义 + 带空格（`json.dumps` 的默认输出形态）。
+DY_JSON_PLAIN = (
+    '{"desc":"用Codex来获取、整理和分析浏览器网页数据",'
+    '"duration":172100,'
+    '"create_time":1785148780,'
+    '"statistics":{"aweme_id":"7667155598017957160","collect_count":18,'
+    '"comment_count":2,"digg_count":33,"forward_count":0,'
+    '"live_watch_count":0,"play_count":2124,"share_count":1},'
+    '"status":{"allow_comment":true,"is_delete":false,"is_private":false,'
+    '"is_prohibited":false,"self_see":false,"with_goods":false}}'
+)
+
+# 章节 desc 紧挨在 statistics 前面：标题不能读成「结语」。
+DY_JSON_WITH_CHAPTERS = (
+    '{"desc":"真实标题 #话题","duration":158467,"create_time":1793007816,'
+    '"recommend_chapter_info":{"recommend_chapter_list":['
+    '{"desc":"引言","detail":"","timestamp":1500},'
+    '{"desc":"结语","detail":"","timestamp":133000}]},'
+    '"statistics":{"aweme_id":"7700909905561144626","collect_count":0,'
+    '"comment_count":0,"digg_count":0,"play_count":15,"share_count":0},'
+    '"status":{"is_delete":false,"self_see":false}}'
 )
 
 
@@ -338,6 +366,8 @@ def test_dy_json_parse() -> None:
         # 顺序必须是 播放 点赞 评论 分享 收藏
         check(normal["raw"] == ["2124", "33", "2", "1", "18"],
               f"statistics 取值或顺序不对：{normal['raw']}")
+        check(normal.get("title") == "用Codex来获取、整理和分析浏览器网页数据",
+              f"标题不对：{normal.get('title')!r}")
 
     hidden = next((i for i in items if i.get("aweme_id") == "7663119071394712872"), None)
     check(hidden is not None, "应解析出仅自己可见那条")
@@ -349,6 +379,87 @@ def test_dy_json_parse() -> None:
     # 空输入不能崩，也不能瞎编
     check(rs.parse_dy_json("") == [], "空文本应解析出 0 条")
     check(rs.parse_dy_json("StaticText \"播放\"") == [], "列表页文本应解析出 0 条（交给 parse_dy）")
+
+
+def test_dy_json_serialization_tolerance() -> None:
+    """未转义 / 带空格 / <pre> 包裹的形态都要认。
+
+    照 SKILL.md 的指引拿 spill 文件（未转义）来解析，以前会静默得到 0 条，
+    操作者只能手工再转义一遍。四种形态必须解出同样的结果。
+    """
+    plain = rs.parse_dy_json(DY_JSON_PLAIN)
+    check(len(plain) == 1, f"未转义形态应解析出 1 条，实际 {len(plain)}")
+    if plain:
+        check(plain[0]["aweme_id"] == "7667155598017957160", "未转义形态的作品 id 不对")
+        check(plain[0]["raw"] == ["2124", "33", "2", "1", "18"],
+              f"未转义形态的取值不对：{plain[0]['raw']}")
+        check(plain[0]["date"] == "2026-07-27",
+              f"未转义形态的日期不对：{plain[0]['date']!r}")
+
+    # <pre> 包裹（spill 文件 / 接口页面）也要认
+    wrapped = "<html><body><pre>" + DY_JSON_PLAIN + "</pre></body></html>"
+    check(len(rs.parse_dy_json(wrapped)) == 1, "包在 <pre> 里的应照样解析")
+
+    # 带空格 + 转义
+    spaced = DY_JSON.replace('":"', '": "').replace('",\\"', '", \\"')
+    check(len(rs.parse_dy_json(spaced)) == 2, "带空格又转义的形态也要认")
+
+
+def test_dy_title_not_from_chapters() -> None:
+    """标题要取 item 自己的 desc，不能取 statistics 前最近的 desc。
+
+    `recommend_chapter_info.recommend_chapter_list` 里每个章节都有一个 desc
+    （引言 / 结语 / 取餐与送餐…），它就排在 statistics 前面。按「最近的
+    desc」会把这期的标题读成「结语」，然后拿它去匹配仓库记录必然对不上。
+    """
+    items = rs.parse_dy_json(DY_JSON_WITH_CHAPTERS)
+    check(len(items) == 1, f"应解析出 1 条，实际 {len(items)}")
+    if items:
+        check(items[0]["title"] == "真实标题 #话题",
+              f"标题被章节 desc 抢走了：{items[0]['title']!r}")
+        check(items[0]["raw"] == ["15", "0", "0", "0", "0"],
+              f"取值不对：{items[0]['raw']}")
+
+
+def test_dy_date_not_from_neighbour_item() -> None:
+    """日期不能取到隔壁 item 的 create_time。
+
+    真实数据里踩过：某条窗口尾部混进了另一条作品（desc 为空）的碎片，
+    那个 create_time 排在后面，按「窗口里最后一个」取就把 2026-03-02
+    读成了 2026-06-22，于是整条对不上仓库、被报成「未匹配」。
+
+    这里拼两条 item：第一条（20260401）在前，第二条（20260101）的窗口里
+    塞了一个属于第三条的靠后时间戳。第二条的日期必须仍是 2026-01-01。
+    """
+    item_a = (
+        '{"desc":"第一条作品","duration":100,"create_time":1775000000,'
+        '"statistics":{"aweme_id":"1000000000000000001","play_count":10,'
+        '"digg_count":0,"comment_count":0,"share_count":0,"collect_count":0},'
+        '"status":{"is_delete":false,"self_see":false}}'
+    )
+    # 第二条：desc 前面有自己的 create_time；desc 之后又混了一个更晚的
+    item_b = (
+        '{"desc":"第二条作品","duration":200,"create_time":1767000000,'
+        '"recommend_chapter_info":{"recommend_chapter_list":['
+        '{"desc":"结语","detail":"","timestamp":1000}]},'
+        '"statistics":{"aweme_id":"1000000000000000002","play_count":20,'
+        '"digg_count":1,"comment_count":0,"share_count":0,"collect_count":0},'
+        '"status":{"is_delete":false,"self_see":false}},'
+        '{"desc":"","create_time":1782000000,"deleted_index":[]}'
+    )
+    items = rs.parse_dy_json("[" + item_a + "," + item_b + "]")
+    check(len(items) == 2, f"应解析出 2 条，实际 {len(items)}")
+    by_id = {i["aweme_id"]: i for i in items}
+    a = by_id.get("1000000000000000001")
+    b = by_id.get("1000000000000000002")
+    if a:
+        check(a["date"] == "2026-04-01", f"第一条日期被带偏：{a['date']!r}")
+        check(a["title"] == "第一条作品", f"第一条标题不对：{a['title']!r}")
+    if b:
+        check(b["date"] == "2025-12-29", f"第二条日期被隔壁 item 顶掉了：{b['date']!r}")
+        check(b["title"] == "第二条作品", f"第二条标题不对：{b['title']!r}")
+        check(b["raw"] == ["20", "1", "0", "0", "0"], f"第二条取值不对：{b['raw']}")
+
 
 
 def test_match_by_work_id() -> None:
@@ -455,6 +566,9 @@ def main() -> int:
         test_wx_parse,
         test_dy_parse,
         test_dy_json_parse,
+        test_dy_json_serialization_tolerance,
+        test_dy_title_not_from_chapters,
+        test_dy_date_not_from_neighbour_item,
         test_parse_count,
         test_apply_values,
         test_match_row,

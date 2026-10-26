@@ -498,6 +498,60 @@ DY_HIDDEN_FLAGS = {
 }
 
 
+# 抖音的 JSON 会被不同环节存成两种形态：
+#   1. 转义形态 —— 引号带反斜杠：{\"statistics\":{\"aweme_id\":\"123\"...
+#      （列表页 observe 抓下来的 StaticText、早期导出的文本）
+#   2. 未转义形态 —— 普通引号：{"statistics":{"aweme_id":"123"...
+#      （bsk_inspect 的 spill 文件、直接 json.load 出来的 <pre> 内层）
+# 两种都是同一份数据，解析器必须都认。写死任一种，另一种就静默解析出 0 条。
+#
+# 做法是**先归一化再解析**，而不是让一个正则同时兼容两种引号。
+# 试过后者：转义形态里 `\\.` 会把 `\"` 也当成转义序列吃掉，一路吃到下一条
+# 记录，标题就串到别的作品上了。归一化之后只写一套简单正则，好读也好测。
+def normalize_dy_json(raw: str) -> str:
+    """把转义形态还原成普通 JSON 文本；已经是普通形态就原样返回。"""
+    if '"statistics"' in raw:
+        return raw
+    if '\\"statistics\\"' not in raw:
+        return raw
+    out: list[str] = []
+    i, n = 0, len(raw)
+    while i < n:
+        c = raw[i]
+        if c == "\\" and i + 1 < n and raw[i + 1] in ('"', "\\"):
+            out.append(raw[i + 1])
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+# 紧凑和带空格的序列化都要认：`"a":1` 与 `"a": 1` 是同一份数据。
+_DY_COLON = r":\s*"
+_DY_COMMA = r",\s*"
+# JSON 字符串的内容：不含未转义引号，允许 \" 这样的转义序列。
+# 必须写成这样、不能用 `.*?`——lazy 的点号会跨过引号跑很远，把空字符串
+# 的 desc 一路匹配到 item 自己的 duration 上，标题就串到别的字段去了。
+_DY_STR = r'((?:[^"\\]|\\.)*)'
+
+_RE_DY_RECORD = re.compile(
+    r'"statistics"\s*:\s*\{\s*"aweme_id"\s*:\s*"(\d+)"'
+    + r"(.*?)\}\s*" + _DY_COMMA + r'"status"\s*:\s*\{(.*?)\}'
+)
+
+# 作品标题取「紧跟着 duration 的那个 desc」，也就是 item 自己的描述。
+# 不能用「statistics 之前最近的一个 desc」——`recommend_chapter_info` 里
+# 章节的 desc（引言/结语/取餐与送餐…）就排在 statistics 前面，按最近取会
+# 把标题读成「结语」。item 级 desc 后面一定跟 duration，章节的后面跟 detail。
+_RE_DY_TITLE = re.compile(
+    r'"desc"\s*:\s*"' + _DY_STR + r'"\s*' + _DY_COMMA + r'"duration"\s*:'
+)
+# next_info.item_title 是去掉话题标签的干净标题，做兜底。
+_RE_DY_ITEM_TITLE = re.compile(r'"item_title"\s*:\s*"' + _DY_STR + r'"')
+_RE_DY_TIME = re.compile(r'"create_time"\s*:\s*(\d{9,10})')
+
+
 def parse_dy_json(raw: str) -> list[dict]:
     """抖音：从 work_list 接口的原始 JSON 里取 statistics，精确值，不靠列序。
 
@@ -512,35 +566,57 @@ def parse_dy_json(raw: str) -> list[dict]:
     锚点是 `"statistics":{"aweme_id":"<id>"`：它同时给出作品 id 和五个指标，
     紧跟着的 `"status":{...}` 给出可见性。两段都在同一条记录里，位置稳定。
 
+    引号带不带反斜杠都认（见 `normalize_dy_json`）：同一个接口，spill 文件存
+    下来是未转义形态，而列表页文本是转义形态。以前只认转义的，照文档拿
+    spill 文件来解析会得到 0 条，还得手工再转义一遍。
+
     返回值和 parse_dy 一致，所以上层逻辑不用改：`raw` 是五个精确数字的字符串，
     或者 `blocked=True` 表示平台不给数（这时保留最后读数，打 limited）。
     """
+    raw = normalize_dy_json(raw)
     items = []
-    pattern = re.compile(
-        r'\\"statistics\\":\{\\"aweme_id\\":\\"(\d+)\\"(.*?)\},\\"status\\":\{(.*?)\}'
-    )
+    pattern = _RE_DY_RECORD
+    prev_end = 0
     for m in pattern.finditer(raw):
         aid, stat_body, status_body = m.group(1), m.group(2), m.group(3)
 
         values: dict[str, str] = {}
         for field, key in DY_STAT_KEYS.items():
-            vm = re.search(r'\\"' + field + r'\\":(\d+)', stat_body)
+            vm = re.search(r'"' + field + r'"\s*:\s*(\d+)', stat_body)
             if vm:
                 values[key] = vm.group(1)
 
-        # 标题和日期：从这条记录往前找最近的一份。desc 里带话题标签，
-        # 和仓库里的 topic 不一定完全一致，靠上层的归一化匹配兜底。
-        pre = raw[max(0, m.start() - 30000):m.start()]
-        dm = list(re.finditer(r'\\"desc\\":\\"(.*?)\\"', pre))
-        title = _unescape(dm[-1].group(1)) if dm else ""
-        cm = list(re.finditer(r'\\"create_time\\":(\d{9,10})', pre))
+        # 标题和日期：在这条记录的「窗口」里往前找。窗口的左边界是**上一条
+        # 记录的结束位置**，不是「往前数 30000 个字符」——后者会跨过好几条，
+        # 把别人的 create_time 抓过来（实测 2026-03-02 那期被读成 06-22）。
+        pre = raw[prev_end:m.start()]
+        prev_end = m.end()
+        tm = list(_RE_DY_TITLE.finditer(pre))
+        if tm:
+            title = _unescape(tm[-1].group(1))
+        else:
+            im = list(_RE_DY_ITEM_TITLE.finditer(pre))
+            title = _unescape(im[-1].group(1)) if im else ""
+        # 日期取「离本条 desc 最近的那个 create_time」。
+        # 抖音把 create_time 排在 desc 前约 320 字符（实测 133 条全如此），
+        # 但也见过反过来的写法，所以两边都找，取距离最近的那个。
+        # 不能用「窗口里最后一个 create_time」——窗口尾部常混进别的 item
+        # 的碎片（desc 为空的那种），它的时间戳会把日期顶掉。
         when = ""
-        if cm:
-            when = time.strftime("%Y-%m-%d", time.localtime(int(cm[-1].group(1))))
+        if tm:
+            anchor = tm[-1].end()
+            cm = list(_RE_DY_TIME.finditer(pre))
+            if cm:
+                nearest = min(cm, key=lambda c: abs(c.start() - anchor))
+                when = time.strftime("%Y-%m-%d", time.localtime(int(nearest.group(1))))
+        else:
+            cm = list(_RE_DY_TIME.finditer(pre))
+            if cm:
+                when = time.strftime("%Y-%m-%d", time.localtime(int(cm[-1].group(1))))
 
         hidden = next(
             (why for flag, why in DY_HIDDEN_FLAGS.items()
-             if re.search(r'\\"' + flag + r'\\":true', status_body)),
+             if re.search(r'"' + flag + r'"\s*:\s*true', status_body)),
             None,
         )
 
@@ -763,7 +839,42 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
             log.append(f"{it['date']} {row['topic'][:24]}: " + ", ".join(diffs))
 
     print(f"\n{platform}：匹配 {matched} 条，跳过 {skipped} 条", file=sys.stderr)
+    report_coverage(rows, platform, matched, items)
     return log
+
+
+def report_coverage(rows: list[dict], platform: str, matched: int, items: list[dict]) -> None:
+    """说清这次刷到了哪儿、没刷到哪儿。
+
+    小红书和视频号只能靠列表页，第一屏就十几条，老期次刷不到。
+    以前只报「匹配 N 条」，不说覆盖范围，很容易让人以为整库都是今天的数。
+    刷完把「最新一条是哪天、最老一条是哪天、库里最早那条是哪天」摆出来，
+    差距一眼看得出。
+    """
+    fresh = [it["date"] for it in items if it.get("date")]
+    if not fresh:
+        return
+    seen_rows = [r for r in rows if platform in r.get("platforms", {})]
+    if not seen_rows:
+        return
+    all_dates = sorted(r["date"] for r in seen_rows)
+    got_newest, got_oldest = max(fresh), min(fresh)
+    missing_before = [d for d in all_dates if d < got_oldest]
+    print(
+        f"  本次覆盖：{got_oldest} ~ {got_newest}（{matched} 期）",
+        file=sys.stderr,
+    )
+    if missing_before:
+        print(
+            f"  ! 早于 {got_oldest} 的 {len(missing_before)} 期这次没读到，"
+            f"它们的数是旧快照（最早一期 {missing_before[0]}）",
+            file=sys.stderr,
+        )
+    if platform in ("xiaohongshu", "wechat_channels"):
+        print(
+            "    这两个平台只能靠列表页，要刷更早的期次得一直往下滚。",
+            file=sys.stderr,
+        )
 
 
 # --------------------------------------------------------------------------

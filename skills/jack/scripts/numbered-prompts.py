@@ -154,14 +154,26 @@ def get_prompt(code: str) -> str:
     return content
 
 
-def find_transcripts_dir() -> Path | None:
-    """从脚本所在位置向上探测仓库根下的 transcripts/md 目录（兼容 symlink 安装）。"""
+def find_repo_root() -> Path | None:
+    """从脚本所在位置向上探测仓库根（兼容 symlink 安装）。
+
+    判据是「这一层同时有 data/ 和 transcripts/」，任缺一个都不算——
+    只装了一份 skill 副本的环境探测不到，调用方据此说明「仅完整克隆时可用」，
+    而不是去找一个不存在的路径。
+    """
     here = Path(__file__).resolve()
     for parent in here.parents:
-        candidate = parent / "transcripts" / "md"
-        if candidate.is_dir():
-            return parent / "transcripts"
+        if (parent / "data").is_dir() and (parent / "transcripts").is_dir():
+            return parent
     return None
+
+
+def find_transcripts_dir() -> Path | None:
+    """仓库根下的 transcripts 目录。逐字稿视图和粉丝视图共用同一个根探测。"""
+    root = find_repo_root()
+    if root is None or not (root / "transcripts" / "md").is_dir():
+        return None
+    return root / "transcripts"
 
 
 BODY_MARKER = re.compile(r"^##\s.*逐字稿.*$", re.MULTILINE)
@@ -209,6 +221,64 @@ def classify(entry: dict[str, str]) -> str:
         if any(keyword in head for keyword in keywords):
             return topic
     return "其他"
+
+
+PLATFORM_LABELS = {
+    "bilibili": "B站",
+    "douyin": "抖音",
+    "xiaohongshu": "小红书",
+    "wechat_channels": "视频号",
+}
+
+
+def followers_overview() -> str | None:
+    """读 data/followers.jsonl，给出各平台最新粉丝数和较上一次的变化。
+
+    返回 None 表示这个环境里没有粉丝数据（比如只装了 skill 副本），
+    由调用方决定是跳过还是说明——不要编一个数出来。
+    """
+    root = find_repo_root()
+    if root is None:
+        return None
+    data_file = root / "data" / "followers.jsonl"
+    if not data_file.is_file():
+        return None
+    try:
+        snaps = [
+            json.loads(line)
+            for line in data_file.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not snaps:
+        return None
+    snaps.sort(key=lambda s: s.get("date", ""), reverse=True)
+
+    # 最近两条，用来算涨粉。只有一条时就说「还看不出趋势」，别编。
+    latest, prev = snaps[0], (snaps[1] if len(snaps) > 1 else None)
+    parts = []
+    for key, label in PLATFORM_LABELS.items():
+        cur = (latest.get("platforms") or {}).get(key)
+        if not cur:
+            continue
+        n = cur.get("followers", 0)
+        text = f"{label} {n:,}"
+        if prev:
+            before = (prev.get("platforms") or {}).get(key)
+            if before:
+                diff = n - before.get("followers", 0)
+                text += f"（{diff:+,}）" if diff else "（持平）"
+        parts.append(text)
+    if not parts:
+        return None
+
+    lines = [f"粉丝（{latest.get('date')}）：" + " · ".join(parts)]
+    if prev:
+        lines.append(f"括号里是较 {prev.get('date')} 的变化。")
+    else:
+        lines.append("目前只有一次快照，还看不出涨粉；隔天再记一次就有对比了。")
+    return "\n".join(lines)
 
 
 def transcripts_overview(entries: list[dict[str, str]]) -> str:
@@ -300,6 +370,12 @@ def main() -> int:
                 for item in items:
                     print(f"- /jack {item['id']} ｜ {item['title']}：{item['purpose']}")
             print()
+            # 粉丝数读不到就整段跳过，不打印一行「—」占位——
+            # 那会让人以为粉丝数是 0。
+            follow = followers_overview()
+            if follow:
+                print(follow)
+                print()
             try:
                 print(transcripts_overview(load_transcripts()))
             except CatalogError:

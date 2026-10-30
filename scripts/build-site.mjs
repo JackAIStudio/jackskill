@@ -178,6 +178,31 @@ function readCovers() {
   return map;
 }
 
+/**
+ * 封面索引里的 id 必须和记录 id 一字不差，否则 coversById.get() 静默落空，
+ * 页面上那一期的封面整块不出现，而构建全程一声不响。
+ *
+ * 实际踩过：手工往索引里加 10-26 那条时，id 保留了空格
+ * （`2026-10-26_AI博主不上班 送外卖 逃避工作`），而记录 id 里空格已换成
+ * 下划线。文件都在、索引也写了，页面却一直不显示封面。
+ *
+ * 这里按「去掉空格和下划线后是否相等」认常见手误，报得具体一点；
+ * 认不出来的照实报未匹配。
+ */
+function checkCoverIds(covers) {
+  const known = new Map(videos.map((v) => [v.id, v]));
+  const loose = new Map(videos.map((v) => [v.id.replace(/[\s_]/g, ""), v]));
+  for (const id of covers.keys()) {
+    if (known.has(id)) continue;
+    const guess = loose.get(id.replace(/[\s_]/g, ""));
+    warnings.push(
+      guess
+        ? `封面索引的 id 与记录对不上（多半是空格没换成下划线）：${id} → 应写作 ${guess.id}`
+        : `封面索引里的 id 在数据里找不到对应记录：${id}`,
+    );
+  }
+}
+
 const coversById = readCovers();
 
 /**
@@ -270,6 +295,9 @@ const videos = records
     };
   })
   .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+// 封面索引对不上的情况在 videos 建好之后才查得了——这里依的是记录 id。
+checkCoverIds(coversById);
 
 const dates = videos.map((v) => v.date).filter(Boolean).sort();
 const payload = {

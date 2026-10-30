@@ -328,3 +328,41 @@ table.gloss td:first-child { color: var(--ink); white-space: nowrap; }
   /* 窄屏上第一列的 nowrap 会把整张表顶出去 */
   table.gloss td:first-child { white-space: normal; }
 }
+
+/* ---------- 粉丝 ---------- */
+
+/* 四张卡片等宽，窗口窄了自己折行。粉丝是账号级的存量，
+   和下面那张「一行一期」的作品表不是一套东西，所以单独成块、单独排版。 */
+.follow-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+.follow-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px 14px;
+}
+/* 没采到的平台压暗，但卡片照旧占位——缺四个里的哪一个要一眼看得见，
+   悄悄少一张卡反而会被当成那个平台不存在。 */
+.follow-card.is-missing { background: #fcfbf9; }
+.follow-card.is-missing .fc-num { color: #c9c3b9; }
+.fc-head {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; color: var(--ink-2); font-weight: 560;
+}
+.fc-num {
+  margin-top: 6px;
+  font-size: 28px; line-height: 1.15; font-weight: 640;
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.fc-sub { margin-top: 6px; font-size: 12.5px; color: var(--ink-3); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.fc-sub .fc-up { color: #1a7f37; font-variant-numeric: tabular-nums; font-weight: 560; }
+.fc-sub .fc-down { color: #b3261e; font-variant-numeric: tabular-nums; font-weight: 560; }
+.fc-sub .fc-flat { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.fc-sub .fc-since { color: var(--ink-3); }
+/* 涨粉曲线的小格标签：平台名照平台色，范围用灰字跟着，
+   让人一眼知道这格的纵轴是放大过的。（SVG 里的字号用 fill 控制，不能用 CSS 的 color） */
+.facet-label { font-size: 12px; fill: var(--ink-2); font-weight: 560; }
+.facet-label .facet-range { fill: var(--ink-3); font-weight: 400; font-family: var(--mono); font-size: 11px; }

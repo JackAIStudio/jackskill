@@ -32,6 +32,9 @@ const SITE_ARTIFACT = path.join(SITE_DIR, "data/videos.json");
 // build-site.mjs 的全部输入，用来判断产物过没过期；那边加输入这里也要加。
 const SOURCE_FILES = [
   path.join(REPO_ROOT, "data/videos.jsonl"),
+  // 粉丝数是另一份真源、另一份产物。忘了加这一行，改完粉丝数打开预览会看到旧页面，
+  // 还会以为是写错了。
+  path.join(REPO_ROOT, "data/followers.jsonl"),
   path.join(REPO_ROOT, "skills/jack/numbered-prompts/catalog.json"),
 ];
 const TRANSCRIPT_DIR = path.join(REPO_ROOT, "transcripts/md");

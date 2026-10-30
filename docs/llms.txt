@@ -1,11 +1,11 @@
 # JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
-> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 391 条、视频口播逐字稿 223 篇（约 17 万字），以及 4 个自研工具的编号规范。
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 391 条、视频口播逐字稿 223 篇（约 17 万字）、四平台粉丝数快照 1 条，以及 4 个自研工具的编号规范。
 
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
 时间跨度 2023-03-30 至 2026-10-26，覆盖 B 站、抖音、小红书、微信视频号四个平台。
 
-本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-30T06:37:53.592Z。
+本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-10-30T07:05:57.626Z。
 
 ## 安装与调用
 
@@ -21,7 +21,14 @@
 - [逐字稿目录（Markdown 真源）](https://github.com/JackAIStudio/jackskill/tree/main/transcripts/md)：223 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
 - [数据文件说明](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/README.md)：字段定义与口径。
 
-注意：数据站页面 https://jackaistudio.github.io/jackskill/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面第一或第二个链接。
+### 粉丝数
+
+- [粉丝快照（单文件全集）](https://jackaistudio.github.io/jackskill/data/followers.json)：四平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 4 个平台有数，最新快照 2026-10-30。
+- [粉丝数真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/followers.jsonl)：每行一条快照，是上面那份的来源。
+
+粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，四个平台是四个账号。要「涨粉」就看两条快照的差。
+
+注意：数据站页面 https://jackaistudio.github.io/jackskill/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面作品与粉丝那几个链接。
 
 ## 调用规范
 

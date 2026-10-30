@@ -34,7 +34,9 @@
       </div>
       <p class="note">
         <a href="data/videos.json">data/videos.json</a> —— 单文件含全部作品指标与逐字稿正文。<br>
-        <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl">data/videos.jsonl</a> —— 数据真源，每行一条记录。<br>
+        <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl">data/videos.jsonl</a> —— 作品数据真源，每行一条记录。<br>
+        <a href="data/followers.json">data/followers.json</a> —— 四平台粉丝数快照（账号级，一天一条）。<br>
+        <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/followers.jsonl">data/followers.jsonl</a> —— 粉丝数真源。<br>
         <a href="llms.txt">llms.txt</a> —— 机器可读索引，列出本仓库全部可抓取资源。
       </p>
     </section>
@@ -72,6 +74,25 @@
     <p class="hint">点任意一行打开右侧明细：分平台数据、原片链接与当期逐字稿全文。点列头可排序，再点一次换方向。</p>
   </section>
 
+  <section class="section" id="followers">
+    <div class="section-head">
+      <h2>粉丝</h2>
+      <p class="note">
+        作品表看的是<strong>这条视频有多少人刷到</strong>，这一节看的是<strong>账号留住了多少人</strong>。
+        两者不是一回事：播放会随时间摊平，粉丝才是复利。数字是账号级的快照，<strong>只有当下的数，
+        不能相加，也不和上面任何作品指标合并</strong>——四个平台是四个账号。
+      </p>
+    </div>
+    <div class="follow-cards" id="followCards"></div>
+    <p class="hint" id="followNote"></p>
+
+    <div class="section-head gloss-sub" id="followTrendHead">
+      <h3>涨粉曲线</h3>
+    </div>
+    <div class="chart-box"><svg id="followChart" role="img" aria-label="各平台粉丝数变化"></svg></div>
+    <div class="legend" id="followLegend"></div>
+  </section>
+
   <section class="section" id="platforms">
     <div class="section-head">
       <h2>平台表现</h2>
@@ -84,6 +105,10 @@
       <table class="plat-table" id="platTable"></table>
     </div>
     <p class="hint" id="platNote"></p>
+    <p class="hint">
+      这一张表里没有粉丝数。粉丝是账号级数据（见上面「粉丝」一节），
+      和「一行一期、可以相加」的作品指标不是一套口径，混在一张表里会被当成能加的量。
+    </p>
   </section>
 
   <section class="section" id="timeline">
@@ -133,6 +158,15 @@
             <td>把播放量排序，取中间那个</td>
             <td>不用平均：单条爆款能把平均拉到失去意义，中位数拉不动。</td>
           </tr>
+          <tr>
+            <td>粉丝数</td>
+            <td>平台侧读到的总数，一天一条快照</td>
+            <td>
+              <strong>账号级数据，不是作品级数据。</strong>它不进任何作品合计，
+              也不跨平台相加——四个平台是四个账号，同一个人可能四个都关注。
+              涨粉 = 两条快照的差；只有一条快照时只能看存量，看不出趋势。
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -158,6 +192,13 @@
             <td>「平台主页」</td>
             <td>小红书和视频号在数据源里存的是平台主页，不是某条作品——这两个平台的笔记链接受风控和 token 限制，存下来很快会失效。</td>
           </tr>
+          <tr>
+            <td>粉丝数旁的「≈」</td>
+            <td>
+              这个平台只给到约数（页面上写的就是「1.9万」），不是精确整数。
+              照实记、照实标，不自己编一个尾数。粉丝卡片上看的是档位，不是个位。
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -176,12 +217,13 @@
   <div class="wrap">
     <p>
       数据与逐字稿的唯一真源都在本仓库：
-      <code>data/videos.jsonl</code>、<code>transcripts/md/*.md</code>。
+      <code>data/videos.jsonl</code>、<code>data/followers.jsonl</code>、<code>transcripts/md/*.md</code>。
       页面是构建产物，改数据后重跑 <code>node scripts/build-site.mjs</code> 即可。
     </p>
     <p>
       给程序的入口：<a href="llms.txt">llms.txt</a>（机器可读索引）、
-      <a href="data/videos.json">data/videos.json</a>（全部指标与逐字稿的单文件版本）。
+      <a href="data/videos.json">data/videos.json</a>（全部指标与逐字稿的单文件版本）、
+      <a href="data/followers.json">data/followers.json</a>（粉丝快照）。
     </p>
     <p><a href="https://github.com/JackAIStudio/jackskill">github.com/JackAIStudio/jackskill</a></p>
   </div>

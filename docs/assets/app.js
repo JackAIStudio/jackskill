@@ -155,6 +155,16 @@ function svgEl(tag, attrs = {}, parent) {
 /* ---------------- 启动 ---------------- */
 
 let DATA = null;
+// 粉丝数是另一份构建产物：账号级、一天一条快照。
+// 它和 DATA（作品数据）是两个真源，读失败不该连累作品表——
+// 反之亦然。所以单独一个变量、单独一次 fetch、单独一处失败提示。
+let FOLLOW = null;
+
+/** 页面级的失败提示：整个换掉 main，不留半截页面。堆栈由调用方 console.error 留下。 */
+function fail(title, html) {
+  document.querySelector("main").innerHTML =
+    `<section class="section"><h2>${esc(title)}</h2><p class="note">${html}</p></section>`;
+}
 
 (async function main() {
   try {
@@ -186,13 +196,28 @@ let DATA = null;
        多半是 <code>docs/data/videos.json</code> 的字段和 <code>app.js</code> 的预期对不上，
        改了 <code>scripts/build-site.mjs</code> 的输出结构就要同步这里。
        完整堆栈在浏览器控制台。`);
+    return;
   }
+
+  // 粉丝那块单独读、单独渲染。它挂了就只挂自己，作品表照常能用。
+  await loadFollowers();
 })();
 
-/** 页面级的失败提示：整个换掉 main，不留半截页面。堆栈由调用方 console.error 留下。 */
-function fail(title, html) {
-  document.querySelector("main").innerHTML =
-    `<section class="section"><h2>${esc(title)}</h2><p class="note">${html}</p></section>`;
+async function loadFollowers() {
+  try {
+    const res = await fetch("data/followers.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    FOLLOW = await res.json();
+    renderFollowers();
+    renderFollowChart();
+  } catch (err) {
+    console.error(err);
+    const el = $("followCards");
+    if (el) {
+      el.innerHTML = `<p class="empty">粉丝数没读到（${esc(err.message)}）。先跑一次
+        <code>node scripts/build-site.mjs</code> 生成 <code>docs/data/followers.json</code>。</p>`;
+    }
+  }
 }
 
 function renderStamp() {
@@ -418,6 +443,229 @@ function renderTrend(mode) {
   $("trendLegend").innerHTML =
     ORDER.map((k) => `<span><i class="plat-dot" style="background:${PLAT[k].color};display:inline-block"></i>${PLAT[k].label}</span>`).join("") +
     `<span class="legend-note">${note}</span>`;
+}
+
+/* ---------------- 粉丝 ---------------- */
+
+// 粉丝数从它自己的构建产物读（data/followers.json）。之所以不塞进 videos.json：
+// 作品是一行一期、可以相加；粉丝是账号级的、一天一条快照，两者口径完全不同，
+// 混在一个文件里迟早有人把粉丝加进「合计」。
+//
+// 读的时候有两条铁律：
+//   1. 粉丝不能跨平台相加。四个平台是四个账号，同一个人可能四个都关注。
+//   2. 没采到的平台显示「—」，不显示 0。0 粉丝和没读到数是两件事。
+
+/** 卡片上的粉丝数：过万折成「1.9 万」，但悬浮提示里一定给出原值。 */
+function followText(n) {
+  if (n === null || n === undefined) return "—";
+  return fmtCompact(n);
+}
+
+/**
+ * 两条快照之间的涨粉。只有一条快照时返回 null——那不是「0 涨粉」，
+ * 是「还看不出趋势」，这两件事在页面上必须长得不一样。
+ *
+ * snapshots 按日期倒序存（最新在最前面），所以 newer 是 [0]、older 是 [1]。
+ * 差值方向必须是「新 − 旧」，写反了会让涨粉显示成掉粉——这个错不报错、
+ * 只是数字全反过来，所以在这里写明。
+ */
+function followerDelta(platform) {
+  const snaps = (FOLLOW && FOLLOW.snapshots || []).filter((s) => s.platforms[platform]);
+  if (snaps.length < 2) return null;
+  const newer = snaps[0], older = snaps[1];
+  const diff = newer.platforms[platform].followers - older.platforms[platform].followers;
+  return { diff, from: older.date, to: newer.date };
+}
+
+function renderFollowers() {
+  const asOf = FOLLOW.asOf;
+  const snapCount = (FOLLOW.snapshots || []).length;
+
+  const cards = ORDER.map((k) => {
+    const got = FOLLOW.latest[k];
+    const label = PLAT[k].label;
+    if (!got) {
+      // 没这个平台的粉丝数：写清楚是「还没采到」，不是 0
+      return `<div class="follow-card is-missing">
+        <div class="fc-head"><i class="pdot" style="background:${PLAT[k].color}"></i>${label}</div>
+        <div class="fc-num">—</div>
+        <div class="fc-sub">还没采到粉丝数</div>
+      </div>`;
+    }
+    const d = followerDelta(k);
+    let sub;
+    if (!d) {
+      sub = `<span class="fc-flat">只有一条快照，还看不出涨粉</span>`;
+    } else if (d.diff === 0) {
+      sub = `<span class="fc-flat">较 ${esc(d.from)} 没变</span>`;
+    } else {
+      const up = d.diff > 0;
+      sub = `<span class="${up ? "fc-up" : "fc-down"}">${up ? "+" : ""}${fmtInt(d.diff)}</span>`
+        + `<span class="fc-since">较 ${esc(d.from)}</span>`;
+    }
+    return `<div class="follow-card">
+      <div class="fc-head"><i class="pdot" style="background:${PLAT[k].color}"></i>${label}</div>
+      <div class="fc-num" title="${fmtInt(got.followers)}">${followText(got.followers)}</div>
+      <div class="fc-sub">${sub}</div>
+    </div>`;
+  }).join("");
+
+  $("followCards").innerHTML = cards;
+
+  // 快照的日期和「最新快照是哪天」要摆出来：这份数据是快照不是实时，
+  // 昨天的数说成「此刻」就是假话。
+  const dates = (FOLLOW.snapshots || []).map((s) => s.date);
+  const rangeText = dates.length > 1
+    ? `${dates[dates.length - 1]} ~ ${asOf}，共 ${snapCount} 次快照`
+    : `${asOf}，目前只有这一次快照`;
+
+  $("followNote").textContent =
+    `最近一次读数：${rangeText}。粉丝数是账号级的存量，不能和作品播放相加，也不跨平台相加——` +
+    `四个平台是四个账号。涨粉看的是两条快照的差；只有一次快照时只显示存量，不编趋势。` +
+    `平台只给到约数的（比如「1.9 万」），照实记，不猜尾数。`;
+}
+
+/**
+ * 涨粉曲线。
+ *
+ * **每个平台单独一格纵轴。** 小红书 6441、B 站 479、抖音 299——量级差二十倍，
+ * 挤在一根纵轴上小平台会被压成贴着底边的一条线，看着像"没涨"。四格并排、
+ * 各画各的，比"同一根轴上看谁高"更有用：这里要回答的是"各平台自己在涨还是掉"。
+ *
+ * 纵轴不从 0 起，原因同上——几百粉的账号从 0 起，日常波动就是一条平线。
+ * 但格子左上角写明「范围 X ~ Y」，让人知道这是放大过的，不是真实比例。
+ *
+ * 只有一次快照时不画线，只放一句话：一条点连不成趋势，画出来会像"一直平着"。
+ */
+function renderFollowChart() {
+  const snaps = (FOLLOW && FOLLOW.snapshots) || [];
+  const svg = $("followChart");
+  const legend = $("followLegend");
+  svg.innerHTML = "";
+  legend.innerHTML = "";
+
+  if (snaps.length < 2) {
+    // 只有一条点的时候不画坐标系，只放一句话。盒子高度按真实曲线的一半左右给，
+    // 免得第一次打开时页面上是一大片空白占位。
+    svg.setAttribute("viewBox", "0 0 900 110");
+    const t = svgEl("text", {
+      class: "axis-text", x: 450, y: 58, "text-anchor": "middle",
+    }, svg);
+    t.textContent = "目前只有一次快照。第二天再记一次，这里就是一条涨粉曲线。";
+    legend.innerHTML = `<span class="legend-note">粉丝数一天一条快照，两条之间才谈得上「涨」。</span>`;
+    return;
+  }
+
+  // 按日期正序画（左旧右新）。snapshots 存的是倒序。
+  const points = [...snaps].sort((a, b) => a.date.localeCompare(b.date));
+  const series = ORDER.filter((k) => points.some((p) => p.platforms[k])).map((k) => ({
+    key: k,
+    label: PLAT[k].label,
+    color: PLAT[k].color,
+    values: points.map((p) => (p.platforms[k] ? p.platforms[k].followers : null)),
+  }));
+
+  if (!series.length) {
+    svg.setAttribute("viewBox", "0 0 900 110");
+    const t = svgEl("text", { class: "axis-text", x: 450, y: 58, "text-anchor": "middle" }, svg);
+    t.textContent = "快照里没有任何平台的粉丝数。";
+    return;
+  }
+
+  // 四格并排；窄屏靠 viewBox 等比缩，不另写一套布局
+  const W = 900, H = 260;
+  const cols = series.length <= 2 ? series.length : 2;
+  const rows = Math.ceil(series.length / cols);
+  const cellW = W / cols;
+  const cellH = H / rows;
+  const pad = { l: 46, r: 12, t: 26, b: 22 };
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  series.forEach((s, si) => {
+    const cx = (si % cols) * cellW;
+    const cy = Math.floor(si / cols) * cellH;
+    const iw = cellW - pad.l - pad.r;
+    const ih = cellH - pad.t - pad.b;
+    // 横轴按**真实日期**排，不是按「第几个点」等距。
+    // 手动更新时两条快照可能隔两天，也可能隔两个月；等距排列会把它们画成一样长，
+    // 那就是在曲线上撒谎。这里用距首个快照的天数算位置。
+    const t0 = Date.parse(points[0].date);
+    const tN = Date.parse(points[points.length - 1].date);
+    const xAt = (i) => {
+      if (points.length === 1 || tN === t0) return cx + pad.l + iw / 2;
+      const frac = (Date.parse(points[i].date) - t0) / (tN - t0);
+      return cx + pad.l + frac * iw;
+    };
+    const x = xAt;
+
+    const vals = s.values.filter((v) => v !== null);
+    const lo = Math.min(...vals);
+    const hi = Math.max(...vals);
+    // 只有一条点时给一个人为的跨度，免得除以 0；跨度为 0 时也让它落在中间
+    const span = hi - lo || Math.max(1, Math.round(hi * 0.02));
+    const yMin = Math.max(0, lo - span * 0.15);
+    const yMax = hi + span * 0.15;
+    const y = (v) => cy + pad.t + ih - ((v - yMin) / (yMax - yMin || 1)) * ih;
+
+    // 格子标签：平台名 + 这次的范围（明确告诉读者纵轴是放大过的）
+    const label = svgEl("text", {
+      class: "facet-label", x: cx + pad.l, y: cy + 15,
+    }, svg);
+    label.innerHTML = `<tspan fill="${s.color}">■</tspan> ${esc(s.label)}`
+      + `<tspan class="facet-range">　${fmtCompact(Math.round(lo))} ~ ${fmtCompact(Math.round(hi))}</tspan>`;
+
+    // 上下两条参考线 + 数字
+    [yMax, yMin].forEach((v) => {
+      svgEl("line", { class: "grid-line", x1: cx + pad.l, x2: cx + pad.l + iw, y1: y(v), y2: y(v) }, svg);
+      const t = svgEl("text", {
+        class: "axis-text", x: cx + pad.l - 6, y: y(v) + 4, "text-anchor": "end",
+      }, svg);
+      t.textContent = fmtCompact(Math.round(v));
+    });
+
+    // 折线：某天没有这个平台的数就断开，不补值——补出来的点不是事实
+    let d = "", pen = false;
+    s.values.forEach((v, i) => {
+      if (v === null) { pen = false; return; }
+      d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
+      pen = true;
+    });
+    if (d) svgEl("path", { class: "series-line", d, stroke: s.color }, svg);
+    s.values.forEach((v, i) => {
+      if (v === null) return;
+      svgEl("circle", { class: "series-dot", cx: x(i), cy: y(v), r: 2.6, fill: s.color }, svg);
+    });
+
+    // x 轴首尾各一个日期，中间不多标——格子窄，标满会挤成一团
+    [0, points.length - 1].forEach((i) => {
+      const t = svgEl("text", {
+        class: "axis-text",
+        x: i === 0 ? cx + pad.l : cx + pad.l + iw,
+        y: cy + cellH - 8,
+        "text-anchor": i === 0 ? "start" : "end",
+      }, svg);
+      t.textContent = points[i].date.slice(5);
+    });
+
+    // 悬停竖带：给出那天这个平台的数
+    const bw = iw / Math.max(1, points.length - 1 || 1);
+    points.forEach((p, i) => {
+      const band = svgEl("rect", {
+        class: "hover-band",
+        x: x(i) - bw / 2, y: cy + pad.t, width: Math.max(bw, 12), height: ih,
+      }, svg);
+      band.addEventListener("mousemove", (evt) => {
+        const v = s.values[i];
+        showTip(`<b>${esc(s.label)} · ${p.date}</b><br>粉丝 <b>${v === null ? "—" : fmtInt(v)}</b>`, evt);
+      });
+      band.addEventListener("mouseleave", hideTip);
+    });
+  });
+
+  legend.innerHTML =
+    `<span class="legend-note">每个平台一格、各自一根纵轴：四者量级差二十倍，挤在一根轴上小平台会被压成贴底的一条线。` +
+    `格子左上角是这次的范围（放大过的，不是从 0 起）。线断掉的地方是那天没读到这个平台的数，没有补值。</span>`;
 }
 
 function niceMax(v) {

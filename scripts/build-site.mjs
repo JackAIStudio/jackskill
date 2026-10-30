@@ -22,11 +22,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkData } from "./check-data.mjs";
+import { checkFollowers } from "./check-followers.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 const DATA_FILE = path.join(REPO_ROOT, "data/videos.jsonl");
+// 粉丝数是账号级的，一行一天一条快照；作品是「一行一期、可相加」的另一回事，
+// 所以分成两个真源。页面上它们也始终分开呈现，不把粉丝加进任何作品合计。
+const FOLLOWERS_FILE = path.join(REPO_ROOT, "data/followers.jsonl");
 const OUT_FILE = path.join(REPO_ROOT, "docs/data/videos.json");
+const FOLLOWERS_OUT_FILE = path.join(REPO_ROOT, "docs/data/followers.json");
 const LLMS_FILE = path.join(REPO_ROOT, "docs/llms.txt");
 const CATALOG_FILE = path.join(REPO_ROOT, "skills/jack/numbered-prompts/catalog.json");
 // 封面清单：covers/<日期>_<主题>/ 下按比例存图，index.json 记着每期有哪些。
@@ -61,6 +66,20 @@ if (check.errors.length) {
 if (check.warnings.length) {
   console.warn(`数据校验有 ${check.warnings.length} 条提醒（不阻止构建）：`);
   for (const w of check.warnings) console.warn(`  - ${w}`);
+  console.warn("");
+}
+
+// 粉丝数单独校验一次。它和作品数据是两份真源，坏哪份都不该出页面。
+const followerCheck = checkFollowers({ quiet: true });
+if (followerCheck.errors.length) {
+  console.error(`粉丝数校验没过（${followerCheck.errors.length} 个错误），已中止构建：`);
+  for (const e of followerCheck.errors) console.error(`  - ${e}`);
+  console.error(`\n先跑 node scripts/check-followers.mjs 看全貌。`);
+  process.exit(1);
+}
+if (followerCheck.warnings.length) {
+  console.warn(`粉丝数校验有 ${followerCheck.warnings.length} 条提醒（不阻止构建）：`);
+  for (const w of followerCheck.warnings) console.warn(`  - ${w}`);
   console.warn("");
 }
 
@@ -161,6 +180,51 @@ function readCovers() {
 
 const coversById = readCovers();
 
+/**
+ * 粉丝数快照：一天一条，四平台各一个数。
+ *
+ * 这一份**只有当下的数，不能相加**——账号在四个平台是四个账号，
+ * 粉丝叠起来没有意义（同一个人可能四个平台都关注了）。页面上它单独成块，
+ * 不与作品指标共用任何合计。
+ *
+ * 缺平台就整个不写那个键，页面显示「—」而不是 0：
+ * 0 粉丝和没采到数是两件完全不同的事。
+ */
+function readFollowers() {
+  const snapshots = followerCheck.snapshots
+    .map((s) => ({
+      date: s.date,
+      platforms: Object.fromEntries(
+        PLATFORM_ORDER.filter((k) => s.platforms?.[k]).map((k) => [
+          k,
+          { followers: Number(s.platforms[k].followers) || 0 },
+        ]),
+      ),
+    }))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  // 页面上要直接答「现在多少粉」，所以把最新一条里各平台的数摊平出来。
+  // 某个平台最新快照里没有、但更早有，就取更早那条并标出日期——
+  // 拿旧数当新数比显示「—」更容易误导。
+  const latestOf = {};
+  for (const k of PLATFORM_ORDER) {
+    const hit = snapshots.find((s) => s.platforms[k]);
+    if (hit) latestOf[k] = { followers: hit.platforms[k].followers, date: hit.date };
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    source: "data/followers.jsonl",
+    platformOrder: PLATFORM_ORDER,
+    // 最新快照的日期（不一定是今天——这份数据是快照，不是实时）
+    asOf: snapshots[0]?.date ?? null,
+    latest: latestOf,
+    snapshots,
+  };
+}
+
+const followers = readFollowers();
+
 const videos = records
   .map((rec) => {
     const platforms = {};
@@ -221,6 +285,7 @@ const payload = {
 
 fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
 fs.writeFileSync(OUT_FILE, JSON.stringify(payload), "utf8");
+fs.writeFileSync(FOLLOWERS_OUT_FILE, JSON.stringify(followers), "utf8");
 
 const size = fs.statSync(OUT_FILE).size;
 const withTranscript = videos.filter((v) => v.transcript).length;
@@ -231,6 +296,7 @@ const perPlatform = Object.fromEntries(
 const livePlatform = Object.fromEntries(
   PLATFORM_ORDER.map((k) => [k, videos.filter((v) => v.platforms[k] && !v.platforms[k].empty).length]),
 );
+const followerPlatforms = PLATFORM_ORDER.filter((k) => followers.latest[k]);
 
 /* ---------------- docs/llms.txt ---------------- */
 
@@ -258,7 +324,7 @@ const toolLines = catalog.length
 
 const llms = `# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
-> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 ${payload.count} 条、视频口播逐字稿 ${withTranscript} 篇（约 ${Math.round(transcriptChars / 10000)} 万字），以及 ${catalog.length} 个自研工具的编号规范。
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 ${payload.count} 条、视频口播逐字稿 ${withTranscript} 篇（约 ${Math.round(transcriptChars / 10000)} 万字）、四平台粉丝数快照 ${followers.snapshots.length} 条，以及 ${catalog.length} 个自研工具的编号规范。
 
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
 时间跨度 ${from} 至 ${to}，覆盖 ${platformNames}四个平台。
@@ -279,7 +345,14 @@ const llms = `# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 - [逐字稿目录（Markdown 真源）](${REPO_URL}/tree/main/transcripts/md)：${withTranscript} 个文件，文件名格式 \`YYYY-MM-DD_标题.md\`，\`## 逐字稿\` 之后是口播正文。
 - [数据文件说明](${RAW_URL}/data/README.md)：字段定义与口径。
 
-注意：数据站页面 ${SITE_URL}/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面第一或第二个链接。
+### 粉丝数
+
+- [粉丝快照（单文件全集）](${SITE_URL}/data/followers.json)：四平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 ${followerPlatforms.length} 个平台有数，最新快照 ${followers.asOf}。
+- [粉丝数真源（JSONL）](${RAW_URL}/data/followers.jsonl)：每行一条快照，是上面那份的来源。
+
+粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，四个平台是四个账号。要「涨粉」就看两条快照的差。
+
+注意：数据站页面 ${SITE_URL}/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面作品与粉丝那几个链接。
 
 ## 调用规范
 

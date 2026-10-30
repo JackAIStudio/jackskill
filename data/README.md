@@ -1,6 +1,19 @@
+# data/ 下的两份真源
+
+`data/` 里是两个文件，各自是一份独立真源，**口径不同，不要混着读**：
+
+| 文件 | 是什么 | 粒度 | 能相加吗 |
+| :--- | :--- | :--- | :--- |
+| `videos.jsonl` | 每一期视频的播放、点赞、收藏、分享、评论 | 一行一期 | 能。`summary` 就是四平台之和 |
+| `followers.jsonl` | 四个账号的粉丝数 | 一行一天（快照） | **不能。**账号级存量，也不跨平台相加 |
+
+加粉丝数的时候最容易犯的错，是把它当成第六个指标塞进 `videos.jsonl`。不行：作品指标是「一行一期、可以累加」的量，粉丝是「一天一个、只有当下」的量。混在一起，页面上迟早会有人把粉丝加进「合计」。所以它单独一个文件、单独一道校验（`scripts/check-followers.mjs`）、页面上也单独一块。
+
+---
+
 # data/videos.jsonl
 
-跨平台自媒体数据，**本仓库的唯一真源**。全网四大平台（B 站、抖音、小红书、微信视频号）每一期的真实播放、点赞、收藏、分享、评论都在这里。
+跨平台自媒体数据，**作品部分唯一真源**。全网四大平台（B 站、抖音、小红书、微信视频号）每一期的真实播放、点赞、收藏、分享、评论都在这里。
 
 - 一行一期，标准 JSON Lines：**每行一个完整 JSON 对象，行与行之间没有逗号，末尾一个换行**。
 - 文件按 `date` 倒序排列（最新在前）。
@@ -144,3 +157,80 @@ python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt --dry-r
 **日期是最容易出错的地方。** 一次批量整理逐字稿时，29 篇的文件名和头部被统一写成了同一天，真实发布日却散在两个月里。结果页面上一整批作品挤在同一天、播放量全是 0——因为文件名日期一旦写错，那一期就再也对不上真实数据了。校验能查出「两处日期不一致」，但查不出「两处日期一起写错」，那个只能靠人对。
 
 **不要用「看起来对」来合并记录。** 曾经用相似度阈值判断两条记录是不是同一条视频，结果那批英文标题的内容互相能撞到 0.90 以上（`I am Chinese, like to teach you Chinese` 对 `Chinese Teaching : Learn To Say Hello`），会误合。现在改成只报给人看，不自动合并。
+
+---
+
+# data/followers.jsonl
+
+四个平台的粉丝数，**粉丝部分唯一真源**。一行一条快照，四平台各一个数。
+
+- 标准 JSON Lines，**按 `date` 倒序**（最新在前），与 `videos.jsonl` 同一习惯。
+- **一天一条**。涨粉看的是两条快照的差；同一天重刷会替换当天那条，不会多出一条。
+- 四个平台一次记齐；某个平台暂时读不到，就先不写那个键，页面显示「—」，不要写 0。
+
+## 字段
+
+```json
+{"date":"2026-10-30","platforms":{"bilibili":{"followers":479},"douyin":{"followers":299},"xiaohongshu":{"followers":6441},"wechat_channels":{"followers":446}}}
+```
+
+| 字段 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `date` | string | `YYYY-MM-DD`，读数的日期。 |
+| `platforms` | object | 键只能是 `bilibili`、`douyin`、`xiaohongshu`、`wechat_channels`。 |
+| `platforms.<平台>.followers` | int | 该平台的粉丝总数，非负整数。 |
+
+**只允许 `followers` 一个字段。** 多写（比如 `index`、`delta`、`gained`）会直接报错：那些要么能算出来，要么是平台自己的口径，存进来只会各自解释一套。
+
+改完跑：
+
+```bash
+node scripts/check-followers.mjs
+```
+
+## 为什么单开一个文件
+
+粉丝和作品指标是三处不一样：
+
+1. **粒度不同**：作品一行一期，粉丝一行一天。
+2. **能不能加不同**：`summary` 是四平台之和，粉丝**不能**加——四个平台是四个账号，同一个人可能四个都关注。
+3. **更新节奏不同**：作品指标刷一次覆盖一批，粉丝一天一条快照，攒起来才有曲线。
+
+塞进 `videos.jsonl` 的话，第一件事就会有人在页面上把粉丝加进「合计」。
+
+## 怎么刷新
+
+```bash
+# B 站：公开接口，免登录
+python3 scripts/refresh-followers.py --platform bilibili
+
+# 另外三个：在已登录的浏览器里 observe 页面，把输出存成文件
+python3 scripts/refresh-followers.py --platform douyin --in /tmp/dy-data.txt
+python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/xhs-home.txt
+python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/wx-home.txt
+```
+
+各处读什么：
+
+| 平台 | 打开哪里 | 认的标签 | 备注 |
+| :--- | :--- | :--- | :--- |
+| B 站 | 不用开浏览器 | `relation/stat` 接口的 `follower` | 精确整数，免登录 |
+| 抖音 | 创作者中心 → 数据中心（**点侧栏进去**） | `总粉丝量` | 见下面那个坑 |
+| 小红书 | `creator.xiaohongshu.com/new/home` | `粉丝数` | 精确整数 |
+| 视频号 | `channels.weixin.qq.com/platform` | `关注者` | 精确整数 |
+
+**抖音有三个坑，都实测过：**
+
+1. **首页那个「粉丝指数 301」不是粉丝数**，是账号权重分。真正的总数在数据中心页，同一个号是 299。
+2. **直接敲 `/creator-micro/data/home` 或 `/data/overview` 会显示「数据暂未产出」**，必须从首页点侧栏「数据中心」进去才渲染得出来。
+3. 数据中心页有一排「粉丝净增 / 吸粉量 / 脱粉量 / 回访粉丝量」，都是为了别认错才只认「总粉丝量」这个标签。
+
+**读不到就不写。** 认不出标签时脚本直接报错退出，不拿别的数字顶上——页面上一旦出现一个错的粉丝数，没人看得出来。
+
+**平台只给约数时照实记。** 小红书面板上写「1.9万」就是 19000 左右的档位，别自己编尾数。`followers.jsonl` 里存的是整数，页面上按原样按万显示。
+
+## 校验会拦什么
+
+**错误**（阻止 `build-site.mjs`）：日期格式不对、平台名不认识、`followers` 不是非负整数、同一天两条快照、日期不是倒序、写了 `followers` 以外的字段。
+
+**提醒**（不拦构建）：某条快照缺某个平台、最近两条快照相隔超过 14 天（粉丝数已经偏旧）。

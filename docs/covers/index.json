@@ -1,13 +1,66 @@
 {
-  "generatedAt": "2026-11-05T19:29:58+0800",
+  "generatedAt": "2026-11-06T11:52:01+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 233,
+  "count": 234,
   "items": [
+    {
+      "id": "2026-11-05_当UP主送外卖遇上晚高峰belike",
+      "date": "2026-11-05",
+      "topic": "当UP主送外卖遇上晚高峰belike",
+      "dir": "covers/2026-11-05_当UP主送外卖遇上晚高峰belike",
+      "covers": {
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
     {
       "id": "2026-11-03_开源一个手机语音输入APP，无需联网",
       "date": "2026-11-03",

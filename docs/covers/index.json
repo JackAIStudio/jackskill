@@ -1,13 +1,66 @@
 {
-  "generatedAt": "2026-11-09T16:12:43+0800",
+  "generatedAt": "2026-11-11T22:28:00+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 235,
+  "count": 236,
   "items": [
+    {
+      "id": "2026-11-11_我让Fable5.2给我做了一个宣传片",
+      "date": "2026-11-11",
+      "topic": "我让Fable5.2给我做了一个宣传片",
+      "dir": "covers/2026-11-11_我让Fable5.2给我做了一个宣传片",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
     {
       "id": "2026-11-07_在办理护照和港澳通行证过程中这些坑别踩",
       "date": "2026-11-07",

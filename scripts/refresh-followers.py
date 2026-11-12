@@ -236,6 +236,17 @@ def parse_xiaohongshu(raw: str) -> tuple[int | None, str]:
     两处是同一个数，取第一个就够。注意别认成「关注数」（0）。
     """
     nodes = _nodes(raw)
+    # 形态 0：同一段文本里「数字 + 粉丝数」连写。
+    # 后台改版后整张账号卡片被并成一个节点：
+    #   `吴杰克 Jack 0 关注数 6446 粉丝数 1.9万 获赞与收藏 …`
+    # 这时标签不是独立节点，前两种形态都认不出来。只认紧贴「粉丝数」左边那个数，
+    # 别把更前面的「关注数 0」当成粉丝数。
+    for text, _ in nodes:
+        m = re.search(r"(\d[\d,]*(?:\.\d+)?\s*(?:万|w|W|亿)?)\s*粉丝数", text)
+        if m:
+            n = _parse_followers_number(m.group(1))
+            if n is not None:
+                return n, "粉丝数"
     # 形态 1：值在前、标签在后（账号卡片，observe 里就是这个顺序）
     for i, (text, _) in enumerate(nodes):
         if text.strip() != "粉丝数":

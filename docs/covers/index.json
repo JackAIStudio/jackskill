@@ -1,13 +1,172 @@
 {
-  "generatedAt": "2026-11-11T22:28:00+0800",
+  "generatedAt": "2026-11-14T17:32:23+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 236,
+  "count": 240,
   "items": [
+    {
+      "id": "2026-11-14_如何用AI制作产品宣传片？",
+      "date": "2026-11-14",
+      "topic": "如何用AI制作产品宣传片？",
+      "dir": "covers/2026-11-14_如何用AI制作产品宣传片？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
+    {
+      "id": "2026-11-13_Opus很好用但我不想再折腾了",
+      "date": "2026-11-13",
+      "topic": "Opus很好用但我不想再折腾了",
+      "dir": "covers/2026-11-13_Opus很好用但我不想再折腾了",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
+    {
+      "id": "2026-11-12_怎么让Agent去帮你自动剪辑达芬奇时间线？",
+      "date": "2026-11-12",
+      "topic": "怎么让Agent去帮你自动剪辑达芬奇时间线？",
+      "dir": "covers/2026-11-12_怎么让Agent去帮你自动剪辑达芬奇时间线？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
     {
       "id": "2026-11-11_我让Fable5.2给我做了一个宣传片",
       "date": "2026-11-11",
@@ -58,6 +217,59 @@
             "orientation": "landscape"
           },
           "source": "manual"
+        }
+      }
+    },
+    {
+      "id": "2026-11-10_市面上那么多AI产品，到底该用哪一个？",
+      "date": "2026-11-10",
+      "topic": "市面上那么多AI产品，到底该用哪一个？",
+      "dir": "covers/2026-11-10_市面上那么多AI产品，到底该用哪一个？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
         }
       }
     },
@@ -433,10 +645,10 @@
       }
     },
     {
-      "id": "2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "id": "2026-10-22_在达芬奇中剪辑长视频的思路和方法",
       "date": "2026-10-22",
-      "topic": "创业失败送外卖还债，雨天摔了一跤，餐撒了",
-      "dir": "covers/2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "topic": "在达芬奇中剪辑长视频的思路和方法",
+      "dir": "covers/2026-10-22_在达芬奇中剪辑长视频的思路和方法",
       "covers": {
         "4x3": {
           "file": "4x3.jpg",
@@ -486,10 +698,10 @@
       }
     },
     {
-      "id": "2026-10-22_在达芬奇中剪辑长视频的思路和方法",
+      "id": "2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
       "date": "2026-10-22",
-      "topic": "在达芬奇中剪辑长视频的思路和方法",
-      "dir": "covers/2026-10-22_在达芬奇中剪辑长视频的思路和方法",
+      "topic": "创业失败送外卖还债，雨天摔了一跤，餐撒了",
+      "dir": "covers/2026-10-22_创业失败送外卖还债，雨天摔了一跤，餐撒了",
       "covers": {
         "4x3": {
           "file": "4x3.jpg",
@@ -592,6 +804,44 @@
       }
     },
     {
+      "id": "2026-10-18_我能为你提供价值，请你雇佣我为你工作",
+      "date": "2026-10-18",
+      "topic": "我能为你提供价值，请你雇佣我为你工作",
+      "dir": "covers/2026-10-18_我能为你提供价值，请你雇佣我为你工作",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "xiaohongshu"
+        }
+      }
+    },
+    {
       "id": "2026-10-18_实测用AI开发安卓APP会比苹果更方便一些",
       "date": "2026-10-18",
       "topic": "实测用AI开发安卓APP会比苹果更方便一些",
@@ -641,44 +891,6 @@
             "orientation": "landscape"
           },
           "source": "douyin"
-        }
-      }
-    },
-    {
-      "id": "2026-10-18_我能为你提供价值，请你雇佣我为你工作",
-      "date": "2026-10-18",
-      "topic": "我能为你提供价值，请你雇佣我为你工作",
-      "dir": "covers/2026-10-18_我能为你提供价值，请你雇佣我为你工作",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "bilibili"
-        },
-        "4x3": {
-          "file": "4x3.jpg",
-          "size": [
-            800,
-            600
-          ],
-          "slot": "4x3",
-          "shape": {
-            "ratio": 1.3333,
-            "nearest": "4x3",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "xiaohongshu"
         }
       }
     },
@@ -842,59 +1054,6 @@
       }
     },
     {
-      "id": "2026-10-12_AI_博主创业失败，送外卖还债第一天",
-      "date": "2026-10-12",
-      "topic": "AI 博主创业失败，送外卖还债第一天",
-      "dir": "covers/2026-10-12_AI 博主创业失败，送外卖还债第一天",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        },
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            540,
-            721
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.749,
-            "nearest": "3x4",
-            "deviation": 0.0014,
-            "orientation": "portrait"
-          },
-          "source": "unknown"
-        },
-        "4x3": {
-          "file": "4x3.jpg",
-          "size": [
-            800,
-            599
-          ],
-          "slot": "4x3",
-          "shape": {
-            "ratio": 1.3356,
-            "nearest": "4x3",
-            "deviation": 0.0017,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2026-10-12_AI博主创业失败，买红米手机送外卖还债",
       "date": "2026-10-12",
       "topic": "AI博主创业失败，买红米手机送外卖还债",
@@ -944,6 +1103,59 @@
             "orientation": "landscape"
           },
           "source": "douyin"
+        }
+      }
+    },
+    {
+      "id": "2026-10-12_AI_博主创业失败，送外卖还债第一天",
+      "date": "2026-10-12",
+      "topic": "AI 博主创业失败，送外卖还债第一天",
+      "dir": "covers/2026-10-12_AI 博主创业失败，送外卖还债第一天",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "unknown"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
         }
       }
     },
@@ -1054,10 +1266,10 @@
       }
     },
     {
-      "id": "2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
+      "id": "2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
       "date": "2026-10-08",
-      "topic": "可视化自己的自媒体数据，让所有人都能参考",
-      "dir": "covers/2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
+      "topic": "我在朋友圈公布了创业失败，亲人们很不理解",
+      "dir": "covers/2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -1087,7 +1299,7 @@
             "deviation": 0.0014,
             "orientation": "portrait"
           },
-          "source": "douyin"
+          "source": "xiaohongshu"
         },
         "4x3": {
           "file": "4x3.jpg",
@@ -1160,10 +1372,10 @@
       }
     },
     {
-      "id": "2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
+      "id": "2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
       "date": "2026-10-08",
-      "topic": "我在朋友圈公布了创业失败，亲人们很不理解",
-      "dir": "covers/2026-10-08_我在朋友圈公布了创业失败，亲人们很不理解",
+      "topic": "可视化自己的自媒体数据，让所有人都能参考",
+      "dir": "covers/2026-10-08_可视化自己的自媒体数据，让所有人都能参考",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -1193,7 +1405,7 @@
             "deviation": 0.0014,
             "orientation": "portrait"
           },
-          "source": "xiaohongshu"
+          "source": "douyin"
         },
         "4x3": {
           "file": "4x3.jpg",
@@ -1531,59 +1743,6 @@
       }
     },
     {
-      "id": "2026-09-29_不要一开始就折腾国外的AI模型和工具",
-      "date": "2026-09-29",
-      "topic": "不要一开始就折腾国外的AI模型和工具",
-      "dir": "covers/2026-09-29_不要一开始就折腾国外的AI模型和工具",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "bilibili"
-        },
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            540,
-            721
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.749,
-            "nearest": "3x4",
-            "deviation": 0.0014,
-            "orientation": "portrait"
-          },
-          "source": "xiaohongshu"
-        },
-        "4x3": {
-          "file": "4x3.jpg",
-          "size": [
-            800,
-            599
-          ],
-          "slot": "4x3",
-          "shape": {
-            "ratio": 1.3356,
-            "nearest": "4x3",
-            "deviation": 0.0017,
-            "orientation": "landscape"
-          },
-          "source": "douyin"
-        }
-      }
-    },
-    {
       "id": "2026-09-29_开源一个自媒体视频一键发布skill",
       "date": "2026-09-29",
       "topic": "开源一个自媒体视频一键发布skill",
@@ -1633,6 +1792,59 @@
             "orientation": "landscape"
           },
           "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2026-09-29_不要一开始就折腾国外的AI模型和工具",
+      "date": "2026-09-29",
+      "topic": "不要一开始就折腾国外的AI模型和工具",
+      "dir": "covers/2026-09-29_不要一开始就折腾国外的AI模型和工具",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "xiaohongshu"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
         }
       }
     },
@@ -1902,59 +2114,6 @@
       }
     },
     {
-      "id": "2026-09-20_【全流程实战】用AI_Agent制作自媒体封面",
-      "date": "2026-09-20",
-      "topic": "【全流程实战】用AI Agent制作自媒体封面",
-      "dir": "covers/2026-09-20_【全流程实战】用AI Agent制作自媒体封面",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        },
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            540,
-            721
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.749,
-            "nearest": "3x4",
-            "deviation": 0.0014,
-            "orientation": "portrait"
-          },
-          "source": "unknown"
-        },
-        "4x3": {
-          "file": "4x3.jpg",
-          "size": [
-            800,
-            599
-          ],
-          "slot": "4x3",
-          "shape": {
-            "ratio": 1.3356,
-            "nearest": "4x3",
-            "deviation": 0.0017,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2026-09-20_镜头自动跟随鼠标！这录屏软件真的太丝滑了",
       "date": "2026-09-20",
       "topic": "镜头自动跟随鼠标！这录屏软件真的太丝滑了",
@@ -2001,6 +2160,59 @@
             "ratio": 1.3333,
             "nearest": "4x3",
             "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2026-09-20_【全流程实战】用AI_Agent制作自媒体封面",
+      "date": "2026-09-20",
+      "topic": "【全流程实战】用AI Agent制作自媒体封面",
+      "dir": "covers/2026-09-20_【全流程实战】用AI Agent制作自媒体封面",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "unknown"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
             "orientation": "landscape"
           },
           "source": "unknown"
@@ -2220,6 +2432,29 @@
       }
     },
     {
+      "id": "2026-09-14_终于不抢屏幕了！给_Agent_装上这个官方_Skill，在后台默默操控浏览器",
+      "date": "2026-09-14",
+      "topic": "终于不抢屏幕了！给 Agent 装上这个官方 Skill，在后台默默操控浏览器",
+      "dir": "covers/2026-09-14_终于不抢屏幕了！给 Agent 装上这个官方 Skill，在后台默默操控浏览器",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
       "id": "2026-09-14_别再让AI霸占你的屏幕，WorkBuddy后台操控浏览器",
       "date": "2026-09-14",
       "topic": "别再让AI霸占你的屏幕，WorkBuddy后台操控浏览器",
@@ -2251,29 +2486,6 @@
             "ratio": 1.3356,
             "nearest": "4x3",
             "deviation": 0.0017,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
-      "id": "2026-09-14_终于不抢屏幕了！给_Agent_装上这个官方_Skill，在后台默默操控浏览器",
-      "date": "2026-09-14",
-      "topic": "终于不抢屏幕了！给 Agent 装上这个官方 Skill，在后台默默操控浏览器",
-      "dir": "covers/2026-09-14_终于不抢屏幕了！给 Agent 装上这个官方 Skill，在后台默默操控浏览器",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
             "orientation": "landscape"
           },
           "source": "unknown"
@@ -3781,29 +3993,6 @@
       }
     },
     {
-      "id": "2026-07-22_开放源代码|用Codex自制AI语音输入工具",
-      "date": "2026-07-22",
-      "topic": "开放源代码|用Codex自制AI语音输入工具",
-      "dir": "covers/2026-07-22_开放源代码_用Codex自制AI语音输入工具",
-      "covers": {
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            600,
-            800
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.75,
-            "nearest": "3x4",
-            "deviation": 0.0,
-            "orientation": "portrait"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2026-07-22_让Codex给我从0到1做了个AI语音输入键盘",
       "date": "2026-07-22",
       "topic": "让Codex给我从0到1做了个AI语音输入键盘",
@@ -3821,6 +4010,29 @@
             "nearest": "16x9",
             "deviation": 0.0,
             "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2026-07-22_开放源代码|用Codex自制AI语音输入工具",
+      "date": "2026-07-22",
+      "topic": "开放源代码|用Codex自制AI语音输入工具",
+      "dir": "covers/2026-07-22_开放源代码_用Codex自制AI语音输入工具",
+      "covers": {
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
           },
           "source": "unknown"
         }
@@ -6167,6 +6379,44 @@
       }
     },
     {
+      "id": "2025-11-02_零基础能玩明白它吗？|大疆Neo_2_上手体验",
+      "date": "2025-11-02",
+      "topic": "零基础能玩明白它吗？|大疆Neo 2 上手体验",
+      "dir": "covers/2025-11-02_零基础能玩明白它吗？_大疆Neo 2 上手体验",
+      "covers": {
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "unknown"
+        },
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
       "id": "2025-11-02_大疆DJINeo2上手体验",
       "date": "2025-11-02",
       "topic": "大疆DJINeo2上手体验",
@@ -6216,44 +6466,6 @@
             "orientation": "landscape"
           },
           "source": "douyin"
-        }
-      }
-    },
-    {
-      "id": "2025-11-02_零基础能玩明白它吗？|大疆Neo_2_上手体验",
-      "date": "2025-11-02",
-      "topic": "零基础能玩明白它吗？|大疆Neo 2 上手体验",
-      "dir": "covers/2025-11-02_零基础能玩明白它吗？_大疆Neo 2 上手体验",
-      "covers": {
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            540,
-            721
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.749,
-            "nearest": "3x4",
-            "deviation": 0.0014,
-            "orientation": "portrait"
-          },
-          "source": "unknown"
-        },
-        "4x3": {
-          "file": "4x3.jpg",
-          "size": [
-            800,
-            599
-          ],
-          "slot": "4x3",
-          "shape": {
-            "ratio": 1.3356,
-            "nearest": "4x3",
-            "deviation": 0.0017,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
         }
       }
     },
@@ -6735,6 +6947,44 @@
       }
     },
     {
+      "id": "2025-09-19_首发iphone17及17pro到手，稍后开箱",
+      "date": "2025-09-19",
+      "topic": "首发iphone17及17pro到手，稍后开箱",
+      "dir": "covers/2025-09-19_首发iphone17及17pro到手，稍后开箱",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
       "id": "2025-09-19_iPhone17系列开箱初上手与前置影像评测",
       "date": "2025-09-19",
       "topic": "iPhone17系列开箱初上手与前置影像评测",
@@ -6784,44 +7034,6 @@
             "orientation": "landscape"
           },
           "source": "douyin"
-        }
-      }
-    },
-    {
-      "id": "2025-09-19_首发iphone17及17pro到手，稍后开箱",
-      "date": "2025-09-19",
-      "topic": "首发iphone17及17pro到手，稍后开箱",
-      "dir": "covers/2025-09-19_首发iphone17及17pro到手，稍后开箱",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        },
-        "3x4": {
-          "file": "3x4.jpg",
-          "size": [
-            540,
-            721
-          ],
-          "slot": "3x4",
-          "shape": {
-            "ratio": 0.749,
-            "nearest": "3x4",
-            "deviation": 0.0014,
-            "orientation": "portrait"
-          },
-          "source": "unknown"
         }
       }
     },
@@ -7724,10 +7936,10 @@
       }
     },
     {
-      "id": "2023-12-15_活动人生第一组认真拍的照片|我好像喜欢上了这光与影的纠缠",
+      "id": "2023-12-15_活动汪曾祺《受戒》选读|这样的愉悦与松弛很难不使我会心一笑|不一样的可爱和尚，哈哈～",
       "date": "2023-12-15",
-      "topic": "活动人生第一组认真拍的照片|我好像喜欢上了这光与影的纠缠",
-      "dir": "covers/2023-12-15_活动人生第一组认真拍的照片_我好像喜欢上了这光与影的纠缠",
+      "topic": "活动汪曾祺《受戒》选读|这样的愉悦与松弛很难不使我会心一笑|不一样的可爱和尚，哈哈～",
+      "dir": "covers/2023-12-15_活动汪曾祺《受戒》选读_这样的愉悦与松弛很难不使我会心一笑_不一样的可爱和尚，哈哈～",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -7747,10 +7959,10 @@
       }
     },
     {
-      "id": "2023-12-15_活动汪曾祺《受戒》选读|这样的愉悦与松弛很难不使我会心一笑|不一样的可爱和尚，哈哈～",
+      "id": "2023-12-15_活动人生第一组认真拍的照片|我好像喜欢上了这光与影的纠缠",
       "date": "2023-12-15",
-      "topic": "活动汪曾祺《受戒》选读|这样的愉悦与松弛很难不使我会心一笑|不一样的可爱和尚，哈哈～",
-      "dir": "covers/2023-12-15_活动汪曾祺《受戒》选读_这样的愉悦与松弛很难不使我会心一笑_不一样的可爱和尚，哈哈～",
+      "topic": "活动人生第一组认真拍的照片|我好像喜欢上了这光与影的纠缠",
+      "dir": "covers/2023-12-15_活动人生第一组认真拍的照片_我好像喜欢上了这光与影的纠缠",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -7816,10 +8028,10 @@
       }
     },
     {
-      "id": "2023-12-12_活动朗读《战争与和平》|浪漫的落日余晖|玄色而沉寂的大海",
+      "id": "2023-12-12_活动海鲜炒饭和海鲜面|为信念干杯喽！（12.11）",
       "date": "2023-12-12",
-      "topic": "活动朗读《战争与和平》|浪漫的落日余晖|玄色而沉寂的大海",
-      "dir": "covers/2023-12-12_活动朗读《战争与和平》_浪漫的落日余晖_玄色而沉寂的大海",
+      "topic": "活动海鲜炒饭和海鲜面|为信念干杯喽！（12.11）",
+      "dir": "covers/2023-12-12_活动海鲜炒饭和海鲜面_为信念干杯喽！（12.11）",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -7839,10 +8051,10 @@
       }
     },
     {
-      "id": "2023-12-12_活动海鲜炒饭和海鲜面|为信念干杯喽！（12.11）",
+      "id": "2023-12-12_活动朗读《战争与和平》|浪漫的落日余晖|玄色而沉寂的大海",
       "date": "2023-12-12",
-      "topic": "活动海鲜炒饭和海鲜面|为信念干杯喽！（12.11）",
-      "dir": "covers/2023-12-12_活动海鲜炒饭和海鲜面_为信念干杯喽！（12.11）",
+      "topic": "活动朗读《战争与和平》|浪漫的落日余晖|玄色而沉寂的大海",
+      "dir": "covers/2023-12-12_活动朗读《战争与和平》_浪漫的落日余晖_玄色而沉寂的大海",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -7908,29 +8120,6 @@
       }
     },
     {
-      "id": "2023-12-05_我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
-      "date": "2023-12-05",
-      "topic": "我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
-      "dir": "covers/2023-12-05_我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2023-12-05_活动观山湖公园|贵阳citywalk|12.1",
       "date": "2023-12-05",
       "topic": "活动观山湖公园|贵阳citywalk|12.1",
@@ -7947,6 +8136,29 @@
             "ratio": 1.6,
             "nearest": "16x9",
             "deviation": 0.1,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2023-12-05_我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
+      "date": "2023-12-05",
+      "topic": "我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
+      "dir": "covers/2023-12-05_我去，我这刚被海风吹的头痛、身体痛，天气就晴朗了，不过这也好，好好养病，过几天再happy吧[妙啊]",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
             "orientation": "landscape"
           },
           "source": "unknown"
@@ -8230,29 +8442,6 @@
       }
     },
     {
-      "id": "2023-11-07_三二一，早上好啊～",
-      "date": "2023-11-07",
-      "topic": "三二一，早上好啊～",
-      "dir": "covers/2023-11-07_三二一，早上好啊～",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            500
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.6,
-            "nearest": "16x9",
-            "deviation": 0.1,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2023-11-07_在成都又寄了两封信^_^",
       "date": "2023-11-07",
       "topic": "在成都又寄了两封信^_^",
@@ -8276,10 +8465,10 @@
       }
     },
     {
-      "id": "2023-11-05_《罪与罚》书籍分享|伤害自己比伤害他人还罪无可恕",
-      "date": "2023-11-05",
-      "topic": "《罪与罚》书籍分享|伤害自己比伤害他人还罪无可恕",
-      "dir": "covers/2023-11-05_《罪与罚》书籍分享_伤害自己比伤害他人还罪无可恕",
+      "id": "2023-11-07_三二一，早上好啊～",
+      "date": "2023-11-07",
+      "topic": "三二一，早上好啊～",
+      "dir": "covers/2023-11-07_三二一，早上好啊～",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -8303,6 +8492,29 @@
       "date": "2023-11-05",
       "topic": "活动清唱李健的《风吹麦浪》",
       "dir": "covers/2023-11-05_活动清唱李健的《风吹麦浪》",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            500
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.6,
+            "nearest": "16x9",
+            "deviation": 0.1,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2023-11-05_《罪与罚》书籍分享|伤害自己比伤害他人还罪无可恕",
+      "date": "2023-11-05",
+      "topic": "《罪与罚》书籍分享|伤害自己比伤害他人还罪无可恕",
+      "dir": "covers/2023-11-05_《罪与罚》书籍分享_伤害自己比伤害他人还罪无可恕",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -8506,29 +8718,6 @@
       }
     },
     {
-      "id": "2023-10-21_活动藏食day3_藏面_藏鸡蛋_肉饼（10月19日记）",
-      "date": "2023-10-21",
-      "topic": "活动藏食day3 藏面 藏鸡蛋 肉饼（10月19日记）",
-      "dir": "covers/2023-10-21_活动藏食day3 藏面 藏鸡蛋 肉饼（10月19日记）",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            500
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.6,
-            "nearest": "16x9",
-            "deviation": 0.1,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
       "id": "2023-10-21_活动藏食day4_炒面片_（10.20记）",
       "date": "2023-10-21",
       "topic": "活动藏食day4 炒面片 （10.20记）",
@@ -8552,33 +8741,10 @@
       }
     },
     {
-      "id": "2023-10-19_从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
-      "date": "2023-10-19",
-      "topic": "从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
-      "dir": "covers/2023-10-19_从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            450
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.7778,
-            "nearest": "16x9",
-            "deviation": 0.0,
-            "orientation": "landscape"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
-      "id": "2023-10-19_活动藏食day1___酥油茶，牛肉包子_（日期：10.15）",
-      "date": "2023-10-19",
-      "topic": "活动藏食day1 _ 酥油茶，牛肉包子 （日期：10.15）",
-      "dir": "covers/2023-10-19_活动藏食day1 _ 酥油茶，牛肉包子 （日期：10.15）",
+      "id": "2023-10-21_活动藏食day3_藏面_藏鸡蛋_肉饼（10月19日记）",
+      "date": "2023-10-21",
+      "topic": "活动藏食day3 藏面 藏鸡蛋 肉饼（10月19日记）",
+      "dir": "covers/2023-10-21_活动藏食day3 藏面 藏鸡蛋 肉饼（10月19日记）",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -8614,6 +8780,52 @@
             "ratio": 1.6,
             "nearest": "16x9",
             "deviation": 0.1,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2023-10-19_活动藏食day1___酥油茶，牛肉包子_（日期：10.15）",
+      "date": "2023-10-19",
+      "topic": "活动藏食day1 _ 酥油茶，牛肉包子 （日期：10.15）",
+      "dir": "covers/2023-10-19_活动藏食day1 _ 酥油茶，牛肉包子 （日期：10.15）",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            500
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.6,
+            "nearest": "16x9",
+            "deviation": 0.1,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
+      "id": "2023-10-19_从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
+      "date": "2023-10-19",
+      "topic": "从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
+      "dir": "covers/2023-10-19_从一楼走到楼顶，整一个人就气喘吁吁，祝朋友们新的一天工作顺利，生活愉快～",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
             "orientation": "landscape"
           },
           "source": "unknown"
@@ -8713,6 +8925,29 @@
       }
     },
     {
+      "id": "2023-10-14_在大理寄了三封信，剩下的信到西藏再写吧～",
+      "date": "2023-10-14",
+      "topic": "在大理寄了三封信，剩下的信到西藏再写吧～",
+      "dir": "covers/2023-10-14_在大理寄了三封信，剩下的信到西藏再写吧～",
+      "covers": {
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            500
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.6,
+            "nearest": "16x9",
+            "deviation": 0.1,
+            "orientation": "landscape"
+          },
+          "source": "unknown"
+        }
+      }
+    },
+    {
       "id": "2023-10-14_全民制作人们好，清唱一首《传奇》，希望李健看到不会打我",
       "date": "2023-10-14",
       "topic": "全民制作人们好，清唱一首《传奇》，希望李健看到不会打我",
@@ -8736,10 +8971,10 @@
       }
     },
     {
-      "id": "2023-10-14_在大理寄了三封信，剩下的信到西藏再写吧～",
-      "date": "2023-10-14",
-      "topic": "在大理寄了三封信，剩下的信到西藏再写吧～",
-      "dir": "covers/2023-10-14_在大理寄了三封信，剩下的信到西藏再写吧～",
+      "id": "2023-10-07_活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
+      "date": "2023-10-07",
+      "topic": "活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
+      "dir": "covers/2023-10-07_活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
       "covers": {
         "16x9": {
           "file": "16x9.jpg",
@@ -8776,29 +9011,6 @@
             "nearest": "3x4",
             "deviation": 0.25,
             "orientation": "portrait"
-          },
-          "source": "unknown"
-        }
-      }
-    },
-    {
-      "id": "2023-10-07_活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
-      "date": "2023-10-07",
-      "topic": "活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
-      "dir": "covers/2023-10-07_活动人在大理，寄信给朋友们，人生第一次写信、寄信，希望他们喜欢",
-      "covers": {
-        "16x9": {
-          "file": "16x9.jpg",
-          "size": [
-            800,
-            500
-          ],
-          "slot": "16x9",
-          "shape": {
-            "ratio": 1.6,
-            "nearest": "16x9",
-            "deviation": 0.1,
-            "orientation": "landscape"
           },
           "source": "unknown"
         }

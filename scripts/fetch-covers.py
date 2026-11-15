@@ -517,11 +517,148 @@ def verify() -> int:
     return 0
 
 
+def merge_manifest_into_index(manifest: list[dict]) -> Path:
+    """按封面槽位增量合并进 docs/covers/index.json，不冲掉已有槽位。"""
+    idx = COVERS_DIR / "index.json"
+    idx.parent.mkdir(parents=True, exist_ok=True)
+    existing = {}
+    if idx.exists():
+        try:
+            for it in json.loads(idx.read_text(encoding="utf-8")).get("items", []):
+                existing[it["id"]] = it
+        except Exception:
+            pass
+    for it in manifest:
+        old = existing.get(it["id"]) or {}
+        merged = dict(old)
+        for k, v in it.items():
+            if k == "covers":
+                continue
+            if v in (None, ""):
+                continue
+            merged[k] = v
+        covers = dict(old.get("covers") or {})
+        covers.update(it.get("covers") or {})
+        merged["covers"] = covers
+        if not merged.get("dir") and it.get("dir"):
+            merged["dir"] = it["dir"]
+        existing[it["id"]] = merged
+    payload = {
+        "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "source": "covers/<日期>_<主题>/",
+        "slots": list(RATIOS),
+        "count": len(existing),
+        "items": sorted(existing.values(), key=lambda x: x["date"], reverse=True),
+    }
+    idx.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return idx
+
+
+def derive_record_id(date_str: str, topic: str) -> str:
+    slug = re.sub(r"\s+", "_", topic.strip())
+    return f"{date_str}_{slug}"
+
+
+def install_manual_covers(
+    *,
+    date_str: str,
+    topic: str,
+    rec_id: str | None,
+    slot_files: dict[str, Path],
+    dry_run: bool,
+    allow_orientation_mismatch: bool = False,
+) -> int:
+    """把用户直接提供的本地原图压成 800px JPEG q78，并按 manual 来源写进索引。"""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str or ""):
+        print(f"错误：--date 必须是 YYYY-MM-DD：{date_str!r}", file=sys.stderr)
+        return 1
+    topic = (topic or "").strip()
+    if not topic:
+        print("错误：--manual 模式需要 --topic", file=sys.stderr)
+        return 1
+    if not slot_files:
+        print("错误：--manual 模式至少需要提供一个封面参数（--cover-4x3 / --cover-3x4 / --cover-16x9）", file=sys.stderr)
+        return 1
+
+    expected_id = derive_record_id(date_str, topic)
+    if rec_id and rec_id != expected_id:
+        print(f"错误：--id 与日期+主题推导值不一致（传入 {rec_id}，应为 {expected_id}）", file=sys.stderr)
+        return 1
+    rec_id = expected_id
+
+    # 先校验全部文件存在性和方向，任何一处不通过就不写盘。
+    checked: list[tuple[str, Path, tuple[int, int]]] = []
+    for slot in RATIOS:
+        src = slot_files.get(slot)
+        if not src:
+            continue
+        src = src.expanduser()
+        if not src.exists():
+            print(f"错误：找不到封面文件：{src}", file=sys.stderr)
+            return 1
+        src_size = image_size(src)
+        if not src_size:
+            print(f"错误：读不出图片宽高：{src}", file=sys.stderr)
+            return 1
+        note = check_slot(slot, src_size)
+        if note and not allow_orientation_mismatch:
+            print(f"错误：{note}（{src.name}）。如果确定要强制入库，请加 --allow-orientation-mismatch。", file=sys.stderr)
+            return 1
+        checked.append((slot, src, src_size))
+
+    rec = {"id": rec_id, "date": date_str, "topic": topic}
+    target = COVERS_DIR / dirname_for(rec)
+    rel_dir = str(target.relative_to(COVERS_DIR.parent))
+
+    if dry_run:
+        print(f"[--dry-run] 目标目录：{rel_dir}（id={rec_id}）")
+        for slot, src, src_size in checked:
+            print(f"  - {slot}.jpg ← {src}（源尺寸 {src_size[0]}x{src_size[1]}）")
+        return 0
+
+    covers: dict[str, dict] = {}
+    for slot, src, _ in checked:
+        dst = target / f"{slot}.jpg"
+        pressed = press(src, dst)
+        if not pressed:
+            print(f"错误：压缩封面失败：{src}", file=sys.stderr)
+            return 1
+        note = check_slot(slot, pressed)
+        if note:
+            print(f"  ! {note}", file=sys.stderr)
+        covers[slot] = {
+            "file": f"{slot}.jpg",
+            "size": list(pressed),
+            "slot": slot,
+            "shape": shape_of(*pressed),
+            "source": "manual",
+        }
+        print(f"  ✓ {rel_dir}/{slot}.jpg ({pressed[0]}x{pressed[1]})")
+
+    manifest = [{
+        "id": rec_id,
+        "date": date_str,
+        "topic": topic,
+        "dir": rel_dir,
+        "covers": covers,
+    }]
+    idx = merge_manifest_into_index(manifest)
+    print(f"清单已写入 {idx.relative_to(REPO_ROOT)}（id={rec_id}，本次写入 {len(covers)} 张 manual 封面）")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="抓取每期视频的多比例封面")
     ap.add_argument("--limit", type=int, default=20, help="抓最近多少期，默认 20")
-    ap.add_argument("--date", help="只抓指定日期的一期")
-    ap.add_argument("--dry-run", action="store_true", help="只报告，不下载")
+    ap.add_argument("--date", help="只抓指定日期的一期（--manual 模式下为发布日期 YYYY-MM-DD）")
+    ap.add_argument("--topic", help="--manual 模式下这一期的标题（topic）")
+    ap.add_argument("--id", dest="rec_id", help="可选：显式校验的记录 id")
+    ap.add_argument("--manual", action="store_true", help="直接压缩并收录本地提供的封面原图（source=manual）")
+    ap.add_argument("--cover-4x3", type=Path, help="--manual 模式的 4:3 原图路径")
+    ap.add_argument("--cover-3x4", type=Path, help="--manual 模式的 3:4 原图路径")
+    ap.add_argument("--cover-16x9", type=Path, help="--manual 模式的 16:9 原图路径")
+    ap.add_argument("--allow-orientation-mismatch", action="store_true", help="允许横竖方向与槽位不一致的图入库")
+    ap.add_argument("--dry-run", action="store_true", help="只报告，不下载/不写盘")
     ap.add_argument("--verify", action="store_true", help="只体检：核对索引、磁盘和真实宽高")
     ap.add_argument("--reindex", action="store_true", help="按磁盘实际图片重写索引的记账字段")
     ap.add_argument("--only-missing", action="store_true", help="只补缺的槽位，已有的图不重下")
@@ -534,6 +671,22 @@ def main() -> int:
         return verify()
     if args.reindex:
         return reindex()
+    if args.manual:
+        slot_files = {}
+        if args.cover_4x3:
+            slot_files["4x3"] = args.cover_4x3
+        if args.cover_3x4:
+            slot_files["3x4"] = args.cover_3x4
+        if args.cover_16x9:
+            slot_files["16x9"] = args.cover_16x9
+        return install_manual_covers(
+            date_str=args.date or "",
+            topic=args.topic or "",
+            rec_id=args.rec_id,
+            slot_files=slot_files,
+            dry_run=args.dry_run,
+            allow_orientation_mismatch=args.allow_orientation_mismatch,
+        )
 
     records = load_records()
     if args.date:
@@ -697,50 +850,7 @@ def main() -> int:
     print(f"三张齐全 {stat['full']} 期 · 部分 {stat['partial']} 期 · 一张没拿到 {stat['none']} 期")
 
     if not args.dry_run:
-        idx = COVERS_DIR / "index.json"
-        idx.parent.mkdir(parents=True, exist_ok=True)
-        existing = {}
-        if idx.exists():
-            try:
-                for it in json.loads(idx.read_text(encoding="utf-8")).get("items", []):
-                    existing[it["id"]] = it
-            except Exception:
-                pass
-        # 按封面增量合并，不整条覆盖。
-        #
-        # 整条替换有个坑：某次只带一个来源重跑（比如只跑 --date 抓 B 站），
-        # 这一期之前抓到的 4:3 / 3:4 会被整条冲掉——图片还在磁盘上，索引里
-        # 却没了，页面就只剩一张。索引只增不减：新抓到的覆盖旧的，没抓到的
-        # 原样保留。
-        for it in manifest:
-            old = existing.get(it["id"]) or {}
-            merged = dict(old)
-            # dir 不能拿空值去覆盖。
-            #
-            # 只补缺时，如果这期原本一张都没抓到、这次也没补到，manifest 里
-            # 的 dir 是 None；直接 merged.update() 会把旧条目的 dir 抹成空，
-            # 索引里所有封面就都指向 docs/ 根目录下的裸文件名，页面全挂。
-            # 只在这次真的有值时才覆盖。
-            for k, v in it.items():
-                if k == "covers":
-                    continue
-                if v in (None, ""):
-                    continue
-                merged[k] = v
-            covers = dict(old.get("covers") or {})
-            covers.update(it.get("covers") or {})
-            merged["covers"] = covers
-            if not merged.get("dir") and it.get("dir"):
-                merged["dir"] = it["dir"]
-            existing[it["id"]] = merged
-        payload = {
-            "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-            "source": "covers/<日期>_<主题>/",
-            "slots": list(RATIOS),
-            "count": len(existing),
-            "items": sorted(existing.values(), key=lambda x: x["date"], reverse=True),
-        }
-        idx.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        idx = merge_manifest_into_index(manifest)
         print(f"清单已写入 {idx.relative_to(REPO_ROOT)}")
 
     return 0

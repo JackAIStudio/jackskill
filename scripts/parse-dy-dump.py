@@ -27,20 +27,101 @@ from pathlib import Path
 FOLD = re.compile(r'"\s*\n\s*StaticText "')
 
 
+def unwrap_bsk_dump(raw: str) -> str:
+    """兼容 bsk_session sync saveFull 落盘的 JSON 外壳，还原其中的 VOM 文本。"""
+    s = (raw or "").lstrip()
+    if not s.startswith("{"):
+        return raw
+    try:
+        obj = json.loads(raw)
+    except Exception:
+        return raw
+    if not isinstance(obj, dict):
+        return raw
+    for candidate in (obj, obj.get("result") if isinstance(obj.get("result"), dict) else None):
+        if not isinstance(candidate, dict):
+            continue
+        obs = candidate.get("observation")
+        if isinstance(obs, dict) and isinstance(obs.get("text"), str):
+            return obs["text"]
+        if isinstance(candidate.get("text"), str) and (
+            "@vom " in candidate["text"] or "StaticText " in candidate["text"]
+        ):
+            return candidate["text"]
+    return raw
+
+
+def _unescape_vom(raw: str) -> str:
+    """单趟还原 VOM 字符串转义（\\\" -> \"、\\\\ -> \\），不误伤嵌套转义。"""
+    out: list[str] = []
+    i, n = 0, len(raw)
+    while i < n:
+        c = raw[i]
+        if c == "\\" and i + 1 < n and raw[i + 1] in ('"', "\\"):
+            out.append(raw[i + 1])
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def _unfold_vom_json(raw: str) -> str:
+    """按行提取并拼接折成多行的 JSON StaticText 块，跳过 RootWebArea 预览。"""
+    lines = raw.splitlines()
+    buf: list[str] = []
+    collecting = False
+    for line in lines:
+        s = line.lstrip()
+        if not collecting:
+            if s.startswith('StaticText "{') or s.startswith('StaticText "{\\"'):
+                collecting = True
+                body = s[len('StaticText "'):]
+                if body.endswith('"'):
+                    body = body[:-1]
+                buf.append(body)
+        else:
+            if s.startswith('StaticText "'):
+                body = s[len('StaticText "'):]
+                if body.endswith('"'):
+                    body = body[:-1]
+                buf.append(body)
+            else:
+                break
+    return "".join(buf) if buf else ""
+
+
 def extract_json(raw: str) -> dict | None:
-    """从页面文本里抠出那段 work_list JSON。"""
+    """从页面文本、saveFull 文件或纯 JSON 里抠出 work_list JSON。"""
+    raw = unwrap_bsk_dump(raw)
+    stripped = raw.lstrip()
+    if stripped.startswith("{"):
+        try:
+            obj = json.loads(raw)
+            if isinstance(obj, dict) and "aweme_list" in obj:
+                return obj
+        except json.JSONDecodeError:
+            pass
+
+    chunk = _unfold_vom_json(raw)
+    if chunk:
+        txt = _unescape_vom(chunk)
+        try:
+            obj = json.loads(txt)
+            if isinstance(obj, dict) and "aweme_list" in obj:
+                return obj
+        except json.JSONDecodeError:
+            pass
+
     m = re.search(r'StaticText "(.*?)"\n\s*form', raw, re.S)
     if not m:
         m = re.search(r'"(.*aweme_list.*)"', raw, re.S)
     if not m:
         return None
-    txt = m.group(1).replace('\\"', '"')
-    txt = FOLD.sub("", txt)
-    txt = txt.replace("\\\\", "\\")
+    txt = _unescape_vom(FOLD.sub("", m.group(1)))
     try:
         return json.loads(txt)
     except json.JSONDecodeError:
-        # 退一步：只抓 aweme_list 那一段，逐个对象解析
         return None
 
 

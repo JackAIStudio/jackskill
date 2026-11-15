@@ -29,7 +29,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.30.1"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.15.1"
 ```
 
 执行规则：
@@ -143,7 +143,7 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2610.30.1"
 | 小红书 | 创作者后台列表页 | 要登录态，靠列序，最容易看错 |
 | 微信视频号 | 创作者后台列表页 | 要登录态，**列表要先滚动才渲染** |
 
-**B 站不要开浏览器。** 公开接口直接返回 `view/like/favorite/share/reply` 五个精确值，和创作者后台完全一致。返回的是字段名不是位置，不存在看错列的问题。全部 220 期跑一遍约 3 分钟，只有偶发一条被限流（`62012`），退避重试即可。别绕回后台列表页。
+**B 站不要开浏览器。** 公开接口直接返回 `view/like/favorite/share/reply` 五个精确值，和创作者后台完全一致。返回的是字段名不是位置，不存在看错列的问题。全部 230 多期默认 3 并发（`--workers 3`）跑一遍约半分钟，只有偶发一条被限流（`62012`），退避重试即可。别绕回后台列表页。
 
 ### 列序（脚本里已写死，别现场猜）
 
@@ -173,7 +173,7 @@ play_count   digg_count   comment_count   share_count   collect_count
 
 **`status` 里的 `self_see` 是「仅自己可见」，必须当成「平台不给数」而不是 0。** 实测 80 条里 `self_see=true` 的 8 条 `play_count` 全是 0，而 `self_see=false` 的 72 条全部大于 0——没有例外。这类作品照实打 `limited`（保留最后读数），不能记成 0 播放。同一处还有 `is_delete` / `is_prohibited` / `is_private`，脚本一并认。
 
-核对有没有漏记录，看接口返回的 `total`（等于后台作品总数），和 `data/videos.jsonl` 里该平台的记录数比。翻页传上一页返回的 `max_cursor`，`has_more: false` 表示到底。
+核对有没有漏记录，看接口返回的 `total`（等于后台作品总数），和 `data/videos.jsonl` 里该平台的记录数比。翻页传上一页返回的 `max_cursor`，`has_more: false` 表示到底。脚本同时会把「平台近期已有、仓库还没有」的未匹配作品单独列出来提醒「疑似漏收录的新作品」，不要只按用户提的那一条更新，先核对有没有前一天深夜或同日发的另一期漏掉。
 
 ### 怎么做
 
@@ -183,24 +183,25 @@ play_count   digg_count   comment_count   share_count   collect_count
 python3 scripts/refresh-stats.py --platform bilibili
 ```
 
-**第二步，另外三个平台**——在已登录的浏览器里打开，把输出存成文本文件，交给脚本解析：
+**第二步，另外三个平台**——在已登录的浏览器里打开，用 `bsk_session sync saveFull` 或 `observe` 存成文件直接 `--in` 喂给脚本：
 
 | 平台 | 打开哪里 | 备注 |
 | :--- | :--- | :--- |
 | 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?...&count=100...` | 原始 JSON，字段有名字，优先走这条 |
-| 小红书 | `creator.xiaohongshu.com/new/note-manager` | 裸数字，最依赖列序 |
-| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**，否则只有导航栏 |
+| 小红书 | `creator.xiaohongshu.com/new/note-manager` | 裸数字，最依赖列序；注意列表里混有图文笔记，正常跳过 |
+| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**，否则只有导航栏；翻页被遮罩挡住时见下 |
 
 ```bash
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt /tmp/xhs-2.txt
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-1.json /tmp/dy-2.json ...
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs.json
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-1.json ...
 ```
 
-抖音那个 JSON 很长，`observe` 会把它截断成一行。**存文件要拿到完整响应**（spill 文件或 `snapshot` 的原始文本），截断的 JSON 解析出来会少记录。
+**`saveFull` 外壳、VOM 折行与四种序列化形态脚本全认，不用手工预处理**：不管存下来的是 `bsk_session sync saveFull` 的 JSON 外壳（`{"observation":{"text":...}}`）、VOM 折成多行的 `StaticText "..."`、`<pre>` 包裹、还是带/不带反斜杠转义，直接原样传给 `--in` 即可。
 
-`count` 用 **100**，不要用 20。接口照收，133 条只需翻 4 页而不是 7 页。翻页传上一页返回的 `max_cursor`，直到 `has_more: false`。
+**微信视频号后台翻页实测坑**：`platform/post/list` 页面经常挂着一层全屏透明容器（VOM 里显示 `L1 modal cover=100%` 盖住 `L2 page`），直接对「下一页」做 `click` 或 `scroll-to` 会报 `covered or unavailable`。改用同页 `evaluate` 递归穿透 `shadowRoot` 定位文本为 `下一页` 的按钮/链接调 `.click()`，再等 1.5 秒 `sync` 即可顺畅翻完 6 页。
 
-**解析器四种形态都认，不用手工处理**：引号带不带反斜杠（spill 文件是普通引号，列表页文本是 `\"`）、冒号后带不带空格（`"a":1` 与 `"a": 1`）。直接把文件原样喂进去即可，`--in` 会自动剥离 `<pre>` 外壳。以前只认「转义 + 紧凑」一种，照文档拿 spill 文件来解析会静默得到 0 条。
+`count` 用 **100**，不要用 20。接口照收，140 多条只需翻 4 页而不是 8 页。翻页传上一页返回的 `max_cursor`，直到 `has_more: false`。
 
 先加 `--dry-run` 看会改什么，确认无误再落盘。
 
@@ -308,11 +309,12 @@ node scripts/check-followers.mjs && node scripts/build-site.mjs
 | 小红书 | `creator.xiaohongshu.com/new/home` | `粉丝数` |
 | 视频号 | `channels.weixin.qq.com/platform` | `关注者` |
 
-### 抖音的三个坑（都实测过）
+### 抖音的四个坑（都实测过）
 
 1. **首页那个「粉丝指数 301」不是粉丝数**，是账号权重分。真正的总数在数据中心页，同一个号是 299。读错了不会报错，只会一直错下去。
 2. **直接敲 `/creator-micro/data/home`、`/data/overview` 会显示「数据暂未产出」**，必须从首页点侧栏「数据中心」进去才渲染得出来。改地址栏进不去，别在这上面试。
 3. 数据中心页有一排「粉丝净增 / 吸粉量 / 脱粉量 / 回访粉丝量」。这些都不是总数，所以解析只认「总粉丝量」这个标签，离它太远的数字不认。
+4. **数据中心「总粉丝量」是 T-1 离线口径**：页面注明每日 10:00 更新前一日数据（统计周期截止昨天），常比首页或 `work_list` 里 `author.follower_count` 的实时值滞后 1~2 天（如 11-15 数据中心显示 321，而实时已是 323）。为了时间序列可比仍统一采数据中心「总粉丝量」，不要拿实时数覆盖，但汇报当日变化时要说明这个延迟。
 
 ### 口径
 
@@ -357,8 +359,8 @@ node scripts/build-site.mjs
 
 用户发来新视频的逐字稿或封面时走这里。**字段规则的真源是仓库里的 `data/README.md`，别凭记忆填。**
 
-1. **逐字稿**放 `transcripts/md/YYYY-MM-DD_标题.md`，头部三行照抄现有格式：视频原片、发布日期、视频时长。原片只写 B 站与抖音的永久直链，小红书和视频号写平台主页。
-2. **数据行**加进 `data/videos.jsonl`，最新的在最前面。
+1. **逐字稿**放 `transcripts/md/YYYY-MM-DD_标题.md`，头部三行照抄现有格式：视频原片、发布日期、视频时长。原片只写 B 站与抖音的永久直链，小红书和视频号写平台主页。若用户给的是 `.srt` 字幕或带分幕说明的文稿，先剥去时间轴、HTML 标签与非口播备注，只保留口播正文。
+2. **数据行**加进 `data/videos.jsonl`，最新的在最前面。`duration` 跨平台因编码对齐常差 1 秒（如原片 27.0s、B 站 28s），优先采用 B 站接口返回的整数秒；未发 B 站时按抖音或原片四舍五入取整。
 3. **封面**放 `docs/covers/<日期>_<主题>/`，三个槽位各一张，再更新 `docs/covers/index.json`。
 4. 收尾跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`。
 
@@ -381,7 +383,17 @@ id = date + "_" + topic 里的空白换成下划线
 
 自己给的图比平台抓的清楚，直接用，别去抓一遍。但**三个槽位必须来自同一期**——曾经把 A 期的 4:3 和 B 期的 3:4 拼进一张对比图，看着完全合理，结论是错的。
 
-处理时压到长边 800、JPEG q78（跟 `fetch-covers.py` 的 `press()` 一致），索引里 `source` 写 `manual`。索引条目要写全 `size` / `slot` / `shape`，`shape` 用 `shape_of(w, h)` 算，别手填。写完跑 `python3 scripts/fetch-covers.py --verify` 体检。
+直接走 `fetch-covers.py --manual`，一行完成压图（长边 800、JPEG q78）、方向防错校验（把竖图错传进横屏槽位会直接拒绝）和索引增量合并（`source: "manual"`、`size` / `slot` / `shape` 自动算好）：
+
+```bash
+python3 scripts/fetch-covers.py --manual \
+  --date 2026-11-15 \
+  --topic "视频标题" \
+  --cover-4x3 /path/to/4x3.png \
+  --cover-3x4 /path/to/3x4.png \
+  --cover-16x9 /path/to/16x9.png
+python3 scripts/fetch-covers.py --verify
+```
 
 ## 封面模式
 

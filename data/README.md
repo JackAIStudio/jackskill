@@ -32,7 +32,7 @@ node scripts/check-data.mjs
 | `id` | string | **推导出来的**：`date + "_" + topic 里的空白换成下划线`。不要自己起名。 |
 | `date` | string | `YYYY-MM-DD`，这一期的发布日期。**必须与逐字稿文件名里的日期一致。** |
 | `topic` | string | 这一期的标题。有逐字稿时取自文件名。 |
-| `duration` | int | 时长（秒）。不知道就填 `0`。 |
+| `duration` | int | 时长（秒）。跨平台差 1 秒时优先以 B 站接口为准，不知道就填 `0`。 |
 | `transcript` | string \| null | 逐字稿路径，如 `transcripts/md/2026-10-08_标题.md`；没有就填 `null`。 |
 | `summary` | object | 四个平台相加的汇总，见下。**必须等于各平台之和。** |
 | `platforms` | object | 按平台分的数据，见下。**某个平台没有数据就整个不写这个键。** |
@@ -102,19 +102,19 @@ node scripts/check-data.mjs
 `data/videos.jsonl` 里的数字不会自己变，得有人定期从四个平台读回来写进去。用 `scripts/refresh-stats.py`：
 
 ```bash
-# B 站：公开接口，免登录，一次刷全部
+# B 站：公开接口，免登录，默认 3 并发一次刷全部
 python3 scripts/refresh-stats.py --platform bilibili
 
-# 另外三个平台：先在已登录的浏览器里 observe 列表页，把输出存成文件
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt
-python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page.txt
+# 另外三个平台：先在已登录的浏览器里 saveFull / observe 列表页，把输出直接传给 --in
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.json
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.json
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page.json
 
 # 先看会改什么，不落盘
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt --dry-run
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.json --dry-run
 ```
 
-刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
+`--in` 支持直接传入 `bsk_session sync saveFull` 写出的外包 JSON、VOM 折行后的 `StaticText` 与纯 JSON，不用手工拆壳。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
 
 **B 站不需要开浏览器。** `api.bilibili.com/x/web-interface/view?bvid=` 免登录返回 `view/like/favorite/share/reply`，和创作者后台一致，而且字段有名字，不存在看错列的问题。
 
@@ -219,11 +219,12 @@ python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/wx-hom
 | 小红书 | `creator.xiaohongshu.com/new/home` | `粉丝数` | 精确整数 |
 | 视频号 | `channels.weixin.qq.com/platform` | `关注者` | 精确整数 |
 
-**抖音有三个坑，都实测过：**
+**抖音有四个坑，都实测过：**
 
 1. **首页那个「粉丝指数 301」不是粉丝数**，是账号权重分。真正的总数在数据中心页，同一个号是 299。
 2. **直接敲 `/creator-micro/data/home` 或 `/data/overview` 会显示「数据暂未产出」**，必须从首页点侧栏「数据中心」进去才渲染得出来。
 3. 数据中心页有一排「粉丝净增 / 吸粉量 / 脱粉量 / 回访粉丝量」，都是为了别认错才只认「总粉丝量」这个标签。
+4. **数据中心「总粉丝量」每日 10:00 更新前一日数据（T-1 口径）**，可能比首页或 `work_list` 接口里的实时 `follower_count` 滞后 1~2 天；为了历史曲线口径一致仍统一读「总粉丝量」，不拿实时数覆盖。
 
 **读不到就不写。** 认不出标签时脚本直接报错退出，不拿别的数字顶上——页面上一旦出现一个错的粉丝数，没人看得出来。
 

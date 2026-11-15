@@ -49,6 +49,7 @@ curl 直接打拿不到；只能在已登录的浏览器里读。读回来的是
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import re
 import sys
@@ -56,7 +57,7 @@ import time
 import unicodedata
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -81,6 +82,71 @@ UA = (
 # --------------------------------------------------------------------------
 # 通用
 # --------------------------------------------------------------------------
+
+def unwrap_bsk_dump(raw: str) -> str:
+    """兼容 bsk_session sync saveFull 落盘的 JSON 外壳，还原其中的 VOM 文本。
+
+    bsk_session({ action: "sync", saveFull: "..." }) 会写出
+    {"observation": {"text": "..."}, ...}，里面的引号和换行又被 JSON
+    包了一层。直接拿它喂正则会得到 0 条——在这里统一解掉这层壳。
+    普通文本、HTML 或裸接口 JSON（含 aweme_list）保持原样返回。
+    """
+    s = (raw or "").lstrip()
+    if not s.startswith("{"):
+        return raw
+    try:
+        obj = json.loads(raw)
+    except Exception:
+        return raw
+    if not isinstance(obj, dict):
+        return raw
+    for candidate in (obj, obj.get("result") if isinstance(obj.get("result"), dict) else None):
+        if not isinstance(candidate, dict):
+            continue
+        obs = candidate.get("observation")
+        if isinstance(obs, dict) and isinstance(obs.get("text"), str):
+            return obs["text"]
+        if isinstance(candidate.get("text"), str) and (
+            "@vom " in candidate["text"] or "StaticText " in candidate["text"]
+        ):
+            return candidate["text"]
+    return raw
+
+
+def _unfold_vom_json(raw: str) -> str:
+    """从 VOM 文本里提取并拼接被按长度折成多行的 JSON StaticText 块。
+
+    bsk / observe 遇到几十 KB 的长文本时，会先把 RootWebArea 截断成一段
+    预览，再把正文拆成多个连续的 `StaticText "..."` 行。直接去匹配会在
+    折行处把一条记录切两半；这里按行跳过 RootWebArea 预览并拼接所有
+    连续的 JSON StaticText 行。
+    """
+    lines = raw.splitlines()
+    buf: list[str] = []
+    collecting = False
+    for line in lines:
+        s = line.lstrip()
+        if not collecting:
+            if s.startswith('StaticText "{') or s.startswith('StaticText "{\\"'):
+                collecting = True
+                body = s[len('StaticText "'):]
+                if body.endswith('"'):
+                    body = body[:-1]
+                buf.append(body)
+        else:
+            if s.startswith('StaticText "'):
+                body = s[len('StaticText "'):]
+                if body.endswith('"'):
+                    body = body[:-1]
+                buf.append(body)
+            else:
+                break
+    return "".join(buf) if buf else raw
+
+
+def read_dump_text(path: str | Path) -> str:
+    return unwrap_bsk_dump(Path(path).read_text(encoding="utf-8", errors="replace"))
+
 
 def norm(s: str) -> str:
     """标题归一化：去掉标点、空格、话题标签，用于模糊匹配。"""
@@ -175,7 +241,9 @@ def bili_fetch(bvid: str, retries: int = 3) -> tuple[dict | None, str | None]:
     return None, "重试耗尽"
 
 
-def refresh_bilibili(rows: list[dict], *, delay: float, dry_run: bool) -> list[str]:
+def refresh_bilibili(
+    rows: list[dict], *, delay: float, dry_run: bool, workers: int = 3
+) -> list[str]:
     log: list[str] = []
     targets = []
     for r in rows:
@@ -186,11 +254,35 @@ def refresh_bilibili(rows: list[dict], *, delay: float, dry_run: bool) -> list[s
         if m:
             targets.append((r, b, m.group(1)))
 
-    print(f"B 站待刷 {len(targets)} 期", file=sys.stderr)
+    print(f"B 站待刷 {len(targets)} 期（并发 {max(1, workers)}）", file=sys.stderr)
     changed = 0
     failed = []
-    for i, (row, plat, bvid) in enumerate(targets):
-        stat, err = bili_fetch(bvid)
+    results: list[tuple[dict | None, str | None]] = [(None, None)] * len(targets)
+
+    def _task(idx: int, bvid: str) -> tuple[int, dict | None, str | None]:
+        res = bili_fetch(bvid)
+        if delay > 0:
+            time.sleep(delay)
+        return idx, res[0], res[1]
+
+    if workers <= 1:
+        for i, (_, _, bvid) in enumerate(targets):
+            _, stat, err = _task(i, bvid)
+            results[i] = (stat, err)
+            if (i + 1) % 25 == 0:
+                print(f"  ...{i + 1}/{len(targets)}", file=sys.stderr)
+    else:
+        done = 0
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [pool.submit(_task, i, bvid) for i, (_, _, bvid) in enumerate(targets)]
+            for fut in as_completed(futs):
+                idx, stat, err = fut.result()
+                results[idx] = (stat, err)
+                done += 1
+                if done % 25 == 0:
+                    print(f"  ...{done}/{len(targets)}", file=sys.stderr)
+
+    for (row, plat, bvid), (stat, err) in zip(targets, results):
         if err:
             failed.append((row["date"], bvid, err))
             print(f"  ! {row['date']} {bvid}: {err}", file=sys.stderr)
@@ -205,13 +297,10 @@ def refresh_bilibili(rows: list[dict], *, delay: float, dry_run: bool) -> list[s
             if diffs:
                 changed += 1
                 log.append(f"{row['date']} {row['topic'][:24]}: " + ", ".join(diffs))
-        if (i + 1) % 25 == 0:
-            print(f"  ...{i + 1}/{len(targets)}", file=sys.stderr)
-        time.sleep(delay)
 
     print(f"\nB 站：{changed} 期有变化，{len(failed)} 期失败", file=sys.stderr)
-    for date, bvid, err in failed:
-        print(f"  失败 {date} {bvid}: {err}", file=sys.stderr)
+    for date_str, bvid, err in failed:
+        print(f"  失败 {date_str} {bvid}: {err}", file=sys.stderr)
     return log
 
 
@@ -328,6 +417,7 @@ def parse_xhs(raw: str) -> list[dict]:
     日期形如 `2026-10-22 17:39`，紧跟其后五个纯数字就是
     观看 评论 点赞 收藏 分享。中间的 img / button 行直接跳过。
     """
+    raw = unwrap_bsk_dump(raw)
     items = []
     lines = [_unescape(x).strip() for x in STATIC.findall(raw)]
     i = 0
@@ -368,6 +458,7 @@ def parse_wx(raw: str) -> list[dict]:
     排除上一层候选时只能按「这一行是不是日期」判断，不能按「含不含年」——
     按含年判断会把这类标题整条丢掉。
     """
+    raw = unwrap_bsk_dump(raw)
     items = []
     lines = [_unescape(x).strip() for x in STATIC.findall(raw)]
     date_re = re.compile(r"\d{4}年\d{1,2}月\d{1,2}日")
@@ -423,6 +514,7 @@ def parse_dy(raw: str) -> list[dict]:
     """
     # 按文档顺序取所有 StaticText / button 的文本，顺序不能丢——
     # 标题在日期前、指标在日期后，全靠相对位置判断。
+    raw = unwrap_bsk_dump(raw)
     tokens = [
         _unescape(m.group(1)).strip()
         for m in re.finditer(r'(?:StaticText|button)\s+"((?:[^"\\]|\\.)*)"', raw)
@@ -509,7 +601,8 @@ DY_HIDDEN_FLAGS = {
 # 试过后者：转义形态里 `\\.` 会把 `\"` 也当成转义序列吃掉，一路吃到下一条
 # 记录，标题就串到别的作品上了。归一化之后只写一套简单正则，好读也好测。
 def normalize_dy_json(raw: str) -> str:
-    """把转义形态还原成普通 JSON 文本；已经是普通形态就原样返回。"""
+    """把 saveFull 外壳、VOM 折行与转义形态统一还原成普通 JSON 文本。"""
+    raw = _unfold_vom_json(unwrap_bsk_dump(raw))
     if '"statistics"' in raw:
         return raw
     if '\\"statistics\\"' not in raw:
@@ -525,6 +618,13 @@ def normalize_dy_json(raw: str) -> str:
         out.append(c)
         i += 1
     return "".join(out)
+
+
+def extract_dy_total(raw: str) -> int | None:
+    """从 work_list JSON 里提取账号总作品数 `total`，用于核对翻页是否拿全。"""
+    raw = normalize_dy_json(raw)
+    m = re.search(r'"total"\s*:\s*(\d+)', raw)
+    return int(m.group(1)) if m else None
 
 
 # 紧凑和带空格的序列化都要认：`"a":1` 与 `"a": 1` 是同一份数据。
@@ -770,12 +870,35 @@ def clear_limited(row: dict, platform: str, *, dry_run: bool) -> list[str]:
     return ["解除 limited（平台重新给数了）"]
 
 
+def find_suspected_new_unmatched(
+    rows: list[dict], leftovers: list[dict], *, recent_days: int = 3
+) -> list[dict]:
+    """筛出「平台已有、仓库还没有」的近期未匹配作品，避免新片被历史噪音淹没。"""
+    if not leftovers or not rows:
+        return []
+    dates = [r["date"] for r in rows if r.get("date")]
+    if not dates:
+        return []
+    try:
+        cutoff = (date.fromisoformat(max(dates)) - timedelta(days=recent_days)).isoformat()
+    except ValueError:
+        return []
+    out = []
+    for it in leftovers:
+        d = it.get("date") or ""
+        t = (it.get("title") or "").strip()
+        if d >= cutoff and t and t != "删除":
+            out.append(it)
+    return out
+
+
 def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry_run: bool) -> list[str]:
     parser = PARSERS[platform]
     log: list[str] = []
     items: list[dict] = []
+    dy_total: int | None = None
     for p in paths:
-        raw = Path(p).read_text(encoding="utf-8", errors="replace")
+        raw = read_dump_text(p)
         got = parser(raw)
         # 抖音优先走 work_list 接口的原始 JSON：字段有名字、全是精确值。
         # 解析不出来（给的是列表页文本）再退回按列序读。
@@ -784,6 +907,9 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
             if precise:
                 print(f"  {Path(p).name}: 按 statistics 精确解析出 {len(precise)} 条", file=sys.stderr)
                 got = precise
+                t = extract_dy_total(raw)
+                if t is not None:
+                    dy_total = t if dy_total is None else max(dy_total, t)
         print(f"  {Path(p).name}: 解析出 {len(got)} 条", file=sys.stderr)
         items.extend(got)
 
@@ -808,9 +934,18 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
     else:
         pairs, leftovers = pair_items_to_rows(rows, platform, items)
 
+    suspected_new = find_suspected_new_unmatched(rows, leftovers)
     for it in leftovers:
         print(f"  ? 未匹配到仓库记录：{it['date']} {it['title'][:30]}", file=sys.stderr)
         skipped += 1
+    if suspected_new:
+        print(
+            f"\n  ! 疑似漏收录的新作品（{len(suspected_new)} 条，建议核对后补进仓库）：",
+            file=sys.stderr,
+        )
+        for it in suspected_new:
+            aid = f" [aweme_id={it['aweme_id']}]" if it.get("aweme_id") else ""
+            print(f"    - {it['date']} {it['title']}{aid}", file=sys.stderr)
 
     for row, it in pairs:
         if it.get("blocked"):
@@ -838,7 +973,9 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
         if diffs:
             log.append(f"{it['date']} {row['topic'][:24]}: " + ", ".join(diffs))
 
-    print(f"\n{platform}：匹配 {matched} 条，跳过 {skipped} 条", file=sys.stderr)
+    repo_plat_count = sum(1 for r in rows if platform in r.get("platforms", {}))
+    extra = f"（后台 total={dy_total}，库内={repo_plat_count}）" if dy_total is not None else ""
+    print(f"\n{platform}：匹配 {matched} 条，跳过 {skipped} 条{extra}", file=sys.stderr)
     report_coverage(rows, platform, matched, items)
     return log
 
@@ -888,14 +1025,15 @@ def main() -> int:
     )
     ap.add_argument("--in", dest="inputs", nargs="+", help="observe 出来的页面文本（B 站不需要）")
     ap.add_argument("--dry-run", action="store_true", help="只报告，不写盘")
-    ap.add_argument("--delay", type=float, default=0.45, help="B 站请求间隔秒数")
+    ap.add_argument("--delay", type=float, default=0.3, help="B 站每次请求后的间隔秒数")
+    ap.add_argument("--workers", type=int, default=3, help="B 站并发线程数（默认 3）")
     args = ap.parse_args()
 
     rows = load_rows()
     print(f"读入 {len(rows)} 期", file=sys.stderr)
 
     if args.platform == "bilibili":
-        log = refresh_bilibili(rows, delay=args.delay, dry_run=args.dry_run)
+        log = refresh_bilibili(rows, delay=args.delay, dry_run=args.dry_run, workers=args.workers)
     else:
         if not args.inputs:
             ap.error(f"{args.platform} 需要 --in 指定页面文本文件")

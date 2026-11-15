@@ -221,6 +221,19 @@ def test_save_order(tmp: Path) -> None:
     check(dates == ["2026-10-31", "2026-10-30", "2026-10-29"], f"应按日期倒序写回，实际 {dates}")
 
 
+def test_savefull_wrapper() -> None:
+    import json
+
+    for label, raw, fn, want in [
+        ("抖音", DY_CTX, rf.parse_douyin, 299),
+        ("小红书", XHS_MERGED, rf.parse_xiaohongshu, 6446),
+        ("视频号", WX_HOME, rf.parse_wechat_channels, 446),
+    ]:
+        wrapped = json.dumps({"observation": {"text": raw}}, ensure_ascii=False)
+        n, src = fn(wrapped)
+        check(n == want, f"{label} 读 bsk saveFull 外壳应得 {want}，实际 {n}（{src}）")
+
+
 def main() -> int:
     import tempfile
 
@@ -228,6 +241,7 @@ def main() -> int:
     test_xiaohongshu()
     test_douyin()
     test_wechat_channels()
+    test_savefull_wrapper()
     test_missing()
     test_upsert()
     test_upsert_delta()

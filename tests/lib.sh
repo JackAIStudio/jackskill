@@ -142,7 +142,7 @@ assert_output_contains() {
 assert_exit_code() {
   local expected="$1" actual="$2"
   if [ "$expected" -ne "$actual" ]; then
-    echo "FAIL: 退出码期望 $expected，实际 $actual"
+    echo "FAIL: 退出码期望 ${expected}，实际 ${actual}"
     return 1
   fi
   return 0

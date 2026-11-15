@@ -174,8 +174,33 @@ def bili_followers(mid: int) -> tuple[int | None, str | None]:
 _NODE_RE = re.compile(r'(?P<line>(?:^|\n)\s*(?:@e\d+\s+\w+|StaticText|paragraph|heading)\s+"(?P<text>[^"]*)"(?P<ctx>[^\n]*))')
 
 
+def unwrap_bsk_dump(raw: str) -> str:
+    """兼容 bsk_session sync saveFull 落盘的 JSON 外壳，还原其中的 VOM 文本。"""
+    s = (raw or "").lstrip()
+    if not s.startswith("{"):
+        return raw
+    try:
+        obj = json.loads(raw)
+    except Exception:
+        return raw
+    if not isinstance(obj, dict):
+        return raw
+    for candidate in (obj, obj.get("result") if isinstance(obj.get("result"), dict) else None):
+        if not isinstance(candidate, dict):
+            continue
+        obs = candidate.get("observation")
+        if isinstance(obs, dict) and isinstance(obs.get("text"), str):
+            return obs["text"]
+        if isinstance(candidate.get("text"), str) and (
+            "@vom " in candidate["text"] or "StaticText " in candidate["text"]
+        ):
+            return candidate["text"]
+    return raw
+
+
 def _nodes(raw: str) -> list[tuple[str, str]]:
     """把页面文本拆成 (文本, 整行) 列表，文本里带引号的已反转义。"""
+    raw = unwrap_bsk_dump(raw)
     out = []
     for m in _NODE_RE.finditer(raw):
         text = m.group("text").replace('\\"', '"')
@@ -207,6 +232,7 @@ def parse_douyin(raw: str) -> tuple[int | None, str]:
     认不出时明确说「没读到」，不要拿首页的粉丝指数糊弄——那是个位数的分，
     不是粉丝量。
     """
+    raw = unwrap_bsk_dump(raw)
     nodes = _nodes(raw)
     # 形态 1：同一行的 ctx 里带着标签
     for text, line in nodes:

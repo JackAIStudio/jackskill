@@ -559,6 +559,53 @@ def test_wx_title_with_year() -> None:
         check(got[0]["raw"] == ["1395", "10", "5", "18", "22"], "五个数字应按列序读全")
 
 
+# ---------------------------------------------------------------------------
+# bsk saveFull 外壳与 VOM StaticText 折行：直接喂给脚本不能得到 0 条
+# ---------------------------------------------------------------------------
+
+def test_savefull_and_vom_fold() -> None:
+    import json
+
+    xhs_savefull = json.dumps({"observation": {"text": XHS_PAGE}}, ensure_ascii=False)
+    check(len(rs.parse_xhs(xhs_savefull)) == 2, "小红书解析应直接认 bsk saveFull JSON 外壳")
+
+    wx_savefull = json.dumps({"observation": {"text": WX_PAGE}}, ensure_ascii=False)
+    check(len(rs.parse_wx(wx_savefull)) == 2, "视频号解析应直接认 bsk saveFull JSON 外壳")
+
+    # VOM 会先写一行截断的 RootWebArea，再把 JSON 折成多行 StaticText，
+    # 折行点甚至可能正好切进 desc 或 statistics 内部。
+    folded_vom = (
+        '@vom 1\n'
+        'L1 page\n'
+        '  RootWebArea "{\\"aweme_list\\":[{\\"desc\\":\\"被截断的预"\n'
+        '    StaticText "{\\"aweme_list\\":[{\\"create_time\\":1794736179,\\"desc\\":\\"谷歌模型"\n'
+        '    StaticText "做的不错但harness做得是一坨\\",\\"duration\\":37500,\\"stat"\n'
+        '    StaticText "istics\\":{\\"aweme_id\\":\\"7708333154834091300\\",\\"collect_count\\":1,\\"comment_count\\":4,\\"digg_count\\":8,\\"play_count\\":555,\\"share_count\\":0},\\"status\\":{\\"is_delete\\":false,\\"self_see\\":false}}],\\"total\\":145}"\n'
+        '    form "美观输出"\n'
+    )
+    dy_savefull = json.dumps({"observation": {"text": folded_vom}}, ensure_ascii=False)
+    items = rs.parse_dy_json(dy_savefull)
+    check(len(items) == 1, f"折在 statistics 里的 bsk saveFull 也应解析出 1 条，实际 {len(items)}")
+    if items:
+        check(items[0]["aweme_id"] == "7708333154834091300", "折行后 aweme_id 应完整")
+        check(items[0]["title"] == "谷歌模型做的不错但harness做得是一坨", f"折在 desc 中间应还原完整标题：{items[0]['title']!r}")
+        check(items[0]["raw"] == ["555", "8", "4", "0", "1"], f"折在 statistics 中间应还原五元组：{items[0]['raw']}")
+    check(rs.extract_dy_total(dy_savefull) == 145, "应能从 saveFull 里读出 total=145")
+
+
+def test_suspected_new_unmatched() -> None:
+    rows = [{"date": "2026-11-14", "topic": "旧视频", "platforms": {}}]
+    leftovers = [
+        {"date": "2026-11-15", "title": "刚发的新视频", "aweme_id": "123"},
+        {"date": "2026-11-14", "title": "昨晚发的另一期"},
+        {"date": "2026-07-25", "title": "删除"},
+        {"date": "2026-03-02", "title": "很久以前未收录的私密稿"},
+    ]
+    got = rs.find_suspected_new_unmatched(rows, leftovers)
+    titles = [x["title"] for x in got]
+    check(titles == ["刚发的新视频", "昨晚发的另一期"], f"疑似漏收录筛得不对：{titles}")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
@@ -577,6 +624,8 @@ def main() -> int:
         test_wx_title_with_year,
         test_mark_limited,
         test_zero_stays_zero,
+        test_savefull_and_vom_fold,
+        test_suspected_new_unmatched,
     ]:
         fn()
 

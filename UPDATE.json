@@ -1,5 +1,5 @@
 {
-  "version": "2610.30.1",
-  "notice": "粉丝数上线：四平台各一个粉丝数快照，dashboard 加了粉丝区块",
-  "updated_at": "2026-10-30"
+  "version": "2611.15.1",
+  "notice": "采集脚本直接兼容 bsk saveFull 与 VOM 折行，新增 fetch-covers --manual 手动封面入库，B 站刷新提速并补齐漏录新片提醒与视频号翻页说明",
+  "updated_at": "2026-11-15"
 }

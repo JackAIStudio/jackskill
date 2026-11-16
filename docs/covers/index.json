@@ -1,13 +1,66 @@
 {
-  "generatedAt": "2026-11-15T19:55:58+0800",
+  "generatedAt": "2026-11-16T22:19:28+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 242,
+  "count": 244,
   "items": [
+    {
+      "id": "2026-11-16_鹈鹕测试，Gemini4_Carbon_和_Gpt6_Astra",
+      "date": "2026-11-16",
+      "topic": "鹈鹕测试，Gemini4 Carbon 和 Gpt6 Astra",
+      "dir": "covers/2026-11-16_鹈鹕测试，Gemini4 Carbon 和 Gpt6 Astra",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            600,
+            800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
     {
       "id": "2026-11-15_谷歌模型做的不错但harness做得是一坨",
       "date": "2026-11-15",
@@ -34,6 +87,59 @@
           "size": [
             600,
             800
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.75,
+            "nearest": "3x4",
+            "deviation": 0.0,
+            "orientation": "portrait"
+          },
+          "source": "manual"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        }
+      }
+    },
+    {
+      "id": "2026-11-15_Gemini4_Hydrogen_3D建模实测",
+      "date": "2026-11-15",
+      "topic": "Gemini4 Hydrogen 3D建模实测",
+      "dir": "covers/2026-11-15_Gemini4 Hydrogen 3D建模实测",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "manual"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            720
           ],
           "slot": "3x4",
           "shape": {

@@ -101,17 +101,20 @@ node scripts/check-data.mjs
 
 `data/videos.jsonl` 里的数字不会自己变，得有人定期从四个平台读回来写进去。用 `scripts/refresh-stats.py`：
 
+**日常默认做滚动更新（最近 7~14 天 / 各平台第 1 页或首屏）**——越新的视频变化越快，老视频曲线平缓，无需每次都翻遍全库；只有明确需要全库校准时才不加 `--days` 全量重刷。
+
 ```bash
-# B 站：公开接口，免登录，默认 3 并发一次刷全部
+# 日常滚动更新：加 --days 14（只刷新近 14 天，B 站几秒跑完；其余平台只采第 1 页 / 首屏）
+python3 scripts/refresh-stats.py --platform bilibili --days 14
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --days 14
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page1.txt --days 14
+
+# 全量重刷（仅当明确需要全库核对时才运行不带 --days 的全量模式）
 python3 scripts/refresh-stats.py --platform bilibili
 
-# 另外三个平台：先在已登录的浏览器里 saveFull / observe 列表页，把输出直接传给 --in
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.json
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.json
-python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page.json
-
-# 先看会改什么，不落盘
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.json --dry-run
+# 只看会改什么，不落盘；也可用 --limit N 只刷最新 N 期
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --dry-run
 ```
 
 `--in` 支持直接传入 `bsk_session sync saveFull` 写出的外包 JSON、VOM 折行后的 `StaticText` 与纯 JSON，不用手工拆壳。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。

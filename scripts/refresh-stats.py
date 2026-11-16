@@ -29,16 +29,18 @@ curl 直接打拿不到；只能在已登录的浏览器里读。读回来的是
 这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」会每一条都错位。
 
 用法：
-    # B 站：全部重刷（默认就是全部）
+    # 滚动更新（日常默认：B 站只刷最近 14 天，其余平台只喂首页 / 第一屏）
+    python3 scripts/refresh-stats.py --platform bilibili --days 14
+    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --days 14
+    python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
+    python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page1.txt --days 14
+
+    # 全量重刷（仅当明确需要全库校准时才不加 --days）
     python3 scripts/refresh-stats.py --platform bilibili
 
-    # 另外三个平台：先在浏览器里 observe 列表页，把输出存成文件
-    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt
-    python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-1.txt /tmp/xhs-2.txt
-    python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page.txt
-
-    # 只看看会改什么，不落盘
-    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page.txt --dry-run
+    # 只刷最新的 N 期，或只看会改什么不落盘
+    python3 scripts/refresh-stats.py --platform bilibili --limit 20 --dry-run
+    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --dry-run
 
 写完记得跑 node scripts/check-data.mjs 和 node scripts/build-site.mjs。
 
@@ -241,20 +243,58 @@ def bili_fetch(bvid: str, retries: int = 3) -> tuple[dict | None, str | None]:
     return None, "重试耗尽"
 
 
-def refresh_bilibili(
-    rows: list[dict], *, delay: float, dry_run: bool, workers: int = 3
-) -> list[str]:
-    log: list[str] = []
+def resolve_since_date(days: int | None, *, today: date | None = None) -> str | None:
+    """把 --days N 转成起始日期字符串（含当天）；未传则返回 None（不按日期截断）。"""
+    if days is None:
+        return None
+    if days < 0:
+        raise ValueError(f"--days 不能为负数：{days}")
+    base = today or date.today()
+    return (base - timedelta(days=days)).isoformat()
+
+
+def select_bili_targets(
+    rows: list[dict], *, since_date: str | None = None, limit: int | None = None
+) -> tuple[list[tuple[dict, dict, str]], int]:
+    """筛出 B 站待刷列表与库内总期数；支持按起始日期与最新条数做滚动截取。"""
     targets = []
+    all_bili = 0
     for r in rows:
         b = r["platforms"].get("bilibili")
         if not b:
             continue
         m = re.search(r"/video/(BV[0-9A-Za-z]+)", b.get("url", ""))
-        if m:
-            targets.append((r, b, m.group(1)))
+        if not m:
+            continue
+        all_bili += 1
+        if since_date and r.get("date", "") < since_date:
+            continue
+        targets.append((r, b, m.group(1)))
 
-    print(f"B 站待刷 {len(targets)} 期（并发 {max(1, workers)}）", file=sys.stderr)
+    if limit is not None and limit >= 0:
+        targets = targets[:limit]
+    return targets, all_bili
+
+
+def refresh_bilibili(
+    rows: list[dict],
+    *,
+    delay: float,
+    dry_run: bool,
+    workers: int = 3,
+    since_date: str | None = None,
+    limit: int | None = None,
+) -> list[str]:
+    log: list[str] = []
+    targets, all_bili = select_bili_targets(rows, since_date=since_date, limit=limit)
+
+    scope_parts = []
+    if since_date:
+        scope_parts.append(f"≥ {since_date}")
+    if limit is not None:
+        scope_parts.append(f"最新 {limit} 期")
+    scope_desc = f"，范围 {' / '.join(scope_parts)}（库内共 {all_bili} 期）" if scope_parts else ""
+    print(f"B 站待刷 {len(targets)} 期（并发 {max(1, workers)}{scope_desc}）", file=sys.stderr)
     changed = 0
     failed = []
     results: list[tuple[dict | None, str | None]] = [(None, None)] * len(targets)
@@ -892,7 +932,15 @@ def find_suspected_new_unmatched(
     return out
 
 
-def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry_run: bool) -> list[str]:
+def refresh_from_pages(
+    rows: list[dict],
+    platform: str,
+    paths: list[str],
+    *,
+    dry_run: bool,
+    since_date: str | None = None,
+    limit: int | None = None,
+) -> list[str]:
     parser = PARSERS[platform]
     log: list[str] = []
     items: list[dict] = []
@@ -918,10 +966,12 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
         print(f"  ! 没解析出任何记录{hint}", file=sys.stderr)
         return log
 
-    matched = skipped = 0
+    matched = skipped = out_of_scope = 0
     # 抖音的 work_list 带 aweme_id，id 是唯一可靠的判据，保持逐条精确匹配；
     # 小红书、视频号的列表页拿不到 id，只能按标题配，必须全局一对一配对，
     # 否则标题被平台改写、或者晚一天发的那一批会全部落到「未匹配」。
+    # 注意：配对必须拿完整 rows，以免页面里「置顶」的旧视频在局部截断下误配或误报未匹配；
+    # --days / --limit 只控制配对后哪些期次允许落盘。
     if platform == "douyin":
         pairs = []
         leftovers = []
@@ -947,7 +997,19 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
             aid = f" [aweme_id={it['aweme_id']}]" if it.get("aweme_id") else ""
             print(f"    - {it['date']} {it['title']}{aid}", file=sys.stderr)
 
+    # 启用 --limit 时按仓库记录日期倒序取最新的 N 条配对
+    if limit is not None and limit >= 0:
+        pairs.sort(key=lambda pair: pair[0].get("date", ""), reverse=True)
+
+    applied_rows = 0
     for row, it in pairs:
+        if since_date and row.get("date", "") < since_date:
+            out_of_scope += 1
+            continue
+        if limit is not None and limit >= 0 and applied_rows >= limit:
+            out_of_scope += 1
+            continue
+        applied_rows += 1
         if it.get("blocked"):
             # 平台不给数据 → 保留最后读数并打 limited 标记，不清零
             diffs, why = mark_limited(
@@ -975,19 +1037,22 @@ def refresh_from_pages(rows: list[dict], platform: str, paths: list[str], *, dry
 
     repo_plat_count = sum(1 for r in rows if platform in r.get("platforms", {}))
     extra = f"（后台 total={dy_total}，库内={repo_plat_count}）" if dy_total is not None else ""
-    print(f"\n{platform}：匹配 {matched} 条，跳过 {skipped} 条{extra}", file=sys.stderr)
-    report_coverage(rows, platform, matched, items)
+    scope_note = f"，超出滚动范围未改 {out_of_scope} 条" if out_of_scope else ""
+    print(f"\n{platform}：匹配 {matched} 条，跳过 {skipped} 条{scope_note}{extra}", file=sys.stderr)
+    report_coverage(rows, platform, matched, items, since_date=since_date, limit=limit)
     return log
 
 
-def report_coverage(rows: list[dict], platform: str, matched: int, items: list[dict]) -> None:
-    """说清这次刷到了哪儿、没刷到哪儿。
-
-    小红书和视频号只能靠列表页，第一屏就十几条，老期次刷不到。
-    以前只报「匹配 N 条」，不说覆盖范围，很容易让人以为整库都是今天的数。
-    刷完把「最新一条是哪天、最老一条是哪天、库里最早那条是哪天」摆出来，
-    差距一眼看得出。
-    """
+def report_coverage(
+    rows: list[dict],
+    platform: str,
+    matched: int,
+    items: list[dict],
+    *,
+    since_date: str | None = None,
+    limit: int | None = None,
+) -> None:
+    """说清这次刷到了哪儿、哪些沿用既有快照。"""
     fresh = [it["date"] for it in items if it.get("date")]
     if not fresh:
         return
@@ -996,20 +1061,17 @@ def report_coverage(rows: list[dict], platform: str, matched: int, items: list[d
         return
     all_dates = sorted(r["date"] for r in seen_rows)
     got_newest, got_oldest = max(fresh), min(fresh)
-    missing_before = [d for d in all_dates if d < got_oldest]
+    effective_oldest = max(got_oldest, since_date) if since_date else got_oldest
+    missing_before = [d for d in all_dates if d < effective_oldest]
+    mode_tag = "滚动更新" if (since_date or limit is not None) else "本次覆盖"
     print(
-        f"  本次覆盖：{got_oldest} ~ {got_newest}（{matched} 期）",
+        f"  {mode_tag}：{effective_oldest} ~ {got_newest}（{matched} 期）",
         file=sys.stderr,
     )
     if missing_before:
         print(
-            f"  ! 早于 {got_oldest} 的 {len(missing_before)} 期这次没读到，"
-            f"它们的数是旧快照（最早一期 {missing_before[0]}）",
-            file=sys.stderr,
-        )
-    if platform in ("xiaohongshu", "wechat_channels"):
-        print(
-            "    这两个平台只能靠列表页，要刷更早的期次得一直往下滚。",
+            f"  - 早于 {effective_oldest} 的 {len(missing_before)} 期未在本次范围，沿用既有快照"
+            f"（库内最早 {missing_before[0]}）；若要全库重刷可不加 --days 翻页运行。",
             file=sys.stderr,
         )
 
@@ -1024,20 +1086,43 @@ def main() -> int:
         choices=["bilibili", "douyin", "xiaohongshu", "wechat_channels"],
     )
     ap.add_argument("--in", dest="inputs", nargs="+", help="observe 出来的页面文本（B 站不需要）")
+    ap.add_argument("--days", type=int, help="只更新最近 N 天（含今天）的期次，用于日常滚动更新")
+    ap.add_argument("--limit", type=int, help="只更新最新的 N 期（按日期倒序）")
     ap.add_argument("--dry-run", action="store_true", help="只报告，不写盘")
     ap.add_argument("--delay", type=float, default=0.3, help="B 站每次请求后的间隔秒数")
     ap.add_argument("--workers", type=int, default=3, help="B 站并发线程数（默认 3）")
     args = ap.parse_args()
 
+    try:
+        since_date = resolve_since_date(args.days)
+    except ValueError as exc:
+        ap.error(str(exc))
+    if args.limit is not None and args.limit < 0:
+        ap.error("--limit 不能为负数")
+
     rows = load_rows()
     print(f"读入 {len(rows)} 期", file=sys.stderr)
 
     if args.platform == "bilibili":
-        log = refresh_bilibili(rows, delay=args.delay, dry_run=args.dry_run, workers=args.workers)
+        log = refresh_bilibili(
+            rows,
+            delay=args.delay,
+            dry_run=args.dry_run,
+            workers=args.workers,
+            since_date=since_date,
+            limit=args.limit,
+        )
     else:
         if not args.inputs:
             ap.error(f"{args.platform} 需要 --in 指定页面文本文件")
-        log = refresh_from_pages(rows, args.platform, args.inputs, dry_run=args.dry_run)
+        log = refresh_from_pages(
+            rows,
+            args.platform,
+            args.inputs,
+            dry_run=args.dry_run,
+            since_date=since_date,
+            limit=args.limit,
+        )
 
     if log:
         print(f"\n=== {args.platform} 有变化的记录（{len(log)} 条）===")

@@ -29,7 +29,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.15.1"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.17.0"
 ```
 
 执行规则：
@@ -130,20 +130,22 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.15.1"
 
 用户说「更新数据」「刷一下播放量」「同步各平台指标」，或者你想用最新数据回答问题时走这里。
 
+**默认只做滚动更新（最近 7~14 天 / 各平台第 1 页或首屏），除非用户明确要求「全量更新」「全部刷一遍」。** 越是新发的视频，前期播放和互动增长越快，最需要及时刷新；越老的视频流量曲线趋于平缓，日常更新不要每次都去扫一遍全库、把所有平台几百条历史记录从头翻到尾。只有用户明确要全量更新、或做长期历史盘点时，才翻完所有分页与历史记录。
+
 **下面所有命令都在仓库根目录跑**（有 `data/` 和 `scripts/` 的那一层），和上面「粉丝数更新」同一个位置。
 
 **`data/videos.jsonl` 里的数字不会自己变。** 它由人（或 Agent）定期从四个平台读回来写进去，没有定时任务。所以回答任何「现在多少播放」之前，先确认这份数据是什么时候的——记录里没有时间戳，只能看最近一次 `feat(data)` 提交的日期。
 
 ### 四平台怎么取数
 
-| 平台 | 来源 | 可靠性 |
-| :--- | :--- | :--- |
-| B 站 | 公开接口 `api.bilibili.com/x/web-interface/view?bvid=` | 免登录、字段有名字、精确值 |
-| 抖音 | `work_list` 接口的 `statistics` 对象 | 要登录态，字段有名字、精确值 |
-| 小红书 | 创作者后台列表页 | 要登录态，靠列序，最容易看错 |
-| 微信视频号 | 创作者后台列表页 | 要登录态，**列表要先滚动才渲染** |
+| 平台 | 来源 | 默认滚动范围（日常更新） | 全量模式（仅明确要求时） |
+| :--- | :--- | :--- | :--- |
+| B 站 | 公开接口 `api.bilibili.com/x/web-interface/view?bvid=`（并看一眼 UP 主投稿页第 1 页查漏录新片） | `--days 14`（或 `--limit 20`），只刷近期十几条 | 不加 `--days`，跑全库 230+ 期 |
+| 抖音 | `work_list` 接口的 `statistics` 对象 | **只拉第 1 页**（`max_cursor=0&count=100`，一页 40 条已覆盖最近数周），加 `--days 14` | 循环 `max_cursor` 翻完全部页 |
+| 小红书 | 创作者后台列表页 | **只取首屏或轻滚 1~2 次**（覆盖最近 1~2 周即可），加 `--days 14` | 滚到底采集全部笔记 |
+| 微信视频号 | 创作者后台列表页（**先滚一下才渲染**） | **只采第 1 页**（最新约 20 条），加 `--days 14` | 穿透 `shadowRoot` 翻完所有分页 |
 
-**B 站不要开浏览器。** 公开接口直接返回 `view/like/favorite/share/reply` 五个精确值，和创作者后台完全一致。返回的是字段名不是位置，不存在看错列的问题。全部 230 多期默认 3 并发（`--workers 3`）跑一遍约半分钟，只有偶发一条被限流（`62012`），退避重试即可。别绕回后台列表页。
+**B 站不要开浏览器刷指标。** 公开接口直接返回 `view/like/favorite/share/reply` 五个精确值，和创作者后台完全一致。返回的是字段名不是位置，不存在看错列的问题。日常滚动加上 `--days 14` 只需几秒；全量时默认 3 并发（`--workers 3`）跑一遍约半分钟，偶发一条被限流（`62012`）退避重试即可。另外若需检查这几天有没有刚发但尚未入库的新视频，再顺带看一眼 UP 主空间第 1 页即可。
 
 ### 列序（脚本里已写死，别现场猜）
 
@@ -177,31 +179,35 @@ play_count   digg_count   comment_count   share_count   collect_count
 
 ### 怎么做
 
-**第一步，B 站（不用浏览器）：**
+**第一步，B 站（默认滚动更新最近 14 天，不用浏览器刷老数据）：**
 
 ```bash
-python3 scripts/refresh-stats.py --platform bilibili
+# 日常滚动更新（只刷最近 14 天，几秒完成；用户明确说全量时去掉 --days）
+python3 scripts/refresh-stats.py --platform bilibili --days 14
 ```
 
-**第二步，另外三个平台**——在已登录的浏览器里打开，用 `bsk_session sync saveFull` 或 `observe` 存成文件直接 `--in` 喂给脚本：
+（若需要核对最近一两天有没有刚发布但未入库的新视频，打开 UP 主空间 `space.bilibili.com/1698895777/upload/video` 第 1 页扫一眼即可。）
 
-| 平台 | 打开哪里 | 备注 |
+**第二步，另外三个平台**——在已登录的浏览器里打开，**默认只采第 1 页 / 首屏**（无需把几百条历史记录翻完），用 `bsk_session sync saveFull` 或 `observe` 存成文件直接 `--in` 喂给脚本：
+
+| 平台 | 打开哪里 | 默认采集边界 |
 | :--- | :--- | :--- |
-| 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?...&count=100...` | 原始 JSON，字段有名字，优先走这条 |
-| 小红书 | `creator.xiaohongshu.com/new/note-manager` | 裸数字，最依赖列序；注意列表里混有图文笔记，正常跳过 |
-| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**，否则只有导航栏；翻页被遮罩挡住时见下 |
+| 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=0&scene=star_atlas&device_platform=android` | **只拉第 1 页**（40 条，无需按 `max_cursor` 继续翻页）；全量时才循环到 `has_more: false` |
+| 小红书 | `creator.xiaohongshu.com/new/note-manager` | **首屏或轻滚 1~2 次**即可，勿滚几十屏到底；注意列表混有图文笔记，正常跳过 |
+| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**渲染出**第 1 页**（20 条）即可；仅在全量模式时才用下方穿透方法翻完多页 |
 
 ```bash
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-1.json /tmp/dy-2.json ...
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs.json
-python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-1.json ...
+# 日常滚动更新：加上 --days 14（或用户指定天数）防止误改置顶老视频
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-p1.json --days 14
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-p1.txt --days 14
 ```
 
 **`saveFull` 外壳、VOM 折行与四种序列化形态脚本全认，不用手工预处理**：不管存下来的是 `bsk_session sync saveFull` 的 JSON 外壳（`{"observation":{"text":...}}`）、VOM 折成多行的 `StaticText "..."`、`<pre>` 包裹、还是带/不带反斜杠转义，直接原样传给 `--in` 即可。
 
-**微信视频号后台翻页实测坑**：`platform/post/list` 页面经常挂着一层全屏透明容器（VOM 里显示 `L1 modal cover=100%` 盖住 `L2 page`），直接对「下一页」做 `click` 或 `scroll-to` 会报 `covered or unavailable`。改用同页 `evaluate` 递归穿透 `shadowRoot` 定位文本为 `下一页` 的按钮/链接调 `.click()`，再等 1.5 秒 `sync` 即可顺畅翻完 6 页。
+**微信视频号后台全量翻页实测坑（仅全量更新时需要）**：`platform/post/list` 页面经常挂着一层全屏透明容器（VOM 里显示 `L1 modal cover=100%` 盖住 `L2 page`），直接对「下一页」做 `click` 或 `scroll-to` 会报 `covered or unavailable`。若用户明确要求全量翻页，改用同页 `evaluate` 递归穿透 `shadowRoot` 定位文本为 `下一页` 的按钮/链接调 `.click()`，再等 1.5 秒 `sync` 即可顺畅翻完。
 
-`count` 用 **100**，不要用 20。接口照收，140 多条只需翻 4 页而不是 8 页。翻页传上一页返回的 `max_cursor`，直到 `has_more: false`。
+`count` 用 **100**，不要用 20：平时第 1 页一次给 40 条，已够覆盖滚动窗口；全量模式翻页时也只需 4 页而非 8 页。
 
 先加 `--dry-run` 看会改什么，确认无误再落盘。
 
@@ -275,8 +281,8 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 
 ### 分寸
 
-- **只刷近期是不够的。** 老作品会长期涨（实测 09-26 那期从 2906 涨到 5770），只刷最近十几期会让长期数据一直偏小。B 站既然能批量跑，就整批刷。
-- **小红书、视频号刷不全，如实说明。** 这两个平台只能靠列表页，第一屏十几条，下面的要一直往下滚。抖音能翻页拿全 133 条，它们不能。结果就是：303 条小红书记录里，241 条是 8 月之前的旧快照。刷完要跟人说清「这次只更新了最近 N 条，老期次还是旧数」，别让人以为整库都是今天的。要真正刷完就得一直滚到底，一次几十屏，值不值得由人定。
+- **默认滚动更新，新片优先、老片按需全量。** 越是新发布的视频数据变动越剧烈，最需要及时刷新；越老的视频增速趋缓，日常不值得每次都去扫几百期老记录。平时默认更新最近 1~2 周（加 `--days 14`，各平台只采第 1 页 / 首屏），既快又不反复翻页打扰；只有用户明确要求「全量更新」「全部刷一遍」时才跑全库与翻完全部历史页。
+- **局部覆盖要如实说明。** 不管是默认滚动更新还是全量重刷，刷完都要把本次实际覆盖的日期范围和期数说清（例如「本次滚动更新覆盖最近 14 天，更早的老期次沿用既有快照」），不把局部快照说成全库刚刚刷过。
 - **数据是快照，不是实时。** 刷完之后页面上写的还是那天的数，别把「我刷过了」说成「这是此刻的数」。
 - **别为了让数字好看而挑平台。** 四个平台一起刷，缺哪个就如实缺着。
 

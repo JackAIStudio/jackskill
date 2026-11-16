@@ -606,6 +606,76 @@ def test_suspected_new_unmatched() -> None:
     check(titles == ["刚发的新视频", "昨晚发的另一期"], f"疑似漏收录筛得不对：{titles}")
 
 
+def test_rolling_scope_days_and_limit() -> None:
+    import datetime
+    import tempfile
+
+    check(rs.resolve_since_date(14, today=datetime.date(2026, 11, 17)) == "2026-11-03",
+          "--days 14 应计算 14 天前的起始日期")
+    check(rs.resolve_since_date(None) is None, "未传 --days 时返回 None")
+
+    rows = [
+        {"id": "2026-11-16_新1", "date": "2026-11-16", "topic": "新片一",
+         "platforms": {"bilibili": {"url": "https://www.bilibili.com/video/BV1111111111/", "views": 1},
+                       "xiaohongshu": {"views": 10, "likes": 0, "collects": 0, "shares": 0, "comments": 0}}},
+        {"id": "2026-11-10_近2", "date": "2026-11-10", "topic": "近期二",
+         "platforms": {"bilibili": {"url": "https://www.bilibili.com/video/BV2222222222/", "views": 1},
+                       "xiaohongshu": {"views": 20, "likes": 0, "collects": 0, "shares": 0, "comments": 0}}},
+        {"id": "2026-10-01_置顶老3", "date": "2026-10-01", "topic": "置顶老视频",
+         "platforms": {"bilibili": {"url": "https://www.bilibili.com/video/BV3333333333/", "views": 1},
+                       "xiaohongshu": {"views": 30, "likes": 0, "collects": 0, "shares": 0, "comments": 0}}},
+    ]
+
+    targets_days, total_bili = rs.select_bili_targets(rows, since_date="2026-11-03")
+    check(total_bili == 3, f"库内 B 站总数应为 3，实际 {total_bili}")
+    check([t[2] for t in targets_days] == ["BV1111111111", "BV2222222222"],
+          "--days 过滤后应只选近期 2 期 B 站视频")
+
+    targets_lim, _ = rs.select_bili_targets(rows, limit=1)
+    check([t[2] for t in targets_lim] == ["BV1111111111"],
+          "--limit 1 应只选最新 1 期 B 站视频")
+
+    xhs_dump = '''
+      StaticText "置顶"
+      StaticText "置顶老视频"
+      StaticText "2026-10-01 10:00"
+      StaticText "999"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+      StaticText "新片一"
+      StaticText "2026-11-16 11:00"
+      StaticText "111"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+      StaticText "近期二"
+      StaticText "2026-11-10 11:00"
+      StaticText "222"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+      StaticText "0"
+    '''
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", encoding="utf-8", delete=True) as tf:
+        tf.write(xhs_dump)
+        tf.flush()
+        rows_copy = copy.deepcopy(rows)
+        log = rs.refresh_from_pages(rows_copy, "xiaohongshu", [tf.name], dry_run=False, since_date="2026-11-03")
+        check(len(log) == 2, f"滚动范围内应更新 2 条，实际 {len(log)}：{log}")
+        check(rows_copy[0]["platforms"]["xiaohongshu"]["views"] == 111, "新片一应更新为 111")
+        check(rows_copy[1]["platforms"]["xiaohongshu"]["views"] == 222, "近期二应更新为 222")
+        check(rows_copy[2]["platforms"]["xiaohongshu"]["views"] == 30, "置顶老视频超出滚动范围，应保持原值 30")
+
+        rows_lim = copy.deepcopy(rows)
+        log_lim = rs.refresh_from_pages(rows_lim, "xiaohongshu", [tf.name], dry_run=False, limit=1)
+        check(len(log_lim) == 1 and rows_lim[0]["platforms"]["xiaohongshu"]["views"] == 111,
+              "--limit 1 应只更新最新 1 条")
+        check(rows_lim[1]["platforms"]["xiaohongshu"]["views"] == 20, "--limit 1 不应改动第二条")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
@@ -626,6 +696,7 @@ def main() -> int:
         test_zero_stays_zero,
         test_savefull_and_vom_fold,
         test_suspected_new_unmatched,
+        test_rolling_scope_days_and_limit,
     ]:
         fn()
 

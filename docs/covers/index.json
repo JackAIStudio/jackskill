@@ -1,13 +1,119 @@
 {
-  "generatedAt": "2026-11-16T22:19:28+0800",
+  "generatedAt": "2026-11-19T03:05:31+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 244,
+  "count": 246,
   "items": [
+    {
+      "id": "2026-11-18_让_Gpt-6.2_Astra_给自己做一个宣传片",
+      "date": "2026-11-18",
+      "topic": "让 Gpt-6.2 Astra 给自己做一个宣传片",
+      "dir": "covers/2026-11-18_让 Gpt-6.2 Astra 给自己做一个宣传片",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-11-18_Gpt6.2_Astra_鹈鹕骑车测试",
+      "date": "2026-11-18",
+      "topic": "Gpt6.2 Astra 鹈鹕骑车测试",
+      "dir": "covers/2026-11-18_Gpt6.2 Astra 鹈鹕骑车测试",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
     {
       "id": "2026-11-16_鹈鹕测试，Gemini4_Carbon_和_Gpt6_Astra",
       "date": "2026-11-16",

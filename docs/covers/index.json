@@ -1,13 +1,172 @@
 {
-  "generatedAt": "2026-11-19T03:05:31+0800",
+  "generatedAt": "2026-11-20T01:58:22+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 246,
+  "count": 249,
   "items": [
+    {
+      "id": "2026-11-19_Gemini_4_Neon_和_Gpt-6.2_Astra谁更能打？",
+      "date": "2026-11-19",
+      "topic": "Gemini 4 Neon 和 Gpt-6.2 Astra谁更能打？",
+      "dir": "covers/2026-11-19_Gemini 4 Neon 和 Gpt-6.2 Astra谁更能打？",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-11-19_A处你完蛋了，Gpt和Gemini要把你打趴下来",
+      "date": "2026-11-19",
+      "topic": "A处你完蛋了，Gpt和Gemini要把你打趴下来",
+      "dir": "covers/2026-11-19_A处你完蛋了，Gpt和Gemini要把你打趴下来",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
+    {
+      "id": "2026-11-19_让_Gemini_4_Neon_给自己做一个宣传片",
+      "date": "2026-11-19",
+      "topic": "让 Gemini 4 Neon 给自己做一个宣传片",
+      "dir": "covers/2026-11-19_让 Gemini 4 Neon 给自己做一个宣传片",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            600
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3333,
+            "nearest": "4x3",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
     {
       "id": "2026-11-18_让_Gpt-6.2_Astra_给自己做一个宣传片",
       "date": "2026-11-18",

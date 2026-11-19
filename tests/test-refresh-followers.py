@@ -234,6 +234,42 @@ def test_savefull_wrapper() -> None:
         check(n == want, f"{label} 读 bsk saveFull 外壳应得 {want}，实际 {n}（{src}）")
 
 
+def test_plain_text_and_ego_snapshot() -> None:
+    """兼容 Ego Lite snapshot 与纯文本 innerText，且仍挡掉抖音「粉丝指数」。"""
+    dy_plain = "11.13-11.19\n导出数据\n总粉丝量\n327\n粉丝净增\n5\n"
+    n, src = rf.parse_douyin(dy_plain)
+    check(n == 327 and src == "总粉丝量", f"抖音纯文本应读成 327，实际 {n}（{src}）")
+
+    dy_ego = 'root\n  container\n    text "总粉丝量"\n    button "327" [ref=12]\n    text "粉丝净增"\n    text "5"\n'
+    n, _ = rf.parse_douyin(dy_ego)
+    check(n == 327, f"抖音 Ego snapshot 应读成 327，实际 {n}")
+
+    dy_home_plain = "首页\n粉丝指数\n301\n关注\n0\n"
+    n, src = rf.parse_douyin(dy_home_plain)
+    check(n is None and "粉丝指数" in src, f"抖音首页纯文本不能误读粉丝指数：{n} / {src}")
+
+    xhs_plain = "吴杰克 Jack\n0\n关注数\n6455\n粉丝数\n1.9万\n获赞与收藏\n小红书账号: 9552197136\n"
+    n, src = rf.parse_xiaohongshu(xhs_plain)
+    check(n == 6455 and src == "粉丝数", f"小红书纯文本应读成 6455，实际 {n}（{src}）")
+
+    # 骨架屏保护：账号尚未返回时的占位 0 不能当成粉丝归零
+    xhs_skeleton = "吴杰克 Jack\n0\n关注数\n0\n粉丝数\n0\n获赞与收藏\n小红书账号:\n"
+    n, src = rf.parse_xiaohongshu(xhs_skeleton)
+    check(n is None and "加载" in src, f"小红书骨架屏占位 0 必须拦截：{n} / {src}")
+
+    xhs_ego = 'root\n  container\n    text "0"\n    text "关注数"\n    text "6455"\n    text "粉丝数"\n'
+    n, _ = rf.parse_xiaohongshu(xhs_ego)
+    check(n == 6455, f"小红书 Ego snapshot 应读成 6455，实际 {n}")
+
+    wx_plain = "视频\n92\n关注者\n446\n昨日数据\n净增关注\n2\n"
+    n, src = rf.parse_wechat_channels(wx_plain)
+    check(n == 446 and src == "关注者", f"视频号纯文本应读成 446，实际 {n}（{src}）")
+
+    wx_ego = 'root\n  container\n    text "关注者"\n    text "446"\n    text "净增关注"\n    text "2"\n'
+    n, _ = rf.parse_wechat_channels(wx_ego)
+    check(n == 446, f"视频号 Ego snapshot 应读成 446，实际 {n}")
+
+
 def main() -> int:
     import tempfile
 
@@ -242,6 +278,7 @@ def main() -> int:
     test_douyin()
     test_wechat_channels()
     test_savefull_wrapper()
+    test_plain_text_and_ego_snapshot()
     test_missing()
     test_upsert()
     test_upsert_delta()

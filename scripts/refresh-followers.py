@@ -164,14 +164,13 @@ def bili_followers(mid: int) -> tuple[int | None, str | None]:
 #   - 真正的总粉丝量在数据中心页：`总粉丝量` 后面跟一个按钮，值在下一个节点
 #   - 粉丝净增、吸粉量、脱粉量都在旁边，顺序不同，只认「总粉丝量」这个标签
 
-# observe 出来的文本长这样（每行一个节点）：
-#     @e69 button "299" [ctx: 总粉丝量]
-# 也可能是不带 ref 的纯文本：
-#     StaticText "299"
-#     StaticText "总粉丝量"
-# 所以两套都要认。
+# observe / snapshot / 纯文本三种形态都要认：
+#   1. bsk VOM：`@e69 button "299" [ctx: 总粉丝量]` / `StaticText "299"`
+#   2. Ego Lite snapshot：`  text "总粉丝量"` / `  button "299"`
+#   3. 纯文本（`document.body.innerText` 按行输出）：`总粉丝量\n299`
 
 _NODE_RE = re.compile(r'(?P<line>(?:^|\n)\s*(?:@e\d+\s+\w+|StaticText|paragraph|heading)\s+"(?P<text>[^"]*)"(?P<ctx>[^\n]*))')
+_EGO_NODE_RE = re.compile(r'(?P<line>(?:^|\n)\s*(?:text|button|heading|paragraph)\s+"(?P<text>(?:[^"\\]|\\.)*)"(?P<ctx>[^\n]*))')
 
 
 def unwrap_bsk_dump(raw: str) -> str:
@@ -199,13 +198,20 @@ def unwrap_bsk_dump(raw: str) -> str:
 
 
 def _nodes(raw: str) -> list[tuple[str, str]]:
-    """把页面文本拆成 (文本, 整行) 列表，文本里带引号的已反转义。"""
+    """把页面文本拆成 (文本, 整行) 列表，兼容 bsk VOM、Ego Lite snapshot 与纯文本。"""
     raw = unwrap_bsk_dump(raw)
     out = []
     for m in _NODE_RE.finditer(raw):
         text = m.group("text").replace('\\"', '"')
         out.append((text, m.group("line")))
-    return out
+    if out:
+        return out
+    for m in _EGO_NODE_RE.finditer(raw):
+        text = m.group("text").replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
+        out.append((text, m.group("line")))
+    if out:
+        return out
+    return [(line.strip(), line) for line in raw.splitlines() if line.strip()]
 
 
 def _parse_followers_number(text: str) -> int | None:
@@ -226,14 +232,22 @@ def _parse_followers_number(text: str) -> int | None:
 def parse_douyin(raw: str) -> tuple[int | None, str]:
     """抖音：数据中心页的「总粉丝量」。
 
-    两种形态都认：
+    三种形态都认：
+      0. 同一行/同一节点连写：`总粉丝量 299` / `总粉丝量：299`
       1. 值节点在同一条的 ctx 里：`@e69 button "299" [ctx: 总粉丝量]`
-      2. 值节点和标签是前后两个节点：`StaticText "总粉丝量"` 之后跟 `StaticText "299"`
+      2. 值节点和标签是前后两个节点：`总粉丝量` 之后跟 `299`
     认不出时明确说「没读到」，不要拿首页的粉丝指数糊弄——那是个位数的分，
     不是粉丝量。
     """
     raw = unwrap_bsk_dump(raw)
     nodes = _nodes(raw)
+    # 形态 0：同节点/同行内「总粉丝量 + 数字」
+    for text, _ in nodes:
+        m = re.search(r"总粉丝量\s*[:：]?\s*(\d[\d,]*(?:\.\d+)?\s*(?:万|w|W|亿)?)", text)
+        if m:
+            n = _parse_followers_number(m.group(1))
+            if n is not None:
+                return n, "总粉丝量"
     # 形态 1：同一行的 ctx 里带着标签
     for text, line in nodes:
         if "总粉丝量" in line and "ctx" in line:
@@ -261,7 +275,12 @@ def parse_xiaohongshu(raw: str) -> tuple[int | None, str]:
       `粉丝` / `6441` / `/10000`    ← 成就进度条
     两处是同一个数，取第一个就够。注意别认成「关注数」（0）。
     """
-    nodes = _nodes(raw)
+    raw_unwrapped = unwrap_bsk_dump(raw)
+    nodes = _nodes(raw_unwrapped)
+    # 骨架屏保护：小红书首页数据接口尚未返回时，账号卡片会短暂渲染出
+    # 「0 关注数 / 0 粉丝数 / 0 获赞与收藏 / 小红书账号:（空）」。
+    # 绝不能把这个占位 0 当成粉丝清零写进库。
+    is_skeleton = bool(re.search(r"小红书账号\s*[:：]\s*(?:\n|$)", raw_unwrapped))
     # 形态 0：同一段文本里「数字 + 粉丝数」连写。
     # 后台改版后整张账号卡片被并成一个节点：
     #   `吴杰克 Jack 0 关注数 6446 粉丝数 1.9万 获赞与收藏 …`
@@ -272,14 +291,18 @@ def parse_xiaohongshu(raw: str) -> tuple[int | None, str]:
         if m:
             n = _parse_followers_number(m.group(1))
             if n is not None:
+                if n == 0 and is_skeleton:
+                    return None, "页面仍在加载（小红书账号数据尚未返回，读到占位 0）"
                 return n, "粉丝数"
-    # 形态 1：值在前、标签在后（账号卡片，observe 里就是这个顺序）
+    # 形态 1：值在前、标签在后（账号卡片，observe / innerText 里就是这个顺序）
     for i, (text, _) in enumerate(nodes):
         if text.strip() != "粉丝数":
             continue
         for j in range(i - 1, max(i - 4, -1), -1):
             n = _parse_followers_number(nodes[j][0])
             if n is not None:
+                if n == 0 and is_skeleton:
+                    return None, "页面仍在加载（小红书账号数据尚未返回，读到占位 0）"
                 return n, "粉丝数"
     # 形态 2：标签在前、值在后
     for i, (text, _) in enumerate(nodes):
@@ -288,6 +311,8 @@ def parse_xiaohongshu(raw: str) -> tuple[int | None, str]:
         for j in range(i + 1, min(i + 4, len(nodes))):
             n = _parse_followers_number(nodes[j][0])
             if n is not None:
+                if n == 0 and is_skeleton:
+                    return None, "页面仍在加载（小红书账号数据尚未返回，读到占位 0）"
                 return n, "粉丝数"
     return None, "没找到「粉丝数」"
 
@@ -299,6 +324,12 @@ def parse_wechat_channels(raw: str) -> tuple[int | None, str]:
     「昨日数据」里的「净增关注」是另一个量，别认错。
     """
     nodes = _nodes(raw)
+    for text, _ in nodes:
+        m = re.search(r"(?:^|\s)关注者\s*[:：]?\s*(\d[\d,]*(?:\.\d+)?\s*(?:万|w|W|亿)?)", text)
+        if m:
+            n = _parse_followers_number(m.group(1))
+            if n is not None:
+                return n, "关注者"
     for i, (text, _) in enumerate(nodes):
         if text.strip() != "关注者":
             continue

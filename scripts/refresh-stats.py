@@ -440,15 +440,37 @@ def pair_items_to_rows(
 
 
 # --------------------------------------------------------------------------
-# 三个后台：解析 observe 出来的页面文本
+# 三个后台：解析页面文本（兼容 bsk VOM、Ego Lite snapshot 与纯文本 innerText）
 # --------------------------------------------------------------------------
 
 STATIC = re.compile(r'StaticText\s+"((?:[^"\\]|\\.)*)"')
 BUTTON = re.compile(r'button\s+"((?:[^"\\]|\\.)*)"')
+BSK_TOKEN = re.compile(r'(?:StaticText|button)\s+"((?:[^"\\]|\\.)*)"')
+EGO_TEXT = re.compile(r'^\s*(?:text|heading|paragraph)\s+"((?:[^"\\]|\\.)*)"', re.M)
+EGO_TOKEN = re.compile(r'^\s*(?:text|button|heading|paragraph)\s+"((?:[^"\\]|\\.)*)"', re.M)
+DURATION_RE = re.compile(r"\d{1,2}:\d{2}(?::\d{2})?")
 
 
 def _unescape(s: str) -> str:
     return s.replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
+
+
+def _extract_page_lines(raw: str, *, include_buttons: bool = False) -> list[str]:
+    """把不同浏览器导出的页面文本统一成有序文本行列表。
+
+    兼容三种来源，按特征自动识别：
+      1. bsk VOM（含 StaticText "..." / button "..."，含 saveFull 外壳）
+      2. Ego Lite page.snapshot()（行首缩进 + text/button/heading/paragraph "..."）
+      3. 纯文本（例如 page.evaluate(() => document.body.innerText) 按行输出）
+    """
+    raw = unwrap_bsk_dump(raw)
+    if STATIC.search(raw) or (include_buttons and BUTTON.search(raw) and not EGO_TEXT.search(raw)):
+        pat = BSK_TOKEN if include_buttons else STATIC
+        return [_unescape(m.group(1)).strip() for m in pat.finditer(raw)]
+    if EGO_TEXT.search(raw):
+        pat = EGO_TOKEN if include_buttons else EGO_TEXT
+        return [_unescape(m.group(1)).strip() for m in pat.finditer(raw)]
+    return [line.strip() for line in raw.splitlines() if line.strip()]
 
 
 def parse_xhs(raw: str) -> list[dict]:
@@ -457,18 +479,20 @@ def parse_xhs(raw: str) -> list[dict]:
     日期形如 `2026-10-22 17:39`，紧跟其后五个纯数字就是
     观看 评论 点赞 收藏 分享。中间的 img / button 行直接跳过。
     """
-    raw = unwrap_bsk_dump(raw)
     items = []
-    lines = [_unescape(x).strip() for x in STATIC.findall(raw)]
+    lines = _extract_page_lines(raw, include_buttons=False)
     i = 0
     while i < len(lines):
         if re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", lines[i]):
-            # 往前找标题：最近一个既不是日期也不是纯数字的行
+            # 往前找标题：最近一个既不是日期、不是纯数字也不是视频时长的行
             title = ""
             for j in range(i - 1, max(-1, i - 4), -1):
                 cand = lines[j]
-                if cand and not re.fullmatch(r"[\d.]+[万亿]?", cand) and not re.fullmatch(
-                    r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", cand
+                if (
+                    cand
+                    and not re.fullmatch(r"[\d.]+[万亿]?", cand)
+                    and not re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", cand)
+                    and not DURATION_RE.fullmatch(cand)
                 ):
                     title = cand
                     break
@@ -498,9 +522,8 @@ def parse_wx(raw: str) -> list[dict]:
     排除上一层候选时只能按「这一行是不是日期」判断，不能按「含不含年」——
     按含年判断会把这类标题整条丢掉。
     """
-    raw = unwrap_bsk_dump(raw)
     items = []
-    lines = [_unescape(x).strip() for x in STATIC.findall(raw)]
+    lines = _extract_page_lines(raw, include_buttons=False)
     date_re = re.compile(r"\d{4}年\d{1,2}月\d{1,2}日")
     i = 0
     while i < len(lines):
@@ -510,7 +533,7 @@ def parse_wx(raw: str) -> list[dict]:
                 cand = lines[j]
                 if not cand:
                     continue
-                if re.fullmatch(r"[\d.]+[万亿]?", cand) or date_re.search(cand):
+                if re.fullmatch(r"[\d.]+[万亿]?", cand) or date_re.search(cand) or DURATION_RE.fullmatch(cand):
                     continue
                 title = cand
                 break
@@ -552,13 +575,9 @@ def parse_dy(raw: str) -> list[dict]:
     仍然返回一条记录，带 blocked 标记和原因，交给上层打 limited：保留最后
     读数，说明这个数停在什么时候。**不清零——限流前那些播放真实发生过。**
     """
-    # 按文档顺序取所有 StaticText / button 的文本，顺序不能丢——
+    # 按文档顺序取文本行，顺序不能丢——
     # 标题在日期前、指标在日期后，全靠相对位置判断。
-    raw = unwrap_bsk_dump(raw)
-    tokens = [
-        _unescape(m.group(1)).strip()
-        for m in re.finditer(r'(?:StaticText|button)\s+"((?:[^"\\]|\\.)*)"', raw)
-    ]
+    tokens = _extract_page_lines(raw, include_buttons=True)
 
     items = []
     for idx, tok in enumerate(tokens):
@@ -567,11 +586,11 @@ def parse_dy(raw: str) -> list[dict]:
             continue
         date = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
 
-        # 往前找标题：跳过状态、纯数字、纯标签这些
+        # 往前找标题：跳过状态、纯数字、纯标签、时长这些
         title = ""
         for j in range(idx - 1, max(-1, idx - 5), -1):
             cand = tokens[j]
-            if not cand or parse_count(cand) is not None:
+            if not cand or parse_count(cand) is not None or DURATION_RE.fullmatch(cand):
                 continue
             if DY_DATE.fullmatch(cand) or cand in DY_LABELS or cand.startswith(DY_NOISE):
                 continue

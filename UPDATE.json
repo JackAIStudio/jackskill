@@ -1,5 +1,5 @@
 {
-  "version": "2611.17.0",
-  "notice": "默认改为滚动更新近期数据，refresh-stats 新增 --days 与 --limit 参数，仅在明确要求时全量刷新",
-  "updated_at": "2026-11-17"
+  "version": "2611.20.0",
+  "notice": "新增 Ego Lite（ego-browser）采集脚本 scripts/collect-ego.py，指标与粉丝解析脚本同时兼容 bsk VOM、Ego snapshot 与纯文本",
+  "updated_at": "2026-11-20"
 }

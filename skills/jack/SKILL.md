@@ -29,7 +29,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.17.0"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.20.0"
 ```
 
 执行规则：
@@ -188,7 +188,22 @@ python3 scripts/refresh-stats.py --platform bilibili --days 14
 
 （若需要核对最近一两天有没有刚发布但未入库的新视频，打开 UP 主空间 `space.bilibili.com/1698895777/upload/video` 第 1 页扫一眼即可。）
 
-**第二步，另外三个平台**——在已登录的浏览器里打开，**默认只采第 1 页 / 首屏**（无需把几百条历史记录翻完），用 `bsk_session sync saveFull` 或 `observe` 存成文件直接 `--in` 喂给脚本：
+**第二步，另外三个平台**——支持两种本机浏览器方式，按当前环境与登录态任选其一（**默认只采第 1 页 / 首屏**，无需把几百条历史记录翻完）：
+
+- **方式 A：Ego Lite（`ego-browser`，已登录时推荐）**
+  直接跑内置采集脚本，一次调用把三个平台的作品首屏/接口 JSON 与粉丝页拉到 `/tmp/jackskill-ego/`；若某个平台（常见为微信视频号）登录过期，会自动采完其余平台、停在登录页移交控制权并打印续采命令（`--space <id>`）：
+  ```bash
+  # 日常滚动采集三平台（作品 + 粉丝一起拉到 /tmp/jackskill-ego）
+  python3 scripts/collect-ego.py
+
+  # 全量模式（仅明确要求全库校准时才加 --mode full）
+  python3 scripts/collect-ego.py --mode full
+
+  # 视频号在 Ego Lite 里登录完成后，沿用刚才的 space 补采
+  python3 scripts/collect-ego.py --space <spaceId> --platforms wechat_channels
+  ```
+- **方式 B：`browser-skill`（`bsk`）**
+  在已登录的浏览器里逐个打开下方后台页，用 `bsk_session sync saveFull` 或 `observe` 存成文件再 `--in` 喂给脚本：
 
 | 平台 | 打开哪里 | 默认采集边界 |
 | :--- | :--- | :--- |
@@ -198,12 +213,13 @@ python3 scripts/refresh-stats.py --platform bilibili --days 14
 
 ```bash
 # 日常滚动更新：加上 --days 14（或用户指定天数）防止误改置顶老视频
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-p1.json --days 14
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
-python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-p1.txt --days 14
+# 下面路径以 Ego Lite 默认输出目录为例；走 bsk 时换成你存的文件路径即可
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --days 14
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-notes.txt --days 14
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/jackskill-ego/wx-p1.txt --days 14
 ```
 
-**`saveFull` 外壳、VOM 折行与四种序列化形态脚本全认，不用手工预处理**：不管存下来的是 `bsk_session sync saveFull` 的 JSON 外壳（`{"observation":{"text":...}}`）、VOM 折成多行的 `StaticText "..."`、`<pre>` 包裹、还是带/不带反斜杠转义，直接原样传给 `--in` 即可。
+**解析脚本不挑浏览器，四种输出形态全认，不用手工预处理**：不管 `--in` 传的是 `bsk` 的 `saveFull` JSON 外壳 / VOM 折行 `StaticText "..."`、Ego Lite 的 `page.snapshot()`（`text "..."`）、纯文本 `document.body.innerText`，还是 `<pre>` 包裹/裸 JSON，直接原样传入即可。
 
 **微信视频号后台全量翻页实测坑（仅全量更新时需要）**：`platform/post/list` 页面经常挂着一层全屏透明容器（VOM 里显示 `L1 modal cover=100%` 盖住 `L2 page`），直接对「下一页」做 `click` 或 `scroll-to` 会报 `covered or unavailable`。若用户明确要求全量翻页，改用同页 `evaluate` 递归穿透 `shadowRoot` 定位文本为 `下一页` 的按钮/链接调 `.click()`，再等 1.5 秒 `sync` 即可顺畅翻完。
 
@@ -296,10 +312,11 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 # B 站：公开接口，免登录，先把 mid 从任意一条作品里取出来再查 fans
 python3 scripts/refresh-followers.py --platform bilibili
 
-# 另外三个：在已登录的浏览器里 observe 页面，把输出存成文件
-python3 scripts/refresh-followers.py --platform douyin --in /tmp/dy-data.txt
-python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/xhs-home.txt
-python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/wx-home.txt
+# 另外三个：走 Ego Lite 一次采集（或用 bsk observe 存成文件）
+python3 scripts/collect-ego.py --target followers
+python3 scripts/refresh-followers.py --platform douyin --in /tmp/jackskill-ego/dy-followers.txt
+python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-home.txt
+python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/jackskill-ego/wx-home.txt
 
 node scripts/check-followers.mjs && node scripts/build-site.mjs
 ```
@@ -438,13 +455,14 @@ docs/covers/index.json    # 索引，构建站点时并入 docs/data/videos.json
 ### 怎么抓
 
 ```bash
-# 1) 先在浏览器里把抖音 work_list 逐页翻完，页面文本存盘
-#    打开 creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<cursor>&scene=star_atlas&device_platform=android
-#    每页用 bsk_inspect snapshot 落成文件，从尾部取下一个 max_cursor 继续
-#    count 用 100：133 条只需翻 4 页，用 20 要翻 7 页
+# 1) 把抖音 work_list 逐页拉完存盘（两种方式任选其一）
+#    - Ego Lite（推荐）：一次循环拉完所有页裸 JSON 到 /tmp/jackskill-ego/dy-p*.json
+python3 scripts/collect-ego.py --platforms douyin --target stats --mode full
+#    - bsk：打开 creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<cursor>&scene=star_atlas&device_platform=android
+#      每页用 bsk_inspect snapshot 落成文件，从尾部取下一个 max_cursor 继续（count=100 约 4 页）
 
 # 2) 离线解析成按 aweme_id 索引的清单
-python3 scripts/parse-dy-dump.py --in /tmp/dy-p1.txt /tmp/dy-p2.txt ... --out /tmp/dy-covers.json
+python3 scripts/parse-dy-dump.py --in /tmp/jackskill-ego/dy-p*.json --out /tmp/dy-covers.json
 
 # 3) 抓图（--only-missing 只补缺，不重下已有的）
 python3 scripts/fetch-covers.py --limit 387 --dy-json /tmp/dy-covers.json --only-missing

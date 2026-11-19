@@ -676,6 +676,84 @@ def test_rolling_scope_days_and_limit() -> None:
         check(rows_lim[1]["platforms"]["xiaohongshu"]["views"] == 20, "--limit 1 不应改动第二条")
 
 
+def test_plain_text_and_ego_snapshot() -> None:
+    """除 bsk VOM 外，也要直接认 Ego Lite snapshot 与纯文本（document.body.innerText）。"""
+    # 1) 小红书纯文本（含视频时长行，不能把时长当成标题）
+    xhs_plain = (
+        "全部 322\n"
+        "01:36\n"
+        "Gemini 4 Neon 和 Gpt-6.2 Astra谁更能打？\n"
+        "2026-11-19 20:12\n"
+        "1\n0\n0\n0\n0\n"
+        "00:56\n"
+        "让 Gemini 4 Neon 给自己做一个宣传片\n"
+        "2026-11-19 10:04\n"
+        "320\n4\n15\n2\n4\n"
+    )
+    xhs_items = rs.parse_xhs(xhs_plain)
+    check(len(xhs_items) == 2, f"小红书纯文本应解析出 2 条，实际 {len(xhs_items)}")
+    if len(xhs_items) == 2:
+        check(xhs_items[0]["title"].startswith("Gemini 4 Neon"), f"小红书纯文本标题不对：{xhs_items[0]['title']!r}")
+        check(xhs_items[1]["raw"] == ["320", "4", "15", "2", "4"], f"小红书纯文本数字不对：{xhs_items[1]['raw']}")
+
+    # 2) 小红书 Ego Lite snapshot
+    xhs_ego = (
+        '[p1 "小红书创作服务平台" | space "jackskill"(1): 1 managed]\n'
+        'root\n'
+        '  container\n'
+        '    text "00:25"\n'
+        '    text "A处你完蛋了，Gpt和Gemini要把你打趴下来"\n'
+        '    text "2026-11-19 12:47"\n'
+        '    text "174"\n'
+        '    text "4"\n'
+        '    text "14"\n'
+        '    text "1"\n'
+        '    text "0"\n'
+    )
+    xhs_ego_items = rs.parse_xhs(xhs_ego)
+    check(len(xhs_ego_items) == 1, f"小红书 Ego snapshot 应解析出 1 条，实际 {len(xhs_ego_items)}")
+    if xhs_ego_items:
+        check(xhs_ego_items[0]["raw"] == ["174", "4", "14", "1", "0"], f"小红书 Ego snapshot 数字不对：{xhs_ego_items[0]['raw']}")
+
+    # 3) 视频号纯文本 & Ego snapshot
+    wx_plain = (
+        "都2026年了，还在用传统方式剪口播？\n"
+        "2026年04月19日 23:23\n"
+        "已声明原创\n"
+        "1395\n10\n5\n18\n22\n"
+    )
+    wx_items = rs.parse_wx(wx_plain)
+    check(len(wx_items) == 1 and wx_items[0]["raw"] == ["1395", "10", "5", "18", "22"],
+          f"视频号纯文本解析不对：{wx_items}")
+
+    wx_ego = (
+        'root\n'
+        '  container\n'
+        '    text "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑"\n'
+        '    text "2026年10月22日 17:39"\n'
+        '    text "已声明原创"\n'
+        '    text "397"\n'
+        '    text "0"\n'
+        '    text "1"\n'
+        '    text "3"\n'
+        '    text "6"\n'
+    )
+    wx_ego_items = rs.parse_wx(wx_ego)
+    check(len(wx_ego_items) == 1 and wx_ego_items[0]["raw"] == ["397", "0", "1", "3", "6"],
+          f"视频号 Ego snapshot 解析不对：{wx_ego_items}")
+
+    # 4) 抖音列表页纯文本兜底
+    dy_plain = (
+        "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑\n"
+        "2026年10月22日 17:40\n"
+        "已发布\n"
+        "播放\n718\n点赞\n6\n评论\n0\n分享\n0\n收藏\n5\n"
+    )
+    dy_items = rs.parse_dy(dy_plain)
+    check(len(dy_items) == 1 and dy_items[0]["raw"] == ["718", "6", "0", "0", "5"],
+          f"抖音列表纯文本解析不对：{dy_items}")
+
+
 def main() -> int:
     for fn in [
         test_column_order,
@@ -697,6 +775,7 @@ def main() -> int:
         test_savefull_and_vom_fold,
         test_suspected_new_unmatched,
         test_rolling_scope_days_and_limit,
+        test_plain_text_and_ego_snapshot,
     ]:
         fn()
 

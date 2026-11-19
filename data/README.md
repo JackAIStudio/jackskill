@@ -104,20 +104,23 @@ node scripts/check-data.mjs
 **日常默认做滚动更新（最近 7~14 天 / 各平台第 1 页或首屏）**——越新的视频变化越快，老视频曲线平缓，无需每次都翻遍全库；只有明确需要全库校准时才不加 `--days` 全量重刷。
 
 ```bash
+# 方式 A：Ego Lite 一次采集三平台首屏与粉丝页到 /tmp/jackskill-ego/（也可继续用 bsk observe 单独存盘）
+python3 scripts/collect-ego.py
+
 # 日常滚动更新：加 --days 14（只刷新近 14 天，B 站几秒跑完；其余平台只采第 1 页 / 首屏）
 python3 scripts/refresh-stats.py --platform bilibili --days 14
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --days 14
-python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
-python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page1.txt --days 14
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --days 14
+python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-notes.txt --days 14
+python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/jackskill-ego/wx-p1.txt --days 14
 
 # 全量重刷（仅当明确需要全库核对时才运行不带 --days 的全量模式）
 python3 scripts/refresh-stats.py --platform bilibili
 
 # 只看会改什么，不落盘；也可用 --limit N 只刷最新 N 期
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --dry-run
+python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --dry-run
 ```
 
-`--in` 支持直接传入 `bsk_session sync saveFull` 写出的外包 JSON、VOM 折行后的 `StaticText` 与纯 JSON，不用手工拆壳。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
+`--in` 同时支持 `bsk_session sync saveFull` 外包 JSON、VOM 折行 `StaticText`、Ego Lite `page.snapshot()`、纯文本 `document.body.innerText` 与裸 JSON，不用手工拆壳。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
 
 **B 站不需要开浏览器。** `api.bilibili.com/x/web-interface/view?bvid=` 免登录返回 `view/like/favorite/share/reply`，和创作者后台一致，而且字段有名字，不存在看错列的问题。
 
@@ -207,10 +210,11 @@ node scripts/check-followers.mjs
 # B 站：公开接口，免登录
 python3 scripts/refresh-followers.py --platform bilibili
 
-# 另外三个：在已登录的浏览器里 observe 页面，把输出存成文件
-python3 scripts/refresh-followers.py --platform douyin --in /tmp/dy-data.txt
-python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/xhs-home.txt
-python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/wx-home.txt
+# 另外三个：走 Ego Lite 采集（或用 bsk observe 存成文件），--in 兼容 VOM / Ego snapshot / 纯文本
+python3 scripts/collect-ego.py --target followers
+python3 scripts/refresh-followers.py --platform douyin --in /tmp/jackskill-ego/dy-followers.txt
+python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-home.txt
+python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/jackskill-ego/wx-home.txt
 ```
 
 各处读什么：

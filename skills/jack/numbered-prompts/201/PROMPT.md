@@ -1,8 +1,8 @@
-# 201｜Jack Media Publisher 多平台视频发布准备助手
+# 201｜Jack Media Publisher 多平台视频发布准备助手（Ego Lite）
 
 - **视频原片**：[B站：吴杰克 Jack 官方主页](https://space.bilibili.com/39324083)
 - **创作者**：吴杰克 Jack
-- **GitHub 开源地址**：[https://github.com/JackAIStudio/jack-media-publisher](https://github.com/JackAIStudio/jack-media-publisher)
+- **GitHub 开源地址**：[https://github.com/JackAIStudio/jack-media-publisher-ego-lite](https://github.com/JackAIStudio/jack-media-publisher-ego-lite)
 
 ## 用户要完成的事
 帮助自媒体创作者彻底告别在各平台后台反复手动上传、填写文案与调整封面的低效劳动。把一条视频全自动准备成小红书、抖音、B站、微信视频号四个平台的精细草稿——自动对齐标题与话题、设置「无需标注」内容声明、匹配多比例封面并完成独立验收，最后停在发布按钮前交给人工确认。
@@ -19,16 +19,18 @@
    - 标题与话题精确控制：避免超长被平台截断，匹配真实存在的话题实体标签；
    - 内容声明统一设定：一律配置为「无需标注」，避免误选 AI 声明导致被平台限流。
 2. **多平台发布草稿自动化流水线**：
-   - 通过开源的 `jack-media-publisher` 工作流驱动浏览器自动化；
+   - 通过开源的 `jack-media-publisher-ego-lite` 工作流驱动 Ego Lite（`ego-browser`）浏览器自动化；
    - 依次进入小红书创作者服务平台、抖音创作服务平台、B站创作者中心、视频号助手；
    - 自动上传视频源文件，填入对应平台的精修标题、简介与话题标签，挂载对应比例的封面图。
 3. **独立截屏验收与人工确认铁律**：
    - **硬边界守护**：绝不点击任何最终发布按钮（如“立即投稿”、“发表笔记”等），保护创作者最终把关权；
+   - **绝不随意关联任何平台活动**：小红书「关联活动」、抖音活动/任务、B站「参与话题 / 参与活动」、微信视频号「活动」等均默认不关联，除非创作者明确提起；若平台因添加话题自动勾选了活动（如小红书出现「取消关联」），须主动取消关联并核对无残留；
    - 各平台分别截屏生成草稿验收结果，确认无误后由创作者人工一键发布。
 
 ## 交付结果
 - **【四平台发布草稿定制方案】**：针对小红书、抖音、B站、视频号定制的最佳标题、正文与话题；
 - **【多比例封面与排版建议】**：各平台关键信息安全区与视觉重心指引；
 - **【Jack Media Publisher 开源项目通道】**：
-  - GitHub 仓库：[https://github.com/JackAIStudio/jack-media-publisher](https://github.com/JackAIStudio/jack-media-publisher)
+  - GitHub 仓库（Ego Lite 版，推荐）：[https://github.com/JackAIStudio/jack-media-publisher-ego-lite](https://github.com/JackAIStudio/jack-media-publisher-ego-lite)
+  - 历史兼容版（Chrome / `bsk`）：[https://github.com/JackAIStudio/jack-media-publisher](https://github.com/JackAIStudio/jack-media-publisher)
   - 开箱即用工作流，一键复用吴杰克日常自媒体多平台发布流水线。

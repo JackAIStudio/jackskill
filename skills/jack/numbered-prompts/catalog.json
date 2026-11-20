@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-01",
+  "updated_at": "2026-11-20",
   "items": [
     {
       "id": "101",
@@ -10,9 +10,9 @@
     },
     {
       "id": "201",
-      "title": "Jack Media Publisher 多平台视频发布准备助手",
-      "purpose": "一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿",
-      "sha256": "975f1ab3e09d37f30d1ce90b5137c449dc7e281753ec1417a5e251de681b7f0b"
+      "title": "Jack Media Publisher 多平台视频发布准备助手（Ego Lite）",
+      "purpose": "基于 Ego Lite 一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿",
+      "sha256": "87e6c9fe36daf181743a5ccd11b910ef6d7c9a62ca2bb3359d1af135966200ed"
     },
     {
       "id": "666",

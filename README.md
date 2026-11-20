@@ -65,7 +65,7 @@ npx -y skills add JackAIStudio/jackskill -g --all
 围绕自媒体创作全流程打磨的工具链，涵盖商业旗舰与开源实用工具：
 
 - `/jack 888`：**JackAICut 达芬奇 AI 剪辑助手（商业产品）** —— 让 Agent 看懂你的达芬奇时间线，根据画面、文字、声音等多个维度帮你剪辑，只要是达芬奇用户都能显著提升剪辑效率。
-- `/jack 201`：**Jack Media Publisher 多平台发布（开源）** —— 一键分发视频至小红书、抖音、B 站、微信视频号，对齐标题封面并生成草稿。
+- `/jack 201`：**Jack Media Publisher 多平台发布（开源）** —— 基于 Ego Lite 一键分发视频至小红书、抖音、B 站、微信视频号，对齐标题封面并生成草稿。
 - `/jack 101`：**JackVoice 极低声轻语输入（开源）** —— 在图书馆或安静办公室轻声轻语即可准确转文字，自带备忘录。
 - `/jack 666`：**JackDSH 桌面 AI 工作台指南（开源）** —— 开箱即用的桌面 AI 工作台，支持手机远程控制。
 
@@ -106,7 +106,7 @@ npx -y skills add JackAIStudio/jackskill -g --all
 | 编号 | 工具 / 产品 | 属性 | 场景与说明 | 官网与链接 |
 | :--- | :--- | :--- | :--- | :--- |
 | **`/jack 888`** | **JackAICut 达芬奇 AI 剪辑助手** | **商业产品** | 让 Agent 看懂达芬奇时间线，根据画面、文字、声音等多个维度辅助剪辑，全面提升达芬奇剪辑效率 | [官网直达](https://jackaicut.com) |
-| **`/jack 201`** | **Jack Media Publisher** | 开源工具 | 视频一键分发小红书、抖音、B 站、视频号草稿，对齐封面话题 | [开源地址](https://github.com/JackAIStudio/jack-media-publisher) |
+| **`/jack 201`** | **Jack Media Publisher (Ego Lite)** | 开源工具 | 基于 Ego Lite 一键分发视频至小红书、抖音、B 站、视频号草稿，对齐封面话题 | [开源地址](https://github.com/JackAIStudio/jack-media-publisher-ego-lite) |
 | **`/jack 101`** | **JackVoice 语音输入** | 开源工具 | 超低声语音输入转文字，支持安静环境轻语转文字与语音备忘录 | [源码与客户端](https://github.com/JackAIStudio/JackVoice) |
 | **`/jack 666`** | **JackDSH 桌面 AI 工作台** | 开源指南 | 可定制桌面 AI 工作台，支持手机远程控制与插件生态 | [项目主页](https://github.com/JackAIStudio) |
 

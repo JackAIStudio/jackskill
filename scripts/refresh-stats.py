@@ -361,6 +361,29 @@ def _similar(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, norm(a), norm(b)).ratio()
 
 
+def _title_match_score(item_title: str, candidate_title: str) -> float:
+    """计算页面标题与一条参考标题（topic 或平台专属 title）的基础匹配分。"""
+    t, rt = norm(item_title), norm(candidate_title)
+    score = _similar(item_title, candidate_title)
+    if t and rt:
+        if t == rt:
+            return 1.0
+        if (t in rt or rt in t) and min(len(t), len(rt)) >= 6:
+            score = max(score, 0.9)
+    return score
+
+
+def _row_candidate_titles(row: dict, platform: str) -> list[str]:
+    """返回一条记录在指定平台上可用于比对的标题集合（主 topic + 平台专属 title）。"""
+    titles: list[str] = []
+    if row.get("topic"):
+        titles.append(row["topic"])
+    plat_title = (row.get("platforms", {}).get(platform, {}) or {}).get("title")
+    if plat_title and plat_title not in titles:
+        titles.append(plat_title)
+    return titles
+
+
 def pair_items_to_rows(
     rows: list[dict], platform: str, items: list[dict]
 ) -> tuple[list[tuple[dict, dict]], list[dict]]:
@@ -368,8 +391,9 @@ def pair_items_to_rows(
 
     为什么要全局配对，而不是像以前那样只看同一天：列表页读回来的标题经常和
     仓库 topic 差一天（2026-09-10 对 09-09、08-30 对 08-29），外加平台会改写
-    标题（「我做了一个达芬奇插件」→「我开发了个达芬奇插件」）。只按当天匹配时
-    这些会全部落到「未匹配」，数字一直停在旧快照上，而页面上早就变了。
+    标题（「我做了一个达芬奇插件」→「我开发了个达芬奇插件」），有时在小红书
+    还会单独起完全不同的标题。只按当天和主 topic 匹配时这些会全部落到「未匹配」，
+    数字一直停在旧快照上，而页面上早就变了。
 
     两条约束防止张冠李戴：
       - **日期必须接近**：超过 40 天的两期不可能是同一条；
@@ -394,13 +418,8 @@ def pair_items_to_rows(
             gap = abs((row_date - item_date).days)
             if gap > MATCH_MAX_GAP_DAYS:
                 continue
-            t, rt = norm(it["title"]), norm(r["topic"])
-            score = _similar(it["title"], r["topic"])
-            if t and rt:
-                if t == rt:
-                    score = 1.0
-                elif (t in rt or rt in t) and min(len(t), len(rt)) >= 6:
-                    score = max(score, 0.9)
+            cand_titles = _row_candidate_titles(r, platform)
+            score = max((_title_match_score(it["title"], ct) for ct in cand_titles), default=0.0)
             # 同一天、差一天，比「标题也一样但差了 20 天」更可信
             score += 0.04 if gap == 0 else (0.02 if gap == 1 else 0.0)
             scored.append((score, it, r))

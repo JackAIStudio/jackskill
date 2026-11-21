@@ -535,6 +535,20 @@ def test_pair_items_to_rows() -> None:
     )
     check(not pairs3 and len(unmatched3) == 1, "差 40 天以上的不配对")
 
+    # 某平台单独起过不同标题（已入库在 platforms[platform].title）：同一天多期也不串、不漏
+    plat_title_rows = [
+        {"id": "2026-11-21_GTA", "date": "2026-11-21", "topic": "我让AI帮我做了个GTA温州版",
+         "platforms": {"xiaohongshu": {"title": "我把温州放进了游戏世界", "views": 1}}},
+        {"id": "2026-11-21_other", "date": "2026-11-21", "topic": "另一期完全无关的作品",
+         "platforms": {"xiaohongshu": {"title": "另一期完全无关的作品", "views": 1}}},
+    ]
+    pairs4, unmatched4 = rs.pair_items_to_rows(
+        plat_title_rows, "xiaohongshu",
+        [{"title": "我把温州放进了游戏世界", "date": "2026-11-21", "raw": ["35", "4", "1", "0", "0"]}],
+    )
+    check(len(pairs4) == 1 and pairs4[0][0]["id"] == "2026-11-21_GTA" and not unmatched4,
+          "平台专属标题与主 topic 不同时，也应按平台专属标题准确配对")
+
 
 # ---------------------------------------------------------------------------
 # 视频号：标题里带「年」不能被当成日期行丢掉

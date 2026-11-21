@@ -1,13 +1,66 @@
 {
-  "generatedAt": "2026-11-20T14:51:11+0800",
+  "generatedAt": "2026-11-21T09:08:50+0800",
   "source": "covers/<日期>_<主题>/",
   "slots": [
     "4x3",
     "3x4",
     "16x9"
   ],
-  "count": 251,
+  "count": 252,
   "items": [
+    {
+      "id": "2026-11-21_我让AI帮我做了个GTA温州版",
+      "date": "2026-11-21",
+      "topic": "我让AI帮我做了个GTA温州版",
+      "dir": "covers/2026-11-21_我让AI帮我做了个GTA温州版",
+      "covers": {
+        "4x3": {
+          "file": "4x3.jpg",
+          "size": [
+            800,
+            599
+          ],
+          "slot": "4x3",
+          "shape": {
+            "ratio": 1.3356,
+            "nearest": "4x3",
+            "deviation": 0.0017,
+            "orientation": "landscape"
+          },
+          "source": "douyin"
+        },
+        "3x4": {
+          "file": "3x4.jpg",
+          "size": [
+            540,
+            721
+          ],
+          "slot": "3x4",
+          "shape": {
+            "ratio": 0.749,
+            "nearest": "3x4",
+            "deviation": 0.0014,
+            "orientation": "portrait"
+          },
+          "source": "douyin"
+        },
+        "16x9": {
+          "file": "16x9.jpg",
+          "size": [
+            800,
+            450
+          ],
+          "slot": "16x9",
+          "shape": {
+            "ratio": 1.7778,
+            "nearest": "16x9",
+            "deviation": 0.0,
+            "orientation": "landscape"
+          },
+          "source": "bilibili"
+        }
+      }
+    },
     {
       "id": "2026-11-20_重生后，Dario跪求我解封账号",
       "date": "2026-11-20",

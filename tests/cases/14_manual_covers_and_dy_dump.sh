@@ -1,29 +1,44 @@
 #!/usr/bin/env bash
-# 用例 14：parse-dy-dump 对 saveFull + 折行的解析，以及 fetch-covers --manual 的压图与方向校验
+# 用例 14：parse-dy-dump 对 Ego Lite work_list JSON 的解析，以及 fetch-covers --manual 的压图与方向校验
 set -uo pipefail
 . "$(dirname "$0")/../lib.sh"
 setup_case "manual_covers_and_dy_dump"
 trap teardown_case EXIT
 
-# --- 1. parse-dy-dump.py 应直接认 bsk saveFull + 折行 StaticText ------------
-dy_in="$CASE_TMP/dy_savefull.json"
+# --- 1. parse-dy-dump.py 应解析裸 JSON 与 <pre> 包裹并按 aweme_id 去重 ------
+dy_in1="$CASE_TMP/dy_p1.json"
+dy_in2="$CASE_TMP/dy_p2.html"
 dy_out="$CASE_TMP/dy_covers.json"
 
-python3 - "$dy_in" <<'PY'
+python3 - "$dy_in1" "$dy_in2" <<'PY'
 import json, sys
-folded_vom = (
-    '@vom 1\n'
-    'L1 page\n'
-    '  RootWebArea "{\\"aweme_list\\":[{\\"aweme_id\\":\\"123"\n'
-    '    StaticText "{\\"aweme_list\\":[{\\"aweme_id\\":\\"7708333154834091300\\",\\"item_title\\":\\"测试\\\\\\"标题\\",\\""\n'
-    '    StaticText "Cover\\":{\\"url_list\\":[\\"https://example.com/3x4.jpg\\"]},\\"horizontal_cover\\":{\\"url_list\\":[\\"https://example.com/4x3.jpg\\"]}}]}"\n'
-    '    form "美观输出"\n'
-)
+
+p1 = {
+    "aweme_list": [
+        {
+            "aweme_id": "7708333154834091300",
+            "item_title": '测试"标题 #话题',
+            "Cover": {"url_list": ["https://example.com/3x4.jpg"]},
+            "horizontal_cover": {"url_list": ["https://example.com/4x3.jpg"]},
+        }
+    ]
+}
+p2 = {
+    "aweme_list": [
+        {
+            "aweme_id": "7708333154834091301",
+            "desc": "第二条视频 #测试",
+            "Cover": {"url_list": ["https://example.com/2_3x4.jpg"]},
+        }
+    ]
+}
 with open(sys.argv[1], "w", encoding="utf-8") as f:
-    json.dump({"observation": {"text": folded_vom}}, f, ensure_ascii=False)
+    json.dump(p1, f, ensure_ascii=False)
+with open(sys.argv[2], "w", encoding="utf-8") as f:
+    f.write("<html><body><pre>" + json.dumps(p2, ensure_ascii=False) + "</pre></body></html>")
 PY
 
-parse_out="$(python3 "$REPO_ROOT/scripts/parse-dy-dump.py" --in "$dy_in" --out "$dy_out" 2>&1)"
+parse_out="$(python3 "$REPO_ROOT/scripts/parse-dy-dump.py" --in "$dy_in1" "$dy_in2" --out "$dy_out" 2>&1)"
 assert_exit_code 0 "$?" || {
   printf '%s\n' "$parse_out"
   exit 1
@@ -32,11 +47,15 @@ assert_exit_code 0 "$?" || {
 python3 - "$dy_out" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
-assert "7708333154834091300" in d, f"missing aweme_id: {d}"
+assert "7708333154834091300" in d, f"missing aweme_id 1: {d}"
+assert "7708333154834091301" in d, f"missing aweme_id 2: {d}"
 rec = d["7708333154834091300"]
 assert rec["title"] == '测试"标题', f"bad title: {rec['title']!r}"
 assert rec["covers"]["4x3"]["url"] == "https://example.com/4x3.jpg"
 assert rec["covers"]["3x4"]["url"] == "https://example.com/3x4.jpg"
+rec2 = d["7708333154834091301"]
+assert rec2["title"] == "第二条视频", f"bad title 2: {rec2['title']!r}"
+assert rec2["covers"]["3x4"]["url"] == "https://example.com/2_3x4.jpg"
 PY
 assert_exit_code 0 "$?" || exit 1
 
@@ -117,5 +136,5 @@ for slot in ("4x3", "3x4", "16x9"):
 PY
 assert_exit_code 0 "$?" || exit 1
 
-echo "PASS: parse-dy-dump 支持 saveFull/折行，fetch-covers --manual 压图、建索引与方向拦截均正确。"
+echo "PASS: parse-dy-dump 支持标准 work_list JSON 与去重，fetch-covers --manual 压图、建索引与方向拦截均正确。"
 exit 0

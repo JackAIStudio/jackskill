@@ -204,7 +204,7 @@ table.plat-table .dim { color: var(--ink-3); }
 
 /* ---------- 平台指标切换 ---------- */
 
-/* 表格的形制不变，只换那四列显示哪个指标。
+/* 表格的形制不变，只换平台列显示哪个指标。
    展开行试过：一行 44px 一行 400px，扫读节奏全被打断，所以明细回抽屉。 */
 .metric-bar { display: inline-flex; gap: 4px; }
 .metric-bar button {
@@ -331,7 +331,7 @@ table.gloss td:first-child { color: var(--ink); white-space: nowrap; }
 
 /* ---------- 粉丝 ---------- */
 
-/* 四张卡片等宽，窗口窄了自己折行。粉丝是账号级的存量，
+/* 五张卡片等宽，窗口窄了自己折行。粉丝是账号级的存量，
    和下面那张「一行一期」的作品表不是一套东西，所以单独成块、单独排版。 */
 .follow-cards {
   display: grid;
@@ -344,7 +344,7 @@ table.gloss td:first-child { color: var(--ink); white-space: nowrap; }
   border-radius: var(--radius);
   padding: 16px 18px 14px;
 }
-/* 没采到的平台压暗，但卡片照旧占位——缺四个里的哪一个要一眼看得见，
+/* 没采到的平台压暗，但卡片照旧占位——缺五个里的哪一个要一眼看得见，
    悄悄少一张卡反而会被当成那个平台不存在。 */
 .follow-card.is-missing { background: #fcfbf9; }
 .follow-card.is-missing .fc-num { color: #c9c3b9; }

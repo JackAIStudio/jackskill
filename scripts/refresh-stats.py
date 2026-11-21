@@ -2,12 +2,13 @@
 """
 刷新 data/videos.jsonl 里各平台的播放 / 点赞 / 收藏 / 分享 / 评论。
 
-四平台的数据来源不一样，可靠性也不一样，这个脚本按平台分开处理：
+五个平台的数据来源不一样，可靠性也不一样，这个脚本按平台分开处理：
 
     bilibili         公开接口，免登录、返回精确值、字段有名字
-    douyin           创作者后台列表页，页面文本 → 按列序解析
-    xiaohongshu      创作者后台列表页，同上
-    wechat_channels  创作者后台列表页，同上（列表要滚动才渲染）
+    douyin           Ego Lite 拉取 work_list 接口裸 JSON（精确整数，按 aweme_id 配对）
+    xiaohongshu      Ego Lite 采集创作者后台列表页文本 → 按列序解析
+    wechat_channels  Ego Lite 采集创作者后台列表页文本 → 按列序解析（列表要滚动才渲染）
+    x                Ego Lite 旁路捕获媒体页 UserVideoTimeline JSON（精确整数，按 tweet_id 配对）
 
 **为什么 B 站不用浏览器。** B 站的
 `api.bilibili.com/x/web-interface/view?bvid=` 免登录就能拿到
@@ -15,36 +16,39 @@ view / like / favorite / share / reply 五个精确值，和创作者后台完�
 而且返回的是字段名不是位置，不存在看错列的问题。220 期跑一遍只有一条会
 被限流（62012），退避重试即可。这条路径比读后台列表页省事得多，别绕回去。
 
-**为什么另外三个平台必须靠页面文本。** 它们的后台接口都要登录态和签名，
-curl 直接打拿不到；只能在已登录的浏览器里读。读回来的是一段纯文本，
-数字没有表头，靠位置判断——所以列序写死在下面 PLATFORM_SPEC 里，不让
-模型每次现猜。四个平台的列序各不相同，而且都不直观：
+**为什么另外四个平台走 Ego Lite。** 它们的后台接口或个人媒体页需要登录态，
+curl 直接打拿不到；统一用 `scripts/collect-ego.py` 在本机已登录的 Ego Lite 里采集。
+小红书和微信视频号读回来的是纯文本，数字没有表头，靠位置判断——所以列序写死在
+下面 PLATFORM_SPEC 里，不让模型每次现猜：
 
     bilibili         （走接口，无列序问题）
-    douyin           播放 点赞 评论 分享 收藏
+    douyin           播放 点赞 评论 分享 收藏（work_list JSON 按字段名取值）
     xiaohongshu      观看 评论 点赞 收藏 分享     ← 收藏在分享前面，最反直觉
     wechat_channels  播放 点赞 评论 分享 收藏
+    x                观看 喜欢 书签 转发(转帖+引用) 回复（GraphQL JSON 按字段名取值）
 
 小红书那一条是拿五期旧数据反推验证出来的：只有「观看/评论/点赞/收藏/分享」
 这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」会每一条都错位。
 
 用法：
-    # 滚动更新（日常默认：B 站只刷最近 14 天，其余平台只喂首页 / 第一屏）
+    # 滚动更新（日常默认：B 站只刷最近 14 天，其余平台由 collect-ego.py 采集首屏/第 1 页）
+    python3 scripts/collect-ego.py
     python3 scripts/refresh-stats.py --platform bilibili --days 14
-    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --days 14
-    python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/xhs-top.txt --days 14
-    python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/wx-page1.txt --days 14
+    python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --days 14
+    python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-notes.txt --days 14
+    python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/jackskill-ego/wx-p1.txt --days 14
+    python3 scripts/refresh-stats.py --platform x --in /tmp/jackskill-ego/x-videos.json --days 14
 
     # 全量重刷（仅当明确需要全库校准时才不加 --days）
     python3 scripts/refresh-stats.py --platform bilibili
 
     # 只刷最新的 N 期，或只看会改什么不落盘
     python3 scripts/refresh-stats.py --platform bilibili --limit 20 --dry-run
-    python3 scripts/refresh-stats.py --platform douyin --in /tmp/dy-page1.json --dry-run
+    python3 scripts/refresh-stats.py --platform x --in /tmp/jackskill-ego/x-videos.json --dry-run
 
-写完记得跑 node scripts/check-data.mjs 和 node scripts/build-site.mjs。
+写完记得跑 node scripts/check-data.mjs && node scripts/build-site.mjs。
 
-**近似值不覆盖精确值。** 抖音后台播放量上万会显示成「1.3万」。这个值是
+**近似值不覆盖精确值。** 抖音列表页播放量上万会显示成「1.3万」。这个值是
 四舍五入过的，1.3 万覆盖 [12500, 13500)。如果库里已经有一条精确值落在
 这个区间里，那条精确值比「1.3万」更可信，不覆盖。硬写 13000 是降精度。
 """
@@ -52,14 +56,14 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 import json
 import re
 import sys
 import time
-import unicodedata
 import urllib.error
 import urllib.request
-from datetime import date, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -68,12 +72,15 @@ DATA_FILE = REPO_ROOT / "data/videos.jsonl"
 METRICS = ["views", "likes", "collects", "shares", "comments"]
 
 # 页面上的列序，按「从左到右」写死。改这里之前先拿旧数据反推验证一遍，
-# 四个平台的顺序真的不一样，凭直觉改会静默错位。
+# 各平台的顺序真的不一样，凭直觉改会静默错位。
 PLATFORM_SPEC = {
     "douyin": ["views", "likes", "comments", "shares", "collects"],
     "xiaohongshu": ["views", "comments", "likes", "collects", "shares"],
     "wechat_channels": ["views", "likes", "comments", "shares", "collects"],
+    "x": ["views", "likes", "collects", "shares", "comments"],
 }
+
+CST = timezone(timedelta(hours=8))
 
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -85,69 +92,8 @@ UA = (
 # 通用
 # --------------------------------------------------------------------------
 
-def unwrap_bsk_dump(raw: str) -> str:
-    """兼容 bsk_session sync saveFull 落盘的 JSON 外壳，还原其中的 VOM 文本。
-
-    bsk_session({ action: "sync", saveFull: "..." }) 会写出
-    {"observation": {"text": "..."}, ...}，里面的引号和换行又被 JSON
-    包了一层。直接拿它喂正则会得到 0 条——在这里统一解掉这层壳。
-    普通文本、HTML 或裸接口 JSON（含 aweme_list）保持原样返回。
-    """
-    s = (raw or "").lstrip()
-    if not s.startswith("{"):
-        return raw
-    try:
-        obj = json.loads(raw)
-    except Exception:
-        return raw
-    if not isinstance(obj, dict):
-        return raw
-    for candidate in (obj, obj.get("result") if isinstance(obj.get("result"), dict) else None):
-        if not isinstance(candidate, dict):
-            continue
-        obs = candidate.get("observation")
-        if isinstance(obs, dict) and isinstance(obs.get("text"), str):
-            return obs["text"]
-        if isinstance(candidate.get("text"), str) and (
-            "@vom " in candidate["text"] or "StaticText " in candidate["text"]
-        ):
-            return candidate["text"]
-    return raw
-
-
-def _unfold_vom_json(raw: str) -> str:
-    """从 VOM 文本里提取并拼接被按长度折成多行的 JSON StaticText 块。
-
-    bsk / observe 遇到几十 KB 的长文本时，会先把 RootWebArea 截断成一段
-    预览，再把正文拆成多个连续的 `StaticText "..."` 行。直接去匹配会在
-    折行处把一条记录切两半；这里按行跳过 RootWebArea 预览并拼接所有
-    连续的 JSON StaticText 行。
-    """
-    lines = raw.splitlines()
-    buf: list[str] = []
-    collecting = False
-    for line in lines:
-        s = line.lstrip()
-        if not collecting:
-            if s.startswith('StaticText "{') or s.startswith('StaticText "{\\"'):
-                collecting = True
-                body = s[len('StaticText "'):]
-                if body.endswith('"'):
-                    body = body[:-1]
-                buf.append(body)
-        else:
-            if s.startswith('StaticText "'):
-                body = s[len('StaticText "'):]
-                if body.endswith('"'):
-                    body = body[:-1]
-                buf.append(body)
-            else:
-                break
-    return "".join(buf) if buf else raw
-
-
 def read_dump_text(path: str | Path) -> str:
-    return unwrap_bsk_dump(Path(path).read_text(encoding="utf-8", errors="replace"))
+    return Path(path).read_text(encoding="utf-8", errors="replace")
 
 
 def norm(s: str) -> str:
@@ -459,12 +405,9 @@ def pair_items_to_rows(
 
 
 # --------------------------------------------------------------------------
-# 三个后台：解析页面文本（兼容 bsk VOM、Ego Lite snapshot 与纯文本 innerText）
+# 页面文本解析（兼容 Ego Lite snapshot 与纯文本 innerText）
 # --------------------------------------------------------------------------
 
-STATIC = re.compile(r'StaticText\s+"((?:[^"\\]|\\.)*)"')
-BUTTON = re.compile(r'button\s+"((?:[^"\\]|\\.)*)"')
-BSK_TOKEN = re.compile(r'(?:StaticText|button)\s+"((?:[^"\\]|\\.)*)"')
 EGO_TEXT = re.compile(r'^\s*(?:text|heading|paragraph)\s+"((?:[^"\\]|\\.)*)"', re.M)
 EGO_TOKEN = re.compile(r'^\s*(?:text|button|heading|paragraph)\s+"((?:[^"\\]|\\.)*)"', re.M)
 DURATION_RE = re.compile(r"\d{1,2}:\d{2}(?::\d{2})?")
@@ -475,17 +418,12 @@ def _unescape(s: str) -> str:
 
 
 def _extract_page_lines(raw: str, *, include_buttons: bool = False) -> list[str]:
-    """把不同浏览器导出的页面文本统一成有序文本行列表。
+    """把 Ego Lite 导出的页面文本统一成有序文本行列表。
 
-    兼容三种来源，按特征自动识别：
-      1. bsk VOM（含 StaticText "..." / button "..."，含 saveFull 外壳）
-      2. Ego Lite page.snapshot()（行首缩进 + text/button/heading/paragraph "..."）
-      3. 纯文本（例如 page.evaluate(() => document.body.innerText) 按行输出）
+    兼容两种输出形态，按特征自动识别：
+      1. Ego Lite page.snapshot()（行首缩进 + text/button/heading/paragraph "..."）
+      2. 纯文本（例如 page.evaluate(() => document.body.innerText) 按行输出）
     """
-    raw = unwrap_bsk_dump(raw)
-    if STATIC.search(raw) or (include_buttons and BUTTON.search(raw) and not EGO_TEXT.search(raw)):
-        pat = BSK_TOKEN if include_buttons else STATIC
-        return [_unescape(m.group(1)).strip() for m in pat.finditer(raw)]
     if EGO_TEXT.search(raw):
         pat = EGO_TOKEN if include_buttons else EGO_TEXT
         return [_unescape(m.group(1)).strip() for m in pat.finditer(raw)]
@@ -668,19 +606,13 @@ DY_HIDDEN_FLAGS = {
 }
 
 
-# 抖音的 JSON 会被不同环节存成两种形态：
-#   1. 转义形态 —— 引号带反斜杠：{\"statistics\":{\"aweme_id\":\"123\"...
-#      （列表页 observe 抓下来的 StaticText、早期导出的文本）
-#   2. 未转义形态 —— 普通引号：{"statistics":{"aweme_id":"123"...
-#      （bsk_inspect 的 spill 文件、直接 json.load 出来的 <pre> 内层）
-# 两种都是同一份数据，解析器必须都认。写死任一种，另一种就静默解析出 0 条。
-#
-# 做法是**先归一化再解析**，而不是让一个正则同时兼容两种引号。
-# 试过后者：转义形态里 `\\.` 会把 `\"` 也当成转义序列吃掉，一路吃到下一条
-# 记录，标题就串到别的作品上了。归一化之后只写一套简单正则，好读也好测。
+# 抖音的 JSON 偶尔会出现两种形态：
+#   1. 未转义形态 —— 普通引号：{"statistics":{"aweme_id":"123"...
+#      （Ego Lite page.fetch 直接拉回来的裸 JSON、`<pre>` 内层）
+#   2. 转义形态 —— 引号带反斜杠：{\"statistics\":{\"aweme_id\":\"123\"...
+# 两种都是同一份数据，先归一化再解析，只写一套简单正则。
 def normalize_dy_json(raw: str) -> str:
-    """把 saveFull 外壳、VOM 折行与转义形态统一还原成普通 JSON 文本。"""
-    raw = _unfold_vom_json(unwrap_bsk_dump(raw))
+    """把转义形态统一还原成普通 JSON 文本。"""
     if '"statistics"' in raw:
         return raw
     if '\\"statistics\\"' not in raw:
@@ -818,7 +750,132 @@ def parse_dy_json(raw: str) -> list[dict]:
     return items
 
 
-PARSERS = {"xiaohongshu": parse_xhs, "wechat_channels": parse_wx, "douyin": parse_dy}
+def _parse_x_date(created_at: str) -> str:
+    """把 X 的时间字符串转成北京时间（UTC+8）的 YYYY-MM-DD。"""
+    s = (created_at or "").strip()
+    if not s:
+        return ""
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", s):
+        return s
+    try:
+        dt = parsedate_to_datetime(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(CST).strftime("%Y-%m-%d")
+    except Exception:
+        pass
+    try:
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(CST).strftime("%Y-%m-%d")
+    except Exception:
+        return ""
+
+
+def _clean_x_title(title: str, text: str) -> str:
+    """优先取 Media Studio 的视频标题，为空时退回推文首行（去掉末尾 t.co 短链）。"""
+    t = (title or "").strip()
+    if t:
+        return t
+    clean = re.sub(r"\s*https?://t\.co/[A-Za-z0-9]+\s*$", "", (text or "").strip())
+    return clean.splitlines()[0].strip() if clean else ""
+
+
+def parse_x(raw: str) -> list[dict]:
+    """X：从 Ego Lite 导出的 x-videos.json 或原始 GraphQL JSON 提取视频推文精确指标。
+
+    指标映射（均为精确整数，不依赖中英文界面也不受 1.3K 近似值影响）：
+      views     = views（次观看 / Impressions）
+      likes     = favorite_count（喜欢 / Likes）
+      collects  = bookmark_count（书签 / Bookmarks）
+      shares    = retweet_count + quote_count（转帖 + 引用）
+      comments  = reply_count（回复 / Replies）
+    """
+    s = (raw or "").strip()
+    if not s:
+        return []
+    try:
+        obj = json.loads(s)
+    except json.JSONDecodeError:
+        return []
+
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    # 形态 1：collect-ego.py 产出的结构化 x-videos.json
+    if isinstance(obj, dict) and isinstance(obj.get("items"), list):
+        handle = (obj.get("handle") or "").strip()
+        for it in obj["items"]:
+            if not isinstance(it, dict):
+                continue
+            tid = str(it.get("tweet_id") or "").strip()
+            if not tid or tid in seen:
+                continue
+            seen.add(tid)
+            day = _parse_x_date(str(it.get("created_at") or it.get("date") or ""))
+            title = _clean_x_title(str(it.get("title") or ""), str(it.get("text") or ""))
+            views = int(it.get("views") or 0)
+            likes = int(it.get("likes") or 0)
+            bookmarks = int(it.get("bookmarks") or 0)
+            shares = int(it.get("retweets") or 0) + int(it.get("quotes") or 0)
+            replies = int(it.get("replies") or 0)
+            url = str(it.get("url") or (f"https://x.com/{handle}/status/{tid}" if handle else ""))
+            items.append({
+                "title": title,
+                "date": day,
+                "raw": [str(views), str(likes), str(bookmarks), str(shares), str(replies)],
+                "tweet_id": tid,
+                "url": url,
+            })
+        return items
+
+    # 形态 2：兜底支持原始 X GraphQL JSON（UserVideoTimeline / UserMedia）
+    def walk(node: object) -> None:
+        if isinstance(node, list):
+            for x in node:
+                walk(x)
+            return
+        if not isinstance(node, dict):
+            return
+        if node.get("__typename") == "Tweet" and node.get("rest_id") and isinstance(node.get("legacy"), dict):
+            tid = str(node["rest_id"])
+            if tid not in seen:
+                leg = node["legacy"]
+                media_list = (leg.get("extended_entities") or leg.get("entities") or {}).get("media") or []
+                vid = next((m for m in media_list if isinstance(m, dict) and m.get("type") == "video"), None)
+                if vid:
+                    seen.add(tid)
+                    user_res = ((node.get("core") or {}).get("user_results") or {}).get("result") or {}
+                    sn = (user_res.get("core") or {}).get("screen_name") or (user_res.get("legacy") or {}).get("screen_name") or ""
+                    views_raw = (node.get("views") or {}).get("count")
+                    views = int(views_raw) if views_raw is not None and str(views_raw).isdigit() else 0
+                    likes = int(leg.get("favorite_count") or 0)
+                    bookmarks = int(leg.get("bookmark_count") or 0)
+                    shares = int(leg.get("retweet_count") or 0) + int(leg.get("quote_count") or 0)
+                    replies = int(leg.get("reply_count") or 0)
+                    media_title = ((vid.get("additional_media_info") or {}).get("title") or "").strip()
+                    title = _clean_x_title(media_title, str(leg.get("full_text") or ""))
+                    items.append({
+                        "title": title,
+                        "date": _parse_x_date(str(leg.get("created_at") or "")),
+                        "raw": [str(views), str(likes), str(bookmarks), str(shares), str(replies)],
+                        "tweet_id": tid,
+                        "url": f"https://x.com/{sn}/status/{tid}" if sn else "",
+                    })
+        for v in node.values():
+            walk(v)
+
+    walk(obj)
+    return items
+
+
+PARSERS = {
+    "xiaohongshu": parse_xhs,
+    "wechat_channels": parse_wx,
+    "douyin": parse_dy,
+    "x": parse_x,
+}
 
 
 # --------------------------------------------------------------------------
@@ -826,9 +883,10 @@ PARSERS = {"xiaohongshu": parse_xhs, "wechat_channels": parse_wx, "douyin": pars
 # --------------------------------------------------------------------------
 
 def _work_id(row: dict, platform: str) -> str:
-    """记录里存的这条作品 id（抖音的 aweme_id）。取不到就返回空串。"""
+    """记录里存的这条作品 id（抖音 aweme_id 或 X tweet_id）。取不到就返回空串。"""
     url = (row.get("platforms", {}).get(platform, {}) or {}).get("url") or ""
-    tail = url.rstrip("/").split("/")[-1]
+    clean = url.split("?", 1)[0].rstrip("/")
+    tail = clean.split("/")[-1]
     return tail if tail.isdigit() else ""
 
 
@@ -1005,16 +1063,17 @@ def refresh_from_pages(
         return log
 
     matched = skipped = out_of_scope = 0
-    # 抖音的 work_list 带 aweme_id，id 是唯一可靠的判据，保持逐条精确匹配；
+    # 抖音（aweme_id）与 X（tweet_id）带唯一数字作品 id，id 是唯一可靠的判据，保持逐条精确匹配；
     # 小红书、视频号的列表页拿不到 id，只能按标题配，必须全局一对一配对，
     # 否则标题被平台改写、或者晚一天发的那一批会全部落到「未匹配」。
     # 注意：配对必须拿完整 rows，以免页面里「置顶」的旧视频在局部截断下误配或误报未匹配；
     # --days / --limit 只控制配对后哪些期次允许落盘。
-    if platform == "douyin":
+    if platform in ("douyin", "x"):
         pairs = []
         leftovers = []
         for it in items:
-            row = match_row(rows, platform, it["date"], it["title"], it.get("aweme_id", ""))
+            wid = it.get("aweme_id") or it.get("tweet_id") or ""
+            row = match_row(rows, platform, it["date"], it["title"], wid)
             if row is None:
                 leftovers.append(it)
             else:
@@ -1032,8 +1091,13 @@ def refresh_from_pages(
             file=sys.stderr,
         )
         for it in suspected_new:
-            aid = f" [aweme_id={it['aweme_id']}]" if it.get("aweme_id") else ""
-            print(f"    - {it['date']} {it['title']}{aid}", file=sys.stderr)
+            if it.get("aweme_id"):
+                wid_tag = f" [aweme_id={it['aweme_id']}]"
+            elif it.get("tweet_id"):
+                wid_tag = f" [tweet_id={it['tweet_id']}]"
+            else:
+                wid_tag = ""
+            print(f"    - {it['date']} {it['title']}{wid_tag}", file=sys.stderr)
 
     # 启用 --limit 时按仓库记录日期倒序取最新的 N 条配对
     if limit is not None and limit >= 0:
@@ -1121,9 +1185,9 @@ def main() -> int:
     ap.add_argument(
         "--platform",
         required=True,
-        choices=["bilibili", "douyin", "xiaohongshu", "wechat_channels"],
+        choices=["bilibili", "douyin", "xiaohongshu", "wechat_channels", "x"],
     )
-    ap.add_argument("--in", dest="inputs", nargs="+", help="observe 出来的页面文本（B 站不需要）")
+    ap.add_argument("--in", dest="inputs", nargs="+", help="Ego Lite 采集脚本产出的页面文本或 JSON（B 站不需要）")
     ap.add_argument("--days", type=int, help="只更新最近 N 天（含今天）的期次，用于日常滚动更新")
     ap.add_argument("--limit", type=int, help="只更新最新的 N 期（按日期倒序）")
     ap.add_argument("--dry-run", action="store_true", help="只报告，不写盘")

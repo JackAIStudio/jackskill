@@ -2,7 +2,7 @@
 """
 refresh-stats.py 的解析与写入规则测试。
 
-这里测的是「不依赖网络、不依赖浏览器」的那部分：页面文本 → 五元组，
+这里测的是「不依赖网络、不依赖浏览器」的那部分：Ego Lite 采集输出 → 五元组，
 以及拿到五元组之后怎么决定写不写。这部分是最容易静默出错的地方——
 列序错了不会报错，只会把点赞写成评论，然后一直错下去。
 
@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -44,29 +45,33 @@ def test_column_order() -> None:
           "小红书列序应为 观看 评论 点赞 收藏 分享（收藏在分享前）")
     check(rs.PLATFORM_SPEC["wechat_channels"] == ["views", "likes", "comments", "shares", "collects"],
           "视频号列序应为 播放 点赞 评论 分享 收藏")
+    check(rs.PLATFORM_SPEC["x"] == ["views", "likes", "collects", "shares", "comments"],
+          "X 列序应为 播放(观看) 点赞(喜欢) 收藏(书签) 分享(转帖+引用) 评论(回复)")
 
 
 # ---------------------------------------------------------------------------
-# 小红书：裸数字，最依赖列序
+# 小红书：裸数字，最依赖列序（Ego Lite snapshot 与纯文本）
 # ---------------------------------------------------------------------------
 
 XHS_PAGE = '''
-  StaticText "置顶"
-  StaticText "我能为你提供价值，请你雇佣我为你工作"
-  StaticText "2026-10-18 13:06"
-  StaticText "38"
-  StaticText "0"
-  StaticText "1"
-  StaticText "0"
-  StaticText "0"
-  img
-  StaticText "在达芬奇中剪辑长视频的思路和方法"
-  StaticText "2026-10-22 17:39"
-  StaticText "355"
-  StaticText "0"
-  StaticText "23"
-  StaticText "20"
-  StaticText "1"
+root
+  container
+    text "置顶"
+    text "我能为你提供价值，请你雇佣我为你工作"
+    text "2026-10-18 13:06"
+    text "38"
+    text "0"
+    text "1"
+    text "0"
+    text "0"
+  container
+    text "在达芬奇中剪辑长视频的思路和方法"
+    text "2026-10-22 17:39"
+    text "355"
+    text "0"
+    text "23"
+    text "20"
+    text "1"
 '''
 
 
@@ -87,22 +92,25 @@ def test_xhs_parse() -> None:
 # ---------------------------------------------------------------------------
 
 WX_PAGE = '''
-  StaticText "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑"
-  StaticText "2026年10月22日 17:39"
-  StaticText "已声明原创"
-  StaticText "397"
-  StaticText "0"
-  StaticText "1"
-  StaticText "3"
-  StaticText "6"
-  StaticText "实测用AI开发安卓APP会比苹果更方便一些 #吴杰克"
-  StaticText "2026年10月18日 18:25"
-  StaticText "已声明原创"
-  StaticText "856"
-  StaticText "1"
-  StaticText "0"
-  StaticText "2"
-  StaticText "6"
+root
+  container
+    text "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑"
+    text "2026年10月22日 17:39"
+    text "已声明原创"
+    text "397"
+    text "0"
+    text "1"
+    text "3"
+    text "6"
+  container
+    text "实测用AI开发安卓APP会比苹果更方便一些 #吴杰克"
+    text "2026年10月18日 18:25"
+    text "已声明原创"
+    text "856"
+    text "1"
+    text "0"
+    text "2"
+    text "6"
 '''
 
 
@@ -117,52 +125,55 @@ def test_wx_parse() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 抖音：标签 + 数值成对，还有近似值和「减少作品推荐」
+# 抖音列表页兜底：标签 + 数值成对，还有近似值和「减少作品推荐」
 # ---------------------------------------------------------------------------
 
 DY_PAGE = '''
-    StaticText "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑"
-    StaticText "2026年10月22日 17:40"
-    StaticText "已发布"
-    @e55 button "播放"
-    @e56 button "718"
-    @e57 button "点赞"
-    @e58 button "6"
-    @e59 button "评论"
-    @e60 button "0"
-    @e61 button "分享"
-    @e62 button "0"
-    @e63 button "收藏"
-    @e64 button "5"
-    StaticText "实测用AI开发安卓APP会比苹果更方便一些 #吴杰克"
-    StaticText "2026年10月18日 18:25"
-    StaticText "已发布"
-    @e126 button "播放"
-    @e127 button "1.3万"
-    @e128 button "点赞"
-    @e129 button "75"
-    @e130 button "评论"
-    @e131 button "36"
-    @e132 button "分享"
-    @e133 button "4"
-    @e134 button "收藏"
-    @e135 button "23"
+root
+  container
+    text "在达芬奇中剪辑长视频的思路和方法 #达芬奇剪辑"
+    text "2026年10月22日 17:40"
+    text "已发布"
+    button "播放"
+    button "718"
+    button "点赞"
+    button "6"
+    button "评论"
+    button "0"
+    button "分享"
+    button "0"
+    button "收藏"
+    button "5"
+  container
+    text "实测用AI开发安卓APP会比苹果更方便一些 #吴杰克"
+    text "2026年10月18日 18:25"
+    text "已发布"
+    button "播放"
+    button "1.3万"
+    button "点赞"
+    button "75"
+    button "评论"
+    button "36"
+    button "分享"
+    button "4"
+    button "收藏"
+    button "23"
 '''
 
 DY_BLOCKED = '''
-    StaticText "DeepSeek送了我100多赠金，看看你有没有 #吴杰克"
-    StaticText "2026年10月15日 17:01"
-    StaticText "减少作品推荐"
-    StaticText "播放"
-    StaticText "-"
-    StaticText "点赞"
-    StaticText "-"
-    StaticText "评论"
-    StaticText "-"
-    StaticText "分享"
-    StaticText "-"
-    StaticText "收藏"
-    StaticText "-"
+DeepSeek送了我100多赠金，看看你有没有 #吴杰克
+2026年10月15日 17:01
+减少作品推荐
+播放
+-
+点赞
+-
+评论
+-
+分享
+-
+收藏
+-
 '''
 
 
@@ -185,7 +196,124 @@ def test_dy_parse() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 近似值：抖音上万是四舍五入，不能拿它盖掉更精确的旧值
+# X：Ego Lite 导出的 x-videos.json 与原始 GraphQL JSON 兜底
+# ---------------------------------------------------------------------------
+
+def test_x_parse() -> None:
+    # 1) collect-ego.py 产出的结构化 x-videos.json
+    x_payload = json.dumps({
+        "platform": "x",
+        "handle": "WuJieKe1999",
+        "items": [
+            {
+                "tweet_id": "2123883690556338512",
+                "url": "https://x.com/WuJieKe1999/status/2123883690556338512",
+                # UTC 11-20 20:58 = 北京时间 11-21 04:58
+                "created_at": "Fri Nov 20 20:58:26 +0000 2026",
+                "title": "我让AI帮我做了个GTA温州版",
+                "text": "用 Gemini Neon 做了一个GTA 温州版",
+                "views": 114,
+                "likes": 2,
+                "bookmarks": 3,
+                "retweets": 1,
+                "quotes": 2,
+                "replies": 4,
+            },
+            {
+                "tweet_id": "2121918516190437490",
+                "url": "https://x.com/WuJieKe1999/status/2121918516190437490",
+                "created_at": "Sun Nov 15 10:49:32 +0000 2026",
+                "title": "",
+                "text": "没有设 Media Studio 标题时的推文首行\n第二行 https://t.co/abc123",
+                "views": 8,
+                "likes": 0,
+                "bookmarks": 0,
+                "retweets": 0,
+                "quotes": 0,
+                "replies": 0,
+            },
+        ],
+    }, ensure_ascii=False)
+
+    items = rs.parse_x(x_payload)
+    check(len(items) == 2, f"X x-videos.json 应解析出 2 条，实际 {len(items)}")
+    if len(items) == 2:
+        a, b = items
+        check(a["tweet_id"] == "2123883690556338512", "X tweet_id 提取不对")
+        check(a["date"] == "2026-11-21", f"X UTC 时间应转为 UTC+8 日期 2026-11-21，实际 {a['date']!r}")
+        check(a["title"] == "我让AI帮我做了个GTA温州版", f"X 应优先取 Media Studio 标题：{a['title']!r}")
+        # views=114, likes=2, collects(bookmarks)=3, shares(retweets+quotes)=3, comments(replies)=4
+        check(a["raw"] == ["114", "2", "3", "3", "4"], f"X 五元组顺序或计算不对：{a['raw']}")
+        check(b["title"] == "没有设 Media Studio 标题时的推文首行", f"无 title 时应取推文首行：{b['title']!r}")
+
+    # 2) 原始 GraphQL UserVideoTimeline 响应兜底
+    raw_gql = json.dumps({
+        "data": {
+            "user": {
+                "result": {
+                    "timeline": {
+                        "entries": [
+                            {
+                                "__typename": "Tweet",
+                                "rest_id": "2123639554381107284",
+                                "views": {"count": "35", "state": "EnabledWithCount"},
+                                "core": {"user_results": {"result": {"core": {"screen_name": "WuJieKe1999"}}}},
+                                "legacy": {
+                                    "created_at": "Fri Nov 20 04:48:19 +0000 2026",
+                                    "full_text": "给大家整个活 https://t.co/ESkFZO0jZP",
+                                    "favorite_count": 5,
+                                    "bookmark_count": 1,
+                                    "retweet_count": 2,
+                                    "quote_count": 1,
+                                    "reply_count": 3,
+                                    "extended_entities": {
+                                        "media": [
+                                            {
+                                                "type": "video",
+                                                "additional_media_info": {"title": "重生后，Dario跪求我解封账号"},
+                                            }
+                                        ]
+                                    },
+                                },
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }, ensure_ascii=False)
+    gql_items = rs.parse_x(raw_gql)
+    check(len(gql_items) == 1, f"X 原始 GraphQL 应解析出 1 条，实际 {len(gql_items)}")
+    if gql_items:
+        g = gql_items[0]
+        check(g["tweet_id"] == "2123639554381107284", "GraphQL tweet_id 不对")
+        check(g["date"] == "2026-11-20", f"GraphQL 日期不对：{g['date']}")
+        check(g["title"] == "重生后，Dario跪求我解封账号", f"GraphQL 标题不对：{g['title']}")
+        check(g["raw"] == ["35", "5", "1", "3", "3"], f"GraphQL 五元组不对：{g['raw']}")
+
+    # 3) 按 tweet_id 精确匹配，不张冠李戴
+    rows = [
+        {
+            "id": "2026-11-21_GTA",
+            "date": "2026-11-21",
+            "topic": "我让AI帮我做了个GTA温州版",
+            "platforms": {
+                "x": {
+                    "title": "我让AI帮我做了个GTA温州版",
+                    "url": "https://x.com/WuJieKe1999/status/2123883690556338512",
+                    "views": 10, "likes": 0, "collects": 0, "shares": 0, "comments": 0,
+                }
+            },
+        }
+    ]
+    hit = rs.match_row(rows, "x", "2026-11-21", "完全不同的标题", work_id="2123883690556338512")
+    check(hit is not None and hit["id"] == "2026-11-21_GTA", "X 应优先按 tweet_id 精确匹配")
+    miss = rs.match_row(rows, "x", "2026-11-21", "我让AI帮我做了个GTA温州版", work_id="9999999999999999999")
+    check(miss is None, "X tweet_id 不在库里时不该退回标题猜测")
+
+
+# ---------------------------------------------------------------------------
+# 近似值：抖音列表页上万是四舍五入，不能拿它盖掉更精确的旧值
 # ---------------------------------------------------------------------------
 
 def test_parse_count() -> None:
@@ -265,7 +393,7 @@ def test_match_row() -> None:
 
 
 # ---------------------------------------------------------------------------
-# 拿不到数据 → 清零，不保留旧快照
+# 拿不到数据 → 保留最后读数并打 limited，不清零
 # ---------------------------------------------------------------------------
 
 def test_mark_limited() -> None:
@@ -308,11 +436,6 @@ def test_zero_stays_zero() -> None:
 # 抖音走 work_list 的 statistics：精确值，且能认出「平台不给看」
 # ---------------------------------------------------------------------------
 
-# 抖音的 JSON 在不同环节会被存成不同形态，解析器必须都认：
-#   转义（列表页 StaticText）／未转义（spill 文件、<pre> 内层）；
-#   紧凑（`"a":1`）／带空格（`"a": 1`）。
-# 以前只认「转义 + 紧凑」，照文档拿 spill 文件来解析会得到 0 条。
-# 下面两份 fixture 内容相同，只是序列化形态不同，用来钉住这个容错。
 DY_JSON = (
     r'\"desc\":\"用Codex来获取、整理和分析浏览器网页数据\",'
     r'\"duration\":172100,'
@@ -331,7 +454,6 @@ DY_JSON = (
     r'\"is_prohibited\":false,\"self_see\":true}'
 )
 
-# 同一份内容，未转义 + 带空格（`json.dumps` 的默认输出形态）。
 DY_JSON_PLAIN = (
     '{"desc":"用Codex来获取、整理和分析浏览器网页数据",'
     '"duration":172100,'
@@ -340,7 +462,7 @@ DY_JSON_PLAIN = (
     '"comment_count":2,"digg_count":33,"forward_count":0,'
     '"live_watch_count":0,"play_count":2124,"share_count":1},'
     '"status":{"allow_comment":true,"is_delete":false,"is_private":false,'
-    '"is_prohibited":false,"self_see":false,"with_goods":false}}'
+    '"is_prohibited":false,"self_see":false,"with_goods":false},"total":154}'
 )
 
 # 章节 desc 紧挨在 statistics 前面：标题不能读成「结语」。
@@ -378,15 +500,11 @@ def test_dy_json_parse() -> None:
 
     # 空输入不能崩，也不能瞎编
     check(rs.parse_dy_json("") == [], "空文本应解析出 0 条")
-    check(rs.parse_dy_json("StaticText \"播放\"") == [], "列表页文本应解析出 0 条（交给 parse_dy）")
+    check(rs.parse_dy_json('text "播放"') == [], "列表页文本应解析出 0 条（交给 parse_dy）")
 
 
 def test_dy_json_serialization_tolerance() -> None:
-    """未转义 / 带空格 / <pre> 包裹的形态都要认。
-
-    照 SKILL.md 的指引拿 spill 文件（未转义）来解析，以前会静默得到 0 条，
-    操作者只能手工再转义一遍。四种形态必须解出同样的结果。
-    """
+    """未转义 / 带空格 / <pre> 包裹的形态都要认。"""
     plain = rs.parse_dy_json(DY_JSON_PLAIN)
     check(len(plain) == 1, f"未转义形态应解析出 1 条，实际 {len(plain)}")
     if plain:
@@ -395,8 +513,9 @@ def test_dy_json_serialization_tolerance() -> None:
               f"未转义形态的取值不对：{plain[0]['raw']}")
         check(plain[0]["date"] == "2026-07-27",
               f"未转义形态的日期不对：{plain[0]['date']!r}")
+    check(rs.extract_dy_total(DY_JSON_PLAIN) == 154, "应能从裸 JSON 里读出 total=154")
 
-    # <pre> 包裹（spill 文件 / 接口页面）也要认
+    # <pre> 包裹也要认
     wrapped = "<html><body><pre>" + DY_JSON_PLAIN + "</pre></body></html>"
     check(len(rs.parse_dy_json(wrapped)) == 1, "包在 <pre> 里的应照样解析")
 
@@ -406,12 +525,6 @@ def test_dy_json_serialization_tolerance() -> None:
 
 
 def test_dy_title_not_from_chapters() -> None:
-    """标题要取 item 自己的 desc，不能取 statistics 前最近的 desc。
-
-    `recommend_chapter_info.recommend_chapter_list` 里每个章节都有一个 desc
-    （引言 / 结语 / 取餐与送餐…），它就排在 statistics 前面。按「最近的
-    desc」会把这期的标题读成「结语」，然后拿它去匹配仓库记录必然对不上。
-    """
     items = rs.parse_dy_json(DY_JSON_WITH_CHAPTERS)
     check(len(items) == 1, f"应解析出 1 条，实际 {len(items)}")
     if items:
@@ -422,22 +535,12 @@ def test_dy_title_not_from_chapters() -> None:
 
 
 def test_dy_date_not_from_neighbour_item() -> None:
-    """日期不能取到隔壁 item 的 create_time。
-
-    真实数据里踩过：某条窗口尾部混进了另一条作品（desc 为空）的碎片，
-    那个 create_time 排在后面，按「窗口里最后一个」取就把 2026-03-02
-    读成了 2026-06-22，于是整条对不上仓库、被报成「未匹配」。
-
-    这里拼两条 item：第一条（20260401）在前，第二条（20260101）的窗口里
-    塞了一个属于第三条的靠后时间戳。第二条的日期必须仍是 2026-01-01。
-    """
     item_a = (
         '{"desc":"第一条作品","duration":100,"create_time":1775000000,'
         '"statistics":{"aweme_id":"1000000000000000001","play_count":10,'
         '"digg_count":0,"comment_count":0,"share_count":0,"collect_count":0},'
         '"status":{"is_delete":false,"self_see":false}}'
     )
-    # 第二条：desc 前面有自己的 create_time；desc 之后又混了一个更晚的
     item_b = (
         '{"desc":"第二条作品","duration":200,"create_time":1767000000,'
         '"recommend_chapter_info":{"recommend_chapter_list":['
@@ -461,7 +564,6 @@ def test_dy_date_not_from_neighbour_item() -> None:
         check(b["raw"] == ["20", "1", "0", "0", "0"], f"第二条取值不对：{b['raw']}")
 
 
-
 def test_match_by_work_id() -> None:
     rows = [
         {"id": "a", "date": "2026-09-10", "topic": "WorkBuddy 接入 GPT",
@@ -469,15 +571,12 @@ def test_match_by_work_id() -> None:
         {"id": "b", "date": "2026-09-10", "topic": "把 Agent 接入达芬奇",
          "platforms": {"douyin": {"url": "https://www.douyin.com/video/7683611440728542490"}}},
     ]
-    # 同一天两条，标题还都对不上时，id 是唯一可靠的判据
     hit = rs.match_row(rows, "douyin", "2026-09-10", "完全不一样的标题",
                        work_id="7683611440728542490")
     check(hit is not None and hit["id"] == "b", "应优先按作品 id 匹配")
-    # 给了 id 但库里没有：不能退化成猜日期
     miss = rs.match_row(rows, "douyin", "2026-09-10", "WorkBuddy 接入 GPT",
                         work_id="9999999999999999999")
     check(miss is None, "id 对不上时不该退回标题匹配（那会张冠李戴）")
-    # 不给 id 时，老路照常工作
     by_title = rs.match_row(rows, "douyin", "2026-09-10", "WorkBuddy 接入 GPT")
     check(by_title is not None and by_title["id"] == "a", "没有 id 时应退回标题匹配")
 
@@ -502,10 +601,8 @@ def test_pair_items_to_rows() -> None:
          "platforms": {"xiaohongshu": {"views": 1}}},
     ]
     items = [
-        # 日期差一天、标题被改写，只看当天会漏
         {"title": "把Agent接入达芬奇,用skill实现自动剪辑", "date": "2026-09-10", "raw": ["1"]},
         {"title": "如何避免dsh宕机？AI工作台稳定运行的诀窍", "date": "2026-08-30", "raw": ["1"]},
-        # 标题完全不同：宁可报未匹配，也不能硬塞给同一天的另一条
         {"title": "完全不存在的主题", "date": "2026-09-10", "raw": ["1"]},
     ]
     pairs, unmatched = rs.pair_items_to_rows(rows, "xiaohongshu", items)
@@ -515,7 +612,6 @@ def test_pair_items_to_rows() -> None:
     check("2017-09-10_WorkBuddy" not in got, "标题不同不能张冠李戴")
     check(len(unmatched) == 1, f"配不上的应如实留在未匹配里，实际 {len(unmatched)}")
 
-    # 一条作品只能配一条记录：同标题的两条不会被同一条作品重复占用
     dup_rows = [
         {"id": "d1", "date": "2026-04-12", "topic": "用达芬奇5秒钟剪完一个片子是种什么体验？",
          "platforms": {"xiaohongshu": {"views": 1}}},
@@ -526,7 +622,6 @@ def test_pair_items_to_rows() -> None:
     pairs2, _ = rs.pair_items_to_rows(dup_rows, "xiaohongshu", dup_items)
     check(len(pairs2) == 1 and pairs2[0][0]["id"] == "d1", "一条作品只配一条记录，且优先当天")
 
-    # 日期太远的根本不参与打分
     far_rows = [{"id": "f1", "date": "2026-01-01", "topic": "同一个标题",
                  "platforms": {"xiaohongshu": {"views": 1}}}]
     pairs3, unmatched3 = rs.pair_items_to_rows(
@@ -535,7 +630,6 @@ def test_pair_items_to_rows() -> None:
     )
     check(not pairs3 and len(unmatched3) == 1, "差 40 天以上的不配对")
 
-    # 某平台单独起过不同标题（已入库在 platforms[platform].title）：同一天多期也不串、不漏
     plat_title_rows = [
         {"id": "2026-11-21_GTA", "date": "2026-11-21", "topic": "我让AI帮我做了个GTA温州版",
          "platforms": {"xiaohongshu": {"title": "我把温州放进了游戏世界", "views": 1}}},
@@ -556,15 +650,11 @@ def test_pair_items_to_rows() -> None:
 
 def test_wx_title_with_year() -> None:
     raw = (
-        'StaticText "都2026年了，还在用传统方式剪口播？"\n'
-        'StaticText "2026年04月19日 23:23"\n'
-        'StaticText "已声明原创"\n'
-        'StaticText "作者修改过视频信息"\n'
-        'StaticText "1395"\n'
-        'StaticText "10"\n'
-        'StaticText "5"\n'
-        'StaticText "18"\n'
-        'StaticText "22"\n'
+        "都2026年了，还在用传统方式剪口播？\n"
+        "2026年04月19日 23:23\n"
+        "已声明原创\n"
+        "作者修改过视频信息\n"
+        "1395\n10\n5\n18\n22\n"
     )
     got = rs.parse_wx(raw)
     check(len(got) == 1, f"标题含「年」的视频号作品应能解析出来，实际 {len(got)} 条")
@@ -573,45 +663,11 @@ def test_wx_title_with_year() -> None:
         check(got[0]["raw"] == ["1395", "10", "5", "18", "22"], "五个数字应按列序读全")
 
 
-# ---------------------------------------------------------------------------
-# bsk saveFull 外壳与 VOM StaticText 折行：直接喂给脚本不能得到 0 条
-# ---------------------------------------------------------------------------
-
-def test_savefull_and_vom_fold() -> None:
-    import json
-
-    xhs_savefull = json.dumps({"observation": {"text": XHS_PAGE}}, ensure_ascii=False)
-    check(len(rs.parse_xhs(xhs_savefull)) == 2, "小红书解析应直接认 bsk saveFull JSON 外壳")
-
-    wx_savefull = json.dumps({"observation": {"text": WX_PAGE}}, ensure_ascii=False)
-    check(len(rs.parse_wx(wx_savefull)) == 2, "视频号解析应直接认 bsk saveFull JSON 外壳")
-
-    # VOM 会先写一行截断的 RootWebArea，再把 JSON 折成多行 StaticText，
-    # 折行点甚至可能正好切进 desc 或 statistics 内部。
-    folded_vom = (
-        '@vom 1\n'
-        'L1 page\n'
-        '  RootWebArea "{\\"aweme_list\\":[{\\"desc\\":\\"被截断的预"\n'
-        '    StaticText "{\\"aweme_list\\":[{\\"create_time\\":1794736179,\\"desc\\":\\"谷歌模型"\n'
-        '    StaticText "做的不错但harness做得是一坨\\",\\"duration\\":37500,\\"stat"\n'
-        '    StaticText "istics\\":{\\"aweme_id\\":\\"7708333154834091300\\",\\"collect_count\\":1,\\"comment_count\\":4,\\"digg_count\\":8,\\"play_count\\":555,\\"share_count\\":0},\\"status\\":{\\"is_delete\\":false,\\"self_see\\":false}}],\\"total\\":145}"\n'
-        '    form "美观输出"\n'
-    )
-    dy_savefull = json.dumps({"observation": {"text": folded_vom}}, ensure_ascii=False)
-    items = rs.parse_dy_json(dy_savefull)
-    check(len(items) == 1, f"折在 statistics 里的 bsk saveFull 也应解析出 1 条，实际 {len(items)}")
-    if items:
-        check(items[0]["aweme_id"] == "7708333154834091300", "折行后 aweme_id 应完整")
-        check(items[0]["title"] == "谷歌模型做的不错但harness做得是一坨", f"折在 desc 中间应还原完整标题：{items[0]['title']!r}")
-        check(items[0]["raw"] == ["555", "8", "4", "0", "1"], f"折在 statistics 中间应还原五元组：{items[0]['raw']}")
-    check(rs.extract_dy_total(dy_savefull) == 145, "应能从 saveFull 里读出 total=145")
-
-
 def test_suspected_new_unmatched() -> None:
     rows = [{"date": "2026-11-14", "topic": "旧视频", "platforms": {}}]
     leftovers = [
         {"date": "2026-11-15", "title": "刚发的新视频", "aweme_id": "123"},
-        {"date": "2026-11-14", "title": "昨晚发的另一期"},
+        {"date": "2026-11-14", "title": "昨晚发的另一期", "tweet_id": "456"},
         {"date": "2026-07-25", "title": "删除"},
         {"date": "2026-03-02", "title": "很久以前未收录的私密稿"},
     ]
@@ -649,30 +705,12 @@ def test_rolling_scope_days_and_limit() -> None:
     check([t[2] for t in targets_lim] == ["BV1111111111"],
           "--limit 1 应只选最新 1 期 B 站视频")
 
-    xhs_dump = '''
-      StaticText "置顶"
-      StaticText "置顶老视频"
-      StaticText "2026-10-01 10:00"
-      StaticText "999"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-      StaticText "新片一"
-      StaticText "2026-11-16 11:00"
-      StaticText "111"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-      StaticText "近期二"
-      StaticText "2026-11-10 11:00"
-      StaticText "222"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-      StaticText "0"
-    '''
+    xhs_dump = (
+        "置顶\n"
+        "置顶老视频\n2026-10-01 10:00\n999\n0\n0\n0\n0\n"
+        "新片一\n2026-11-16 11:00\n111\n0\n0\n0\n0\n"
+        "近期二\n2026-11-10 11:00\n222\n0\n0\n0\n0\n"
+    )
     with tempfile.NamedTemporaryFile("w", suffix=".txt", encoding="utf-8", delete=True) as tf:
         tf.write(xhs_dump)
         tf.flush()
@@ -691,7 +729,7 @@ def test_rolling_scope_days_and_limit() -> None:
 
 
 def test_plain_text_and_ego_snapshot() -> None:
-    """除 bsk VOM 外，也要直接认 Ego Lite snapshot 与纯文本（document.body.innerText）。"""
+    """Ego Lite snapshot 与纯文本（document.body.innerText）均应准确解析。"""
     # 1) 小红书纯文本（含视频时长行，不能把时长当成标题）
     xhs_plain = (
         "全部 322\n"
@@ -774,6 +812,7 @@ def main() -> int:
         test_xhs_parse,
         test_wx_parse,
         test_dy_parse,
+        test_x_parse,
         test_dy_json_parse,
         test_dy_json_serialization_tolerance,
         test_dy_title_not_from_chapters,
@@ -786,7 +825,6 @@ def main() -> int:
         test_wx_title_with_year,
         test_mark_limited,
         test_zero_stays_zero,
-        test_savefull_and_vom_fold,
         test_suspected_new_unmatched,
         test_rolling_scope_days_and_limit,
         test_plain_text_and_ego_snapshot,
@@ -798,7 +836,7 @@ def main() -> int:
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"PASS: {checks} 项检查全部通过（列序、四平台解析、近似值、id 匹配、全局一对一配对）")
+    print(f"PASS: 全部 {checks} 项检查通过")
     return 0
 
 

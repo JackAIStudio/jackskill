@@ -228,6 +228,7 @@ PLATFORM_LABELS = {
     "douyin": "抖音",
     "xiaohongshu": "小红书",
     "wechat_channels": "视频号",
+    "x": "X",
 }
 
 

@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 """
-用 Ego Lite（ego-browser）从本机已登录浏览器采集抖音 / 小红书 / 微信视频号的后台页面文本与接口 JSON。
+用 Ego Lite（ego-browser）从本机已登录浏览器采集抖音 / 小红书 / 微信视频号 / X 的后台页面文本与数据 JSON。
 
 设计原则：
-  - 只读平台自己的后台页面，复用本机 Ego Lite 登录态，不读取也不写入任何 Cookie / 凭证；
+  - 只读平台自己的页面，复用本机 Ego Lite 登录态，不读取也不写入任何 Cookie / 凭证；
   - 产出纯 JSON 或纯文本落到输出目录（默认 /tmp/jackskill-ego），再交给
     scripts/refresh-stats.py 与 scripts/refresh-followers.py 解析入库；
-  - 某个平台未登录（最常见的是微信视频号过期）时，不停掉其他平台：先采完已登录的平台，
-    最后停在未登录页面调用 task.handOff() 交给人扫码/点击快捷登录，并打印续跑命令（--space <id>）；
+  - 某个平台未登录（常见的是微信视频号或 X 过期）时，不停掉其他平台：先采完已登录的平台，
+    最后停在未登录页面调用 task.handOff() 交给人扫码/登录，并打印续跑命令（--space <id>）；
   - 全部采完后单独调用一次 task.finish({ keep: [] }) 关闭临时空间，不留多余标签页。
 
 用法：
-    # 默认滚动采集三平台（作品指标第 1 页/首屏 + 粉丝数）
+    # 默认滚动采集四个登录态平台（作品指标第 1 页/首屏 + 粉丝数）
     python3 scripts/collect-ego.py
 
     # 只采指定平台
-    python3 scripts/collect-ego.py --platforms douyin xiaohongshu
+    python3 scripts/collect-ego.py --platforms douyin xiaohongshu x
 
     # 只采作品指标或只采粉丝数
     python3 scripts/collect-ego.py --target stats
     python3 scripts/collect-ego.py --target followers
 
-    # 全量模式（抖音循环翻完全部页、小红书滚到底、视频号翻完所有页）
+    # 全量模式（抖音循环翻完全部页、小红书滚到底、视频号翻完所有页、X 媒体页滚到底）
     python3 scripts/collect-ego.py --mode full
 
-    # 用户在 Ego Lite 扫完视频号登录后，接着刚才那个空间补采
+    # 用户在 Ego Lite 扫完登录后，接着刚才那个空间补采
     python3 scripts/collect-ego.py --space 28 --platforms wechat_channels
 """
 from __future__ import annotations
@@ -36,13 +36,48 @@ import subprocess
 import sys
 from pathlib import Path
 
-ALL_PLATFORMS = ["douyin", "xiaohongshu", "wechat_channels"]
+ALL_PLATFORMS = ["douyin", "xiaohongshu", "wechat_channels", "x"]
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# 注入到 x.com 新文档的只读 XHR 旁路脚本：独立成 raw string 并经 json.dumps 传入，
+# 避免 Python f-string + JS 模板字符串双重反转义破坏正则里的 \/。
+X_HOOK_JS = r"""
+(() => {
+  if (!/(^|\.)x\.com$/i.test(location.hostname)) return;
+  window.__jackXGql = [];
+  const origOpen = XMLHttpRequest.prototype.open;
+  const origSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    this.__jackXUrl = String(url || "");
+    return origOpen.apply(this, arguments);
+  };
+  XMLHttpRequest.prototype.send = function() {
+    this.addEventListener("load", function() {
+      const u = this.__jackXUrl || "";
+      const idx = u.indexOf("/i/api/graphql/");
+      if (idx < 0) return;
+      const tail = u.slice(idx + "/i/api/graphql/".length).split("?")[0];
+      const parts = tail.split("/");
+      const op = parts[1] || "";
+      if (
+        op === "UserByScreenName" ||
+        op === "UserVideoTimeline" ||
+        op === "UserMedia" ||
+        op === "UserTweets"
+      ) {
+        window.__jackXGql.push({ op, text: this.responseText || "" });
+      }
+    });
+    return origSend.apply(this, arguments);
+  };
+})();
+""".strip()
 
 
 def build_collect_js(cfg: dict) -> str:
     """生成交给 `ego-browser nodejs` 执行的 ESM 采集脚本。"""
     cfg_json = json.dumps(cfg, ensure_ascii=False)
+    x_hook_json = json.dumps(X_HOOK_JS, ensure_ascii=False)
     return f"""
 const fs = await import("node:fs/promises");
 const path = await import("node:path");
@@ -455,6 +490,269 @@ if (CFG.platforms.includes("wechat_channels")) {{
   result.platforms.wechat_channels = info;
 }}
 
+// ---------------------------------------------------------------------------
+// X：打开个人媒体页，旁路捕获 UserByScreenName（精确粉丝数）与 UserVideoTimeline（视频指标）
+// ---------------------------------------------------------------------------
+if (CFG.platforms.includes("x")) {{
+  const t0 = Date.now();
+  const info = {{ status: "ok", statsFiles: [], followersFile: null }};
+  try {{
+    // 在跳转到 x.com 之前挂只读 XHR 旁路，只记录公开的 GraphQL 响应体，不接触凭证或请求头
+    await page.cdp("Page.addScriptToEvaluateOnNewDocument", {{
+      source: {x_hook_json},
+    }});
+
+    // 第一步：确认登录态并自动探测当前登录账号的 handle（若命令行未显式传 --x-handle）
+    let handle = (CFG.xHandle || "").replace(/^@/, "").trim();
+    if (!handle) {{
+      await page.goto("https://x.com/home", {{
+        waitUntil: "domcontentloaded",
+        timeout: 25000,
+      }});
+      await page
+        .waitForFunction(
+          () => {{
+            const a = document.querySelector('a[data-testid="AppTabBar_Profile_Link"]');
+            const u = location.href;
+            const t = document.body?.innerText || "";
+            return (
+              Boolean(a?.getAttribute("href")) ||
+              /\\/(?:i\\/flow\\/)?login/i.test(u) ||
+              t.includes("登录 X") ||
+              t.includes("Sign in to X")
+            );
+          }},
+          undefined,
+          {{ timeout: 18000 }}
+        )
+        .catch(() => {{}});
+      const homeCheck = await page.evaluate(() => {{
+        const a = document.querySelector('a[data-testid="AppTabBar_Profile_Link"]');
+        const href = a?.getAttribute("href") || "";
+        const t = document.body?.innerText || "";
+        return {{
+          url: location.href,
+          handle: href.replace(/^\\//, "").split("/")[0] || "",
+          looksLoggedOut:
+            /\\/(?:i\\/flow\\/)?login/i.test(location.href) ||
+            t.includes("登录 X") ||
+            t.includes("Sign in to X"),
+        }};
+      }});
+      if (homeCheck.looksLoggedOut || !homeCheck.handle) {{
+        info.status = "needs_login";
+        info.loginUrl = "https://x.com/i/flow/login";
+        result.needsLogin.push({{ platform: "x", url: info.loginUrl }});
+      }} else {{
+        handle = homeCheck.handle;
+      }}
+    }}
+
+    if (info.status === "ok" && handle) {{
+      info.handle = handle;
+      const targetUrl = wantStats
+        ? `https://x.com/${{handle}}/media`
+        : `https://x.com/${{handle}}`;
+      await page.goto(targetUrl, {{
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      }});
+      await page
+        .waitForFunction(
+          (needStats) => {{
+            const gql = window.__jackXGql || [];
+            const hasUser = gql.some((x) => x.op === "UserByScreenName");
+            const hasVideos = gql.some((x) => x.op === "UserVideoTimeline" || x.op === "UserMedia");
+            const hasDomFollowers = Boolean(
+              document.querySelector('a[href$="/verified_followers"], a[href$="/followers"]')
+            );
+            const loggedOut = /\\/(?:i\\/flow\\/)?login/i.test(location.href);
+            if (loggedOut) return true;
+            if (needStats) return hasVideos && (hasUser || hasDomFollowers);
+            return hasUser || hasDomFollowers;
+          }},
+          wantStats,
+          {{ timeout: 20000 }}
+        )
+        .catch(() => {{}});
+
+      const curUrl = await page.url();
+      const hasProfileAnchor = await page.evaluate(() =>
+        Boolean(document.querySelector('a[data-testid="AppTabBar_Profile_Link"]'))
+      );
+      if (/\\/(?:i\\/flow\\/)?login/i.test(curUrl) || !hasProfileAnchor) {{
+        info.status = "needs_login";
+        info.loginUrl = "https://x.com/i/flow/login";
+        result.needsLogin.push({{ platform: "x", url: info.loginUrl }});
+      }} else {{
+        // 统计模式下向下滚动触发更多 UserVideoTimeline 分页
+        if (wantStats) {{
+          const maxScrolls = CFG.mode === "full" ? 40 : 2;
+          let lastCount = await page.evaluate(() =>
+            (window.__jackXGql || []).filter(
+              (x) => x.op === "UserVideoTimeline" || x.op === "UserMedia"
+            ).length
+          );
+          let stagnant = 0;
+          for (let s = 0; s < maxScrolls; s++) {{
+            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+            await sleep(2000);
+            const curCount = await page.evaluate(() =>
+              (window.__jackXGql || []).filter(
+                (x) => x.op === "UserVideoTimeline" || x.op === "UserMedia"
+              ).length
+            );
+            if (CFG.mode === "full") {{
+              if (curCount === lastCount) {{
+                stagnant += 1;
+                if (stagnant >= 3) break;
+              }} else {{
+                stagnant = 0;
+                lastCount = curCount;
+              }}
+            }}
+          }}
+        }}
+
+        // 在页面内直接提纯结构化数据（不含任何无关账号或敏感字段）
+        const extracted = await page.evaluate((expectedHandle) => {{
+          const gql = window.__jackXGql || [];
+          let followers = null;
+          let following = null;
+          let followerSource = null;
+          const handleLower = expectedHandle.toLowerCase();
+
+          // 1. 精确粉丝数：优先从 UserByScreenName 提取
+          for (const entry of gql) {{
+            if (entry.op !== "UserByScreenName") continue;
+            try {{
+              const j = JSON.parse(entry.text);
+              const u = j?.data?.user?.result;
+              if (!u) continue;
+              const sn = (u.core?.screen_name || u.legacy?.screen_name || "").toLowerCase();
+              if (sn && sn !== handleLower) continue;
+              if (typeof u.relationship_counts?.followers === "number") {{
+                followers = u.relationship_counts.followers;
+                following = typeof u.relationship_counts?.following === "number" ? u.relationship_counts.following : null;
+                followerSource = "UserByScreenName.relationship_counts";
+                break;
+              }}
+              if (typeof u.legacy?.followers_count === "number") {{
+                followers = u.legacy.followers_count;
+                following = typeof u.legacy?.friends_count === "number" ? u.legacy.friends_count : null;
+                followerSource = "UserByScreenName.legacy";
+                break;
+              }}
+            }} catch {{}}
+          }}
+
+          const domFollowersEl = document.querySelector(
+            'a[href$="/verified_followers"], a[href$="/followers"]'
+          );
+          const domText = (domFollowersEl?.innerText || "").trim();
+
+          // 2. 本账号全部视频推文精确指标：从 UserVideoTimeline / UserMedia 提取
+          const seen = new Set();
+          const items = [];
+          const walk = (o) => {{
+            if (!o || typeof o !== "object") return;
+            if (o.__typename === "Tweet" && o.rest_id && o.legacy && !seen.has(o.rest_id)) {{
+              const userRes = o.core?.user_results?.result;
+              const sn = userRes?.core?.screen_name || userRes?.legacy?.screen_name || "";
+              if (sn.toLowerCase() === handleLower) {{
+                const leg = o.legacy;
+                const mediaList = leg.extended_entities?.media || leg.entities?.media || [];
+                const vid = mediaList.find((m) => m.type === "video");
+                if (vid) {{
+                  seen.add(o.rest_id);
+                  const rawText = leg.full_text || "";
+                  const cleanText = rawText.replace(/\\s*https:\\/\\/t\\.co\\/[A-Za-z0-9]+\\s*$/g, "").trim();
+                  const viewsRaw = o.views?.count;
+                  const viewsNum =
+                    viewsRaw !== undefined && viewsRaw !== null && /^\\d+$/.test(String(viewsRaw))
+                      ? Number(viewsRaw)
+                      : 0;
+                  items.push({{
+                    tweet_id: String(o.rest_id),
+                    url: `https://x.com/${{sn}}/status/${{o.rest_id}}`,
+                    created_at: leg.created_at || "",
+                    title: (vid.additional_media_info?.title || "").trim(),
+                    text: cleanText,
+                    media_key: vid.media_key || "",
+                    duration_ms: vid.video_info?.duration_millis ?? null,
+                    views: viewsNum,
+                    likes: Number(leg.favorite_count) || 0,
+                    bookmarks: Number(leg.bookmark_count) || 0,
+                    retweets: Number(leg.retweet_count) || 0,
+                    quotes: Number(leg.quote_count) || 0,
+                    replies: Number(leg.reply_count) || 0,
+                  }});
+                }}
+              }}
+            }}
+            if (Array.isArray(o)) {{
+              for (const x of o) walk(x);
+            }} else {{
+              for (const k of Object.keys(o)) walk(o[k]);
+            }}
+          }};
+
+          for (const entry of gql) {{
+            if (entry.op !== "UserVideoTimeline" && entry.op !== "UserMedia" && entry.op !== "UserTweets") {{
+              continue;
+            }}
+            try {{
+              walk(JSON.parse(entry.text));
+            }} catch {{}}
+          }}
+
+          return {{
+            followers,
+            following,
+            followerSource,
+            domText,
+            items,
+          }};
+        }}, handle);
+
+        if (wantFollowers) {{
+          const outPath = path.join(CFG.outDir, "x-followers.json");
+          const payload = {{
+            platform: "x",
+            handle,
+            collectedAt: new Date().toISOString(),
+            followers: extracted.followers,
+            following: extracted.following,
+            source: extracted.followerSource || (extracted.domText ? "dom" : null),
+            domText: extracted.domText,
+          }};
+          await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + "\\n", "utf8");
+          info.followersFile = outPath;
+        }}
+
+        if (wantStats) {{
+          const outPath = path.join(CFG.outDir, "x-videos.json");
+          const payload = {{
+            platform: "x",
+            handle,
+            collectedAt: new Date().toISOString(),
+            count: extracted.items.length,
+            items: extracted.items,
+          }};
+          await fs.writeFile(outPath, JSON.stringify(payload, null, 2) + "\\n", "utf8");
+          info.statsFiles.push(outPath);
+          info.workCount = extracted.items.length;
+        }}
+      }}
+    }}
+  }} catch (err) {{
+    info.status = "error";
+    info.error = String(err?.message || err);
+  }}
+  info.elapsedMs = Date.now() - t0;
+  result.platforms.x = info;
+}}
+
 // 若有平台需要登录且允许交接：停在第一个需要登录的页面，把控制权交给人
 if (result.needsLogin.length > 0 && CFG.keepOnLogin) {{
   const first = result.needsLogin[0];
@@ -505,13 +803,13 @@ def parse_result(stdout: str) -> dict | None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="用 Ego Lite 采集抖音 / 小红书 / 视频号后台数据到临时文件")
+    ap = argparse.ArgumentParser(description="用 Ego Lite 采集抖音 / 小红书 / 视频号 / X 平台数据到临时文件")
     ap.add_argument(
         "--platforms",
         nargs="+",
         choices=ALL_PLATFORMS,
         default=ALL_PLATFORMS,
-        help="要采集的平台（默认全部三个）",
+        help="要采集的平台（默认全部四个：douyin xiaohongshu wechat_channels x）",
     )
     ap.add_argument(
         "--target",
@@ -535,6 +833,11 @@ def main() -> int:
         type=int,
         default=None,
         help="复用已有的 Ego Lite taskSpaceId（例如刚扫完码后续跑）",
+    )
+    ap.add_argument(
+        "--x-handle",
+        default="",
+        help="可选：显式指定 X 用户名（不带 @）；省略时自动从已登录的 X 会话识别",
     )
     ap.add_argument(
         "--days",
@@ -565,10 +868,11 @@ def main() -> int:
         "mode": args.mode,
         "outDir": out_dir,
         "spaceId": args.space,
+        "xHandle": args.x_handle,
         "keepOnLogin": True,
     }
 
-    code, stdout, stderr = run_ego_js(build_collect_js(cfg), timeout=240 if args.mode == "full" else 120)
+    code, stdout, stderr = run_ego_js(build_collect_js(cfg), timeout=300 if args.mode == "full" else 180)
     # ego-browser nodejs 的 console.log 可能输出在 stderr，两边一起检索结果标记
     data = parse_result(stdout + "\n" + stderr)
     if data is None:
@@ -602,7 +906,12 @@ def main() -> int:
         if st == "ok":
             parts = []
             if p.get("statsFiles"):
-                extra = f", total={p['total']}" if p.get("total") is not None else ""
+                if p.get("total") is not None:
+                    extra = f", total={p['total']}"
+                elif p.get("workCount") is not None:
+                    extra = f", {p['workCount']} 条"
+                else:
+                    extra = ""
                 parts.append(f"作品 {len(p['statsFiles'])} 份{extra}")
             if p.get("followersFile"):
                 parts.append("粉丝 1 份")

@@ -1,11 +1,11 @@
 # JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
-> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 413 条、视频口播逐字稿 240 篇（约 18 万字）、四平台粉丝数快照 15 条，以及 4 个自研工具的编号规范。
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 413 条、视频口播逐字稿 240 篇（约 18 万字）、五平台粉丝数快照 15 条，以及 4 个自研工具的编号规范。
 
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
-时间跨度 2023-03-30 至 2026-11-21，覆盖 B 站、抖音、小红书、微信视频号四个平台。
+时间跨度 2023-03-30 至 2026-11-21，覆盖 B 站、抖音、小红书、微信视频号、X五个平台（含海外首个渠道 X）。
 
-本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-11-21T01:12:33.930Z。
+本文件由 `scripts/build-site.mjs` 从仓库真源生成，构建于 2026-11-21T08:19:39.719Z。
 
 ## 安装与调用
 
@@ -16,17 +16,17 @@
 
 ## 数据
 
-- [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：413 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 240 条带逐字稿。
+- [作品数据（单文件全集）](https://jackaistudio.github.io/jackskill/data/videos.json)：413 条记录的 JSON。单条含 id、date、topic、duration、summary（五平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 240 条带逐字稿。
 - [作品数据真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
 - [逐字稿目录（Markdown 真源）](https://github.com/JackAIStudio/jackskill/tree/main/transcripts/md)：240 个文件，文件名格式 `YYYY-MM-DD_标题.md`，`## 逐字稿` 之后是口播正文。
 - [数据文件说明](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/README.md)：字段定义与口径。
 
 ### 粉丝数
 
-- [粉丝快照（单文件全集）](https://jackaistudio.github.io/jackskill/data/followers.json)：四平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 4 个平台有数，最新快照 2026-11-21。
+- [粉丝快照（单文件全集）](https://jackaistudio.github.io/jackskill/data/followers.json)：五平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 5 个平台有数，最新快照 2026-11-21。
 - [粉丝数真源（JSONL）](https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/followers.jsonl)：每行一条快照，是上面那份的来源。
 
-粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，四个平台是四个账号。要「涨粉」就看两条快照的差。
+粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，五个平台是五个账号。要「涨粉」就看两条快照的差。
 
 注意：数据站页面 https://jackaistudio.github.io/jackskill/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面作品与粉丝那几个链接。
 
@@ -40,7 +40,7 @@
 ## 编号工具
 
 - 101 — JackVoice 超低声全局语音输入工具：超低声轻语转文字并自动粘贴，适合安静场景下的免打字输入
-- 201 — Jack Media Publisher 多平台视频发布准备助手（Ego Lite）：基于 Ego Lite 一键将视频分发至小红书、抖音、B站、视频号，自动匹配标题封面并独立验收草稿
+- 201 — Jack Media Publisher 多平台视频发布准备助手（Ego Lite）：基于 Ego Lite 一键将视频分发至小红书、抖音、B站、视频号与 X（Media Studio），自动匹配标题封面并独立验收草稿
 - 666 — JackDSH 开源桌面客户端与内核升级全指南：最新 0.1.7 RC2 内核便携包下载、多端免 Key 订阅大模型与手机遥控使用说明
 - 888 — 达芬奇 AI 智能口播剪辑助手 (JackAICut)：口播字级气口切分与失误重说智能剔除，一秒生成达芬奇时间线与官网直达
 

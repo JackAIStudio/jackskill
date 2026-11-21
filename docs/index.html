@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>吴杰克 Jack · 自媒体数据全量公开</title>
-<meta name="description" content="吴杰克 Jack 在 B 站、抖音、小红书、微信视频号的真实自媒体数据与全部口播逐字稿。">
+<meta name="description" content="吴杰克 Jack 在 B 站、抖音、小红书、微信视频号与 X（海外首个渠道）的真实自媒体数据与全部口播逐字稿。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231b1a18'/><text x='16' y='23' font-family='-apple-system,Segoe UI,sans-serif' font-size='19' font-weight='600' fill='%23fff' text-anchor='middle'>J</text></svg>">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="alternate" type="text/markdown" href="llms.txt" title="机器可读索引">
@@ -35,7 +35,7 @@
       <p class="note">
         <a href="data/videos.json">data/videos.json</a> —— 单文件含全部作品指标与逐字稿正文。<br>
         <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/videos.jsonl">data/videos.jsonl</a> —— 作品数据真源，每行一条记录。<br>
-        <a href="data/followers.json">data/followers.json</a> —— 四平台粉丝数快照（账号级，一天一条）。<br>
+        <a href="data/followers.json">data/followers.json</a> —— 五平台粉丝数快照（账号级，一天一条）。<br>
         <a href="https://raw.githubusercontent.com/JackAIStudio/jackskill/main/data/followers.jsonl">data/followers.jsonl</a> —— 粉丝数真源。<br>
         <a href="llms.txt">llms.txt</a> —— 机器可读索引，列出本仓库全部可抓取资源。
       </p>
@@ -56,14 +56,14 @@
         <thead id="worksHead"></thead>
         <!-- 数据到位前先占住表格的形状。这段 HTML 是静态的，脚本那边还在下 700KB
              的 JSON，中间几秒如果 tbody 是空的，整张表会塌成一条线，看着像坏了。
-             colspan 9 = app.js 里 COLS 的列数，加列时这里跟着改。 -->
+             colspan 10 = app.js 里 COLS 的列数，加列时这里跟着改。 -->
         <tbody id="worksBody">
-          <tr><td colspan="9" class="empty">正在加载数据…</td></tr>
+          <tr><td colspan="10" class="empty">正在加载数据…</td></tr>
         </tbody>
       </table>
     </div>
     <p class="hint">
-      表里最后两列跟着上面的指标一起换：<b>合计</b>是那个指标的四平台之和，
+      表里最后两列跟着上面的指标一起换：<b>合计</b>是那个指标的五平台之和，
       <b>末列</b>是把它除以播放——选点赞看点赞率，选收藏看收藏率。
       播放视图没有「播放的效率」，所以固定看收藏率：播放量只说明多少人刷到，收藏才说明多少人觉得以后还要用。
     </p>
@@ -80,7 +80,7 @@
       <p class="note">
         作品表看的是<strong>这条视频有多少人刷到</strong>，这一节看的是<strong>账号留住了多少人</strong>。
         两者不是一回事：播放会随时间摊平，粉丝才是复利。数字是账号级的快照，<strong>只有当下的数，
-        不能相加，也不和上面任何作品指标合并</strong>——四个平台是四个账号。
+        不能相加，也不和上面任何作品指标合并</strong>——五个平台是五个账号。
       </p>
     </div>
     <div class="follow-cards" id="followCards"></div>
@@ -115,7 +115,7 @@
     <div class="section-head">
       <h2>时间线</h2>
       <p class="note">
-        平台是逐年接入的：2023 年只有 B 站，2024 年主要是小红书，2026 年才四平台齐全。
+        平台是逐年接入的：2023 年只有 B 站，2024 年主要是小红书，2026 年国内四平台齐全，并在 2026 年 11 月接入海外首个渠道 X。
         所以按平台各画一条线，<strong>不做总量堆叠</strong>——早期总量低是因为当时没采别的平台，
         不是流量低。线断掉的地方就是那个月没数据。
       </p>
@@ -141,7 +141,7 @@
           <tr>
             <td>播放 / 点赞 / 收藏 / 分享 / 评论</td>
             <td>各平台相加</td>
-            <td>作品表一行的「合计」= 四个平台那一列之和；全站数字 = 所有期相加。加总的口径由 <code>check-data.mjs</code> 每次构建时校验，对不上就不出页面。</td>
+            <td>作品表一行的「合计」= 五个平台那一列之和；全站数字 = 所有期相加（其中 X 的收藏对应书签 Bookmarks、分享对应转帖+引用、评论对应回复）。加总的口径由 <code>check-data.mjs</code> 每次构建时校验，对不上就不出页面。</td>
           </tr>
           <tr>
             <td>互动率</td>
@@ -163,7 +163,7 @@
             <td>平台侧读到的总数，一天一条快照</td>
             <td>
               <strong>账号级数据，不是作品级数据。</strong>它不进任何作品合计，
-              也不跨平台相加——四个平台是四个账号，同一个人可能四个都关注。
+              也不跨平台相加——五个平台是五个账号，同一个人可能多个平台都关注。
               涨粉 = 两条快照的差；只有一条快照时只能看存量，看不出趋势。
             </td>
           </tr>

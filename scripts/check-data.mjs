@@ -23,7 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 const DATA_FILE = path.join(REPO_ROOT, "data/videos.jsonl");
 
-export const PLATFORMS = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
+export const PLATFORMS = ["bilibili", "douyin", "xiaohongshu", "wechat_channels", "x"];
 const METRICS = ["views", "likes", "collects", "shares", "comments"];
 
 const cleanForMatching = (s) =>
@@ -36,10 +36,12 @@ const VIDEO_URL = [
   /^https?:\/\/(www\.)?bilibili\.com\/video\/BV[0-9A-Za-z]+/i,
   /^https?:\/\/(www\.)?douyin\.com\/video\/\d+/i,
   /^https?:\/\/(www\.)?xiaohongshu\.com\/explore\/[0-9a-z]+/i,
+  /^https?:\/\/(www\.)?(x|twitter)\.com\/[A-Za-z0-9_]+\/status\/\d+/i,
 ];
 const HOME_URL = [
   /^https?:\/\/(www\.)?xiaohongshu\.com\/?$/i,
   /^https?:\/\/channels\.weixin\.qq\.com\/?$/i,
+  /^https?:\/\/(www\.)?(x|twitter)\.com(\/[A-Za-z0-9_]+)?\/?$/i,
 ];
 
 /** 给汇总提醒用：一批链接里都有哪些 host。 */

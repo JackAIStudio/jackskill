@@ -15,5 +15,5 @@ assert_exit_code 0 "$code" || {
   exit 1
 }
 assert_output_contains "$output" "PASS:" || exit 1
-echo "PASS: refresh-stats 的列序、三平台解析、近似值判定与匹配规则均正确。"
+echo "PASS: refresh-stats 的列序、五平台解析、近似值判定与匹配规则均正确。"
 exit 0

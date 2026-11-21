@@ -1,17 +1,17 @@
 ---
 name: jack
-description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音输入、201 多平台发布、666 桌面 AI 工作台、888 达芬奇剪辑），输入 /jack <三位编号> 执行；② 2023 年至今全部视频口播逐字稿，用户带着困惑或创作问题时检索回应；③ 跨平台真实自媒体数据（作品指标 + 四平台粉丝数），辅助选题分析、流量复盘与涨粉观察。触发：/jack、/jack list、三位编号、「更新 jackskill」，或创作、自媒体、AI 相关的提问。
+description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音输入、201 五平台发布、666 桌面 AI 工作台、888 达芬奇剪辑），输入 /jack <三位编号> 执行；② 2023 年至今全部视频口播逐字稿，用户带着困惑或创作问题时检索回应；③ 跨平台真实自媒体数据（五平台作品指标 + 五平台粉丝数，含海外首个渠道 X），辅助选题分析、流量复盘与涨粉观察。触发：/jack、/jack list、三位编号、「更新 jackskill」，或创作、自媒体、AI 相关的提问。
 ---
 
 # Jack 把自己开源了
 
 这个 skill 有三部分：
 
-1. **编号工具**：他做的几个小工具——语音输入、自媒体多平台发布、DSH 桌面工作台、达芬奇 AI 剪辑助手。输入编号，按需取用。
+1. **编号工具**：他做的几个小工具——语音输入、自媒体五平台发布（Ego Lite）、DSH 桌面工作台、达芬奇 AI 剪辑助手。输入编号，按需取用。
 2. **口播逐字稿**：2023 年至今的全部视频口播，持续更新。AI 工具案例、自媒体创作、独立开发、读书、旅行和生活里的真实经历，都在里面。
-3. **自媒体视频数据**：在 B 站、小红书、抖音、微信视频号的真实互动数据（`data/videos.jsonl`，与逐字稿一一对应），以及四个账号的粉丝数快照（`data/followers.jsonl`）。
+3. **自媒体视频数据**：在 B 站、小红书、抖音、微信视频号与 X（海外首个渠道）的真实互动数据（`data/videos.jsonl`，与逐字稿一一对应），以及五个账号的粉丝数快照（`data/followers.jsonl`）。
 
-数据是两份，口径不一样，读的时候别混：作品是「一行一期、四平台可以相加」，粉丝是「一行一天、账号级存量、不能相加」。
+数据是两份，口径不一样，读的时候别混：作品是「一行一期、五平台可以相加」，粉丝是「一行一天、账号级存量、不能相加」。
 
 你负责六件事：
 
@@ -29,7 +29,7 @@ description: 吴杰克 Jack 把自己开源了：① 编号工具（101 语音�
 每次进入本 skill 时，在执行其他逻辑前，先运行检查脚本：
 
 ```bash
-bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.21.0"
+bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.21.1"
 ```
 
 执行规则：
@@ -112,8 +112,8 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.21.0"
 3. **看封面**：光看标题会漏掉一半信息。每期在 `docs/covers/<日期>_<主题>/` 下存着已抓到的封面，`docs/covers/index.json` 是索引。**分析选题与爆款时优先把封面看一眼**——封面上的大字就是当时的钩子，很多时候比标题更能说明这期在卖什么。三种比例（`4x3.jpg` / `3x4.jpg` / `16x9.jpg`）是各自独立上传的三张图，不是一张裁出来的，别只盯一张。详见下面「封面模式」。
 4. **读对应逐字稿**：数据记录中的 `transcript` 字段直连对应的 Markdown 逐字稿文件（`transcripts/md/...`）。分析数据时，**配合逐字稿正文一起看**——离开文案谈数据是空中楼阁，重点看它的开头抓手（Hook）、文案节奏和核心价值点。
 5. **给事实与客观分析**：结合各平台的真实分发结果，实事求是地告诉用户算法反馈，指出哪些做法被证明有效、哪些做法踩了规则坑。
-6. **要看涨粉就读 `data/followers.jsonl`**：一行一条快照，四平台各一个 `followers`。读的时候守住三条：
-   - **不能跨平台相加**。四个平台是四个账号，同一个人可能四个都关注；
+6. **要看涨粉就读 `data/followers.jsonl`**：一行一条快照，五平台各一个 `followers`。读的时候守住三条：
+   - **不能跨平台相加**。五个平台是五个账号，同一个人可能多个平台都关注；
    - **涨粉是两条快照的差**，不是某一行的数。只有一条快照时只能说「现在多少粉、还看不出趋势」，别编一个增长率；
    - **快照可能不是今天的**。看最新那条的 `date`，把「这是 X 月 X 日的数」说出来。
 
@@ -134,22 +134,23 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.21.0"
 
 **下面所有命令都在仓库根目录跑**（有 `data/` 和 `scripts/` 的那一层），和上面「粉丝数更新」同一个位置。
 
-**`data/videos.jsonl` 里的数字不会自己变。** 它由人（或 Agent）定期从四个平台读回来写进去，没有定时任务。所以回答任何「现在多少播放」之前，先确认这份数据是什么时候的——记录里没有时间戳，只能看最近一次 `feat(data)` 提交的日期。
+**`data/videos.jsonl` 里的数字不会自己变。** 它由人（或 Agent）定期从五个平台读回来写进去，没有定时任务。所以回答任何「现在多少播放」之前，先确认这份数据是什么时候的——记录里没有时间戳，只能看最近一次 `feat(data)` 提交的日期。
 
-### 四平台怎么取数
+### 五平台怎么取数
 
 | 平台 | 来源 | 默认滚动范围（日常更新） | 全量模式（仅明确要求时） |
 | :--- | :--- | :--- | :--- |
 | B 站 | 公开接口 `api.bilibili.com/x/web-interface/view?bvid=`（并看一眼 UP 主投稿页第 1 页查漏录新片） | `--days 14`（或 `--limit 20`），只刷近期十几条 | 不加 `--days`，跑全库 230+ 期 |
-| 抖音 | `work_list` 接口的 `statistics` 对象 | **只拉第 1 页**（`max_cursor=0&count=100`，一页 40 条已覆盖最近数周），加 `--days 14` | 循环 `max_cursor` 翻完全部页 |
-| 小红书 | 创作者后台列表页 | **只取首屏或轻滚 1~2 次**（覆盖最近 1~2 周即可），加 `--days 14` | 滚到底采集全部笔记 |
-| 微信视频号 | 创作者后台列表页（**先滚一下才渲染**） | **只采第 1 页**（最新约 20 条），加 `--days 14` | 穿透 `shadowRoot` 翻完所有分页 |
+| 抖音 | Ego Lite 拉取 `work_list` 接口的 `statistics` 对象 | **只拉第 1 页**（`max_cursor=0&count=100`，一页 40 条已覆盖最近数周），加 `--days 14` | 循环 `max_cursor` 翻完全部页 |
+| 小红书 | Ego Lite 采创作者后台列表页 | **只取首屏或轻滚 1~2 次**（覆盖最近 1~2 周即可），加 `--days 14` | 滚到底采集全部笔记 |
+| 微信视频号 | Ego Lite 采创作者后台列表页（**先滚一下才渲染**） | **只采第 1 页**（最新约 20 条），加 `--days 14` | 穿透 `shadowRoot` 翻完所有分页 |
+| X（海外） | Ego Lite 打开 `x.com/<用户名>/media`，只读捕获 `UserVideoTimeline` GraphQL JSON | **首屏 + 轻滚 2 次**（覆盖近期 25~35 条视频），加 `--days 14` | 媒体页滚到底采全历史视频 |
 
 **B 站不要开浏览器刷指标。** 公开接口直接返回 `view/like/favorite/share/reply` 五个精确值，和创作者后台完全一致。返回的是字段名不是位置，不存在看错列的问题。日常滚动加上 `--days 14` 只需几秒；全量时默认 3 并发（`--workers 3`）跑一遍约半分钟，偶发一条被限流（`62012`）退避重试即可。另外若需检查这几天有没有刚发但尚未入库的新视频，再顺带看一眼 UP 主空间第 1 页即可。
 
 ### 列序（脚本里已写死，别现场猜）
 
-小红书和视频号的后台接口要登录态和签名，`curl` 打不通，只能在已登录的浏览器里读。读回来的是一段纯文本，数字**没有表头**，只能靠位置判断：
+小红书和视频号的后台接口要登录态和签名，`curl` 打不通，只能在已登录的 Ego Lite 里读页面文本。读回来的数字**没有表头**，只能靠位置判断：
 
 ```
 小红书        观看  评论  点赞  收藏  分享    ← 收藏在分享前面，最反直觉
@@ -158,9 +159,9 @@ bash "<本 SKILL.md 所在目录>/scripts/check-update.sh" "2611.21.0"
 
 小红书这条是拿五期旧数据反推验证出来的：只有「观看/评论/点赞/收藏/分享」这一种排法能同时对上。按直觉写成「观看/点赞/评论/收藏/分享」，每一条都会错位。**这两条列序写在 `scripts/refresh-stats.py` 的 `PLATFORM_SPEC` 里，改之前先拿旧数据反推验证一遍。**
 
-### 抖音走接口，不走列表页
+### 抖音与 X 走结构化 JSON，不靠列表页猜数
 
-`creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<ms>&scene=star_atlas&device_platform=android` 返回原始 JSON，`statistics` 里字段有名字：
+1. **抖音走 `work_list` 接口的 `statistics` 对象**：`creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<ms>&scene=star_atlas&device_platform=android` 返回原始 JSON，`statistics` 里字段有名字：
 
 ```
 play_count   digg_count   comment_count   share_count   collect_count
@@ -169,13 +170,22 @@ play_count   digg_count   comment_count   share_count   collect_count
 
 全是精确整数，不用猜列序，也没有「1.3万」这类四舍五入。**同一个 JSON 里别处还有 `view_count`，那是话题标签的计数**——按它抓会把每条读成 0 或乱数。脚本的 `parse_dy_json()` 只认 `statistics`，认不出才退回列表页解析。
 
-**配对用 `aweme_id`，不要用日期或标题**：同一天发两条是常事，标题还会被平台改写（加话题标签、截短）。`match_row()` 拿到 id 就只按 id 匹配，对不上就报「未匹配」，不会退化成猜日期。
+2. **X 走媒体页 `UserVideoTimeline` GraphQL 旁路 JSON**：`collect-ego.py` 打开 `x.com/<用户名>/media` 时只读捕获公开响应，提纯为 `x-videos.json`（零凭证、零无关流）。每条视频自带 `tweet_id`、Media Studio 视频标题（`additional_media_info.title`）和五项精确整数，不受 `1.3K` 近似值或中英文界面切换影响：
 
-**小红书、视频号没有 id，只能全局一对一配对，不能只看同一天。** 列表页拿不到作品 id，平台侧的发布日期和仓库日期经常差一天（2026-09-10 对 09-09、08-30 对 08-29），标题还会被改写（「我做了一个达芬奇插件」→「我开发了个达芬奇插件」）。以前只按当天 + 标题包含匹配，302 条里有 37 条永远配不上，数字一直停在旧快照上。现在走 `pair_items_to_rows()`：日期差 40 天以内才参与打分，按标题相似度 + 日期接近度排序，贪心一对一分配，且必须甩开第二名 0.06 才认。
+```
+views.count   favorite_count   bookmark_count   retweet_count + quote_count   reply_count
+播放(观看)     点赞(喜欢)        收藏(书签)        分享(转帖 + 引用)              评论(回复)
+```
+
+X 的 `created_at` 为 UTC 时间，`parse_x()` 会统一换算成北京时间（UTC+8）日期，与仓库发布日期对齐。
+
+**抖音与 X 配对用唯一作品 id（`aweme_id` / `tweet_id`），不要用日期或标题**：同一天发两条是常事，标题还会被平台改写。`match_row()` 拿到 id 就只按 id 匹配，对不上就报「未匹配」，不会退化成猜日期。
+
+**小红书、视频号没有 id，只能全局一对一配对，不能只看同一天。** 列表页拿不到作品 id，平台侧的发布日期和仓库日期经常差一天（2026-09-10 对 09-09、08-30 对 08-29），标题还会被改写（「我做了一个达芬奇插件」→「我开发了个达芬奇插件」）。以前只按当天 + 标题包含匹配，302 条里有 37 条永远配不上，数字一直停在旧快照上。现在走 `pair_items_to_rows()`：日期差 40 天以内才参与打分，按标题相似度（同时参考主 `topic` 与平台专属 `title`）+ 日期接近度排序，贪心一对一分配，且必须甩开第二名 0.06 才认。
 
 **`status` 里的 `self_see` 是「仅自己可见」，必须当成「平台不给数」而不是 0。** 实测 80 条里 `self_see=true` 的 8 条 `play_count` 全是 0，而 `self_see=false` 的 72 条全部大于 0——没有例外。这类作品照实打 `limited`（保留最后读数），不能记成 0 播放。同一处还有 `is_delete` / `is_prohibited` / `is_private`，脚本一并认。
 
-核对有没有漏记录，看接口返回的 `total`（等于后台作品总数），和 `data/videos.jsonl` 里该平台的记录数比。翻页传上一页返回的 `max_cursor`，`has_more: false` 表示到底。脚本同时会把「平台近期已有、仓库还没有」的未匹配作品单独列出来提醒「疑似漏收录的新作品」，不要只按用户提的那一条更新，先核对有没有前一天深夜或同日发的另一期漏掉。
+核对有没有漏记录，抖音看接口返回的 `total`（等于后台作品总数），和 `data/videos.jsonl` 里该平台的记录数比。翻页传上一页返回的 `max_cursor`，`has_more: false` 表示到底。脚本同时会把「平台近期已有、仓库还没有」的未匹配作品单独列出来提醒「疑似漏收录的新作品」，不要只按用户提的那一条更新，先核对有没有前一天深夜或同日发的另一期漏掉。
 
 ### 怎么做
 
@@ -188,40 +198,39 @@ python3 scripts/refresh-stats.py --platform bilibili --days 14
 
 （若需要核对最近一两天有没有刚发布但未入库的新视频，打开 UP 主空间 `space.bilibili.com/1698895777/upload/video` 第 1 页扫一眼即可。）
 
-**第二步，另外三个平台**——支持两种本机浏览器方式，按当前环境与登录态任选其一（**默认只采第 1 页 / 首屏**，无需把几百条历史记录翻完）：
+**第二步，另外四个登录态平台统一走 Ego Lite（`ego-browser`）**（**默认只采第 1 页 / 首屏**，无需把几百条历史记录翻完）：
 
-- **方式 A：Ego Lite（`ego-browser`，已登录时推荐）**
-  直接跑内置采集脚本，一次调用把三个平台的作品首屏/接口 JSON 与粉丝页拉到 `/tmp/jackskill-ego/`；若某个平台（常见为微信视频号）登录过期，会自动采完其余平台、停在登录页移交控制权并打印续采命令（`--space <id>`）：
-  ```bash
-  # 日常滚动采集三平台（作品 + 粉丝一起拉到 /tmp/jackskill-ego）
-  python3 scripts/collect-ego.py
+直接跑内置采集脚本，一次调用把抖音 / 小红书 / 微信视频号 / X 的作品数据与粉丝页拉到 `/tmp/jackskill-ego/`；若某个平台（常见为微信视频号或 X）登录过期，会自动采完其余平台、停在登录页移交控制权并打印续采命令（`--space <id>`）：
 
-  # 全量模式（仅明确要求全库校准时才加 --mode full）
-  python3 scripts/collect-ego.py --mode full
+```bash
+# 日常滚动采集四平台（作品 + 粉丝一起拉到 /tmp/jackskill-ego）
+python3 scripts/collect-ego.py
 
-  # 视频号在 Ego Lite 里登录完成后，沿用刚才的 space 补采
-  python3 scripts/collect-ego.py --space <spaceId> --platforms wechat_channels
-  ```
-- **方式 B：`browser-skill`（`bsk`）**
-  在已登录的浏览器里逐个打开下方后台页，用 `bsk_session sync saveFull` 或 `observe` 存成文件再 `--in` 喂给脚本：
+# 全量模式（仅明确要求全库校准时才加 --mode full）
+python3 scripts/collect-ego.py --mode full
 
-| 平台 | 打开哪里 | 默认采集边界 |
+# 某平台在 Ego Lite 里登录完成后，沿用刚才的 space 补采
+python3 scripts/collect-ego.py --space <spaceId> --platforms wechat_channels
+```
+
+| 平台 | Ego Lite 采集入口 | 默认采集边界 |
 | :--- | :--- | :--- |
 | 抖音 | `creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=0&scene=star_atlas&device_platform=android` | **只拉第 1 页**（40 条，无需按 `max_cursor` 继续翻页）；全量时才循环到 `has_more: false` |
-| 小红书 | `creator.xiaohongshu.com/new/note-manager` | **首屏或轻滚 1~2 次**即可，勿滚几十屏到底；注意列表混有图文笔记，正常跳过 |
-| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**渲染出**第 1 页**（20 条）即可；仅在全量模式时才用下方穿透方法翻完多页 |
+| 小红书 | `creator.xiaohongshu.com/new/note-manager` | **首屏或轻滚 2 次**即可，勿滚几十屏到底；注意列表混有图文笔记，正常跳过 |
+| 视频号 | `channels.weixin.qq.com/platform/post/list` | **先滚一下**渲染出**第 1 页**（20 条）即可；仅在全量模式时穿透 `shadowRoot` 翻完多页 |
+| X | `x.com/<用户名>/media`（旁路捕获 `UserVideoTimeline` + `UserByScreenName`） | **首屏 + 轻滚 2 次**（覆盖近期 25~35 条视频）；全量时滚到底采全历史视频 |
 
 ```bash
 # 日常滚动更新：加上 --days 14（或用户指定天数）防止误改置顶老视频
-# 下面路径以 Ego Lite 默认输出目录为例；走 bsk 时换成你存的文件路径即可
 python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --days 14
 python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-notes.txt --days 14
 python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/jackskill-ego/wx-p1.txt --days 14
+python3 scripts/refresh-stats.py --platform x --in /tmp/jackskill-ego/x-videos.json --days 14
 ```
 
-**解析脚本不挑浏览器，四种输出形态全认，不用手工预处理**：不管 `--in` 传的是 `bsk` 的 `saveFull` JSON 外壳 / VOM 折行 `StaticText "..."`、Ego Lite 的 `page.snapshot()`（`text "..."`）、纯文本 `document.body.innerText`，还是 `<pre>` 包裹/裸 JSON，直接原样传入即可。
+**解析脚本直接吃 Ego Lite 的裸 JSON、`page.snapshot()` 与纯文本 `document.body.innerText`，不用手工预处理。**
 
-**微信视频号后台全量翻页实测坑（仅全量更新时需要）**：`platform/post/list` 页面经常挂着一层全屏透明容器（VOM 里显示 `L1 modal cover=100%` 盖住 `L2 page`），直接对「下一页」做 `click` 或 `scroll-to` 会报 `covered or unavailable`。若用户明确要求全量翻页，改用同页 `evaluate` 递归穿透 `shadowRoot` 定位文本为 `下一页` 的按钮/链接调 `.click()`，再等 1.5 秒 `sync` 即可顺畅翻完。
+**微信视频号后台全量翻页实测坑（仅全量更新时需要）**：`platform/post/list` 页面常有透明层遮挡「下一页」，`collect-ego.py` 在 `--mode full` 下会直接通过 `page.evaluate` 递归穿透 `shadowRoot` 定位「下一页」按钮调 `.click()` 翻完所有分页。
 
 `count` 用 **100**，不要用 20：平时第 1 页一次给 40 条，已够覆盖滚动窗口；全量模式翻页时也只需 4 页而非 8 页。
 
@@ -276,11 +285,11 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 1. **近似值不覆盖精确值。** 抖音播放量上万显示成「1.3万」，那是四舍五入过的，1.3 万覆盖 [12500, 13500)。旧值如果已经落在这个区间里，它比「1.3万」更可信，不覆盖。硬写 13000 是降精度。
 2. **平台给 `-` 就标 limited，不清零。** 保留最后读数，记下原因和最后读数日期；平台哪天重新给数了，标记自动摘掉。
 3. **播放量暴跌会报出来。** 掉超 20% 不写入，先报给人看——那多半是读错了行，或者平台改了可见性。点赞小幅回落是正常的（有人取消赞），不拦。
-4. **匹配靠日期 + 标题，不靠顺序。** 一天发两条很常见，只按日期会串行。各平台标题会带话题标签、会被改短，所以归一化后再做包含匹配。抖音按作品 id 配；小红书和视频号按「标题相似度 + 日期接近度」做全局一对一配对，配不上的照实报「未匹配」，不硬塞。
+4. **匹配靠作品 id 或日期 + 标题，不靠顺序。** 抖音按 `aweme_id` 配、X 按 `tweet_id` 配；小红书和视频号按「标题相似度（含平台专属标题）+ 日期接近度」做全局一对一配对，配不上的照实报「未匹配」，不硬塞。
 
 ### 拿不到的情况
 
-- **视频号登录态会过期**，过期时二维码在 iframe 里，`observe` 只看到「加载失败」，得截图才看得见码，要本人扫。这是唯一必须人参与的一步。
+- **视频号与 X 登录态会过期**，视频号过期时二维码在 iframe 里，需要本人扫码；`collect-ego.py` 会自动采完其余平台，再把空间移交给你登录并打印 `--space <id>` 续采命令。
 - **抖音「导出数据」按钮点不动**，也不会落盘到 Downloads。别在这上面反复试。
 - **抖音的 `play_count: 0` 有两种，别混。** 一种是作品正常可见、真的没人看，记 0；另一种是 `self_see=true`（仅自己可见），平台压根不给统计，得打 `limited`。判据就是同一个 `status` 对象里的 `self_see`——实测 80 条里它和「播放是否大于 0」完全对应，没有例外。
 - **B 站 `62002` / `62012` 不是一回事，别混着当成限流重试。** 两个都拿不到接口数据，但页面能打开，处置也不一样：
@@ -300,7 +309,7 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 - **默认滚动更新，新片优先、老片按需全量。** 越是新发布的视频数据变动越剧烈，最需要及时刷新；越老的视频增速趋缓，日常不值得每次都去扫几百期老记录。平时默认更新最近 1~2 周（加 `--days 14`，各平台只采第 1 页 / 首屏），既快又不反复翻页打扰；只有用户明确要求「全量更新」「全部刷一遍」时才跑全库与翻完全部历史页。
 - **局部覆盖要如实说明。** 不管是默认滚动更新还是全量重刷，刷完都要把本次实际覆盖的日期范围和期数说清（例如「本次滚动更新覆盖最近 14 天，更早的老期次沿用既有快照」），不把局部快照说成全库刚刚刷过。
 - **数据是快照，不是实时。** 刷完之后页面上写的还是那天的数，别把「我刷过了」说成「这是此刻的数」。
-- **别为了让数字好看而挑平台。** 四个平台一起刷，缺哪个就如实缺着。
+- **别为了让数字好看而挑平台。** 五个平台一起刷，缺哪个就如实缺着。
 
 ## 粉丝数更新
 
@@ -312,11 +321,12 @@ node scripts/check-data.mjs && node scripts/build-site.mjs
 # B 站：公开接口，免登录，先把 mid 从任意一条作品里取出来再查 fans
 python3 scripts/refresh-followers.py --platform bilibili
 
-# 另外三个：走 Ego Lite 一次采集（或用 bsk observe 存成文件）
+# 另外四个：统一走 Ego Lite 一次采集到 /tmp/jackskill-ego/
 python3 scripts/collect-ego.py --target followers
 python3 scripts/refresh-followers.py --platform douyin --in /tmp/jackskill-ego/dy-followers.txt
 python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-home.txt
 python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/jackskill-ego/wx-home.txt
+python3 scripts/refresh-followers.py --platform x --in /tmp/jackskill-ego/x-followers.json
 
 node scripts/check-followers.mjs && node scripts/build-site.mjs
 ```
@@ -325,12 +335,13 @@ node scripts/check-followers.mjs && node scripts/build-site.mjs
 
 各处读什么（脚本里写死了，别现场猜）：
 
-| 平台 | 打开哪里 | 认的标签 |
+| 平台 | 打开哪里 | 认的字段 / 标签 |
 | :--- | :--- | :--- |
 | B 站 | 不用开浏览器 | `api.bilibili.com/x/relation/stat?vmid=` 的 `follower` |
 | 抖音 | 创作者中心 → **点侧栏「数据中心」** | `总粉丝量` |
 | 小红书 | `creator.xiaohongshu.com/new/home` | `粉丝数` |
 | 视频号 | `channels.weixin.qq.com/platform` | `关注者` |
+| X | `x.com/<用户名>`（或 `/media`） | `UserByScreenName` 的 `relationship_counts.followers`（DOM `关注者 / Followers` 兜底） |
 
 ### 抖音的四个坑（都实测过）
 
@@ -341,7 +352,7 @@ node scripts/check-followers.mjs && node scripts/build-site.mjs
 
 ### 口径
 
-- **不能跨平台相加。** 四个平台是四个账号，同一个人可能四个都关注。「我总共多少粉」这个数不存在，只能各平台分别说。
+- **不能跨平台相加。** 五个平台是五个账号，同一个人可能多个平台都关注。「我总共多少粉」这个数不存在，只能各平台分别说。
 - **读不到就不写。** 认不出标签脚本会直接报错退出，不会拿别的数字顶上。页面上一旦出现一个错的粉丝数，没人看得出来。
 - **平台只给约数就照实记。** 小红书面板上写「1.9 万」，就是那个档位，别自己编一个尾数。
 - **和历史比之前先看日期。** `followers.jsonl` 最新那条的 `date` 才是这份数据的时间点，不是今天。
@@ -360,7 +371,7 @@ data/followers.jsonl   ├─→ node scripts/build-site.mjs ─→ docs/data/*.
 transcripts/md/*.md    ┘
 ```
 
-页面上有四块：全部作品总表（可搜索、点列头排序）、**粉丝**（四张卡片 + 一格一平台的涨粉曲线）、平台表现对照表、按平台分开的月度趋势线。
+页面上有四块：全部作品总表（可搜索、点列头排序）、**粉丝**（五张卡片 + 一格一平台的涨粉曲线）、平台表现对照表、按平台分开的月度趋势线。
 
 **只要改了 `data/` 或 `transcripts/` 下的任何东西，就要重建页面**，否则线上看到的还是旧数字：
 
@@ -382,7 +393,7 @@ node scripts/build-site.mjs
 
 用户发来新视频的逐字稿或封面时走这里。**字段规则的真源是仓库里的 `data/README.md`，别凭记忆填。**
 
-1. **逐字稿**放 `transcripts/md/YYYY-MM-DD_标题.md`，头部三行照抄现有格式：视频原片、发布日期、视频时长。原片只写 B 站与抖音的永久直链，小红书和视频号写平台主页。若用户给的是 `.srt` 字幕或带分幕说明的文稿，先剥去时间轴、HTML 标签与非口播备注，只保留口播正文。
+1. **逐字稿**放 `transcripts/md/YYYY-MM-DD_标题.md`，头部三行照抄现有格式：视频原片、发布日期、视频时长。原片只写 B 站、抖音与 X 的永久直链，小红书和视频号不写原片直链（数据行写平台主页）。若用户给的是 `.srt` 字幕或带分幕说明的文稿，先剥去时间轴、HTML 标签与非口播备注，只保留口播正文。
 2. **数据行**加进 `data/videos.jsonl`，最新的在最前面。`duration` 跨平台因编码对齐常差 1 秒（如原片 27.0s、B 站 28s），优先采用 B 站接口返回的整数秒；未发 B 站时按抖音或原片四舍五入取整。
 3. **封面**放 `docs/covers/<日期>_<主题>/`，三个槽位各一张，再更新 `docs/covers/index.json`。
 4. 收尾跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`。
@@ -397,9 +408,9 @@ id = date + "_" + topic 里的空白换成下划线
 
 **最容易错的一处**：`id` 里不留空格。`topic` 保留原样带空格，只有 `id` 换成下划线。写错时 `check-data.mjs` 会直接报「id 与『日期_标题』不符」并给出正确答案，照抄即可。逐字稿的**文件名**则保留空格（`2026-10-26_AI博主不上班 送外卖 逃避工作.md`）——文件名和 `id` 不是一回事。
 
-### 三个平台的 `url` 写法不一样
+### 五个平台的 `url` 写法不一样
 
-- **B 站、抖音**：作品永久直链（`https://www.bilibili.com/video/BV.../`、`https://www.douyin.com/video/<数字id>`）。
+- **B 站、抖音、X**：作品永久直链（`https://www.bilibili.com/video/BV.../`、`https://www.douyin.com/video/<数字id>`、`https://x.com/<用户名>/status/<tweet_id>`）。
 - **小红书、视频号**：只写平台主页（`https://www.xiaohongshu.com`、`https://channels.weixin.qq.com`）。它们的笔记链接带风控和 Session，几天就失效，写进去等于留一堆死链。
 
 ### 用户直接给封面图时
@@ -420,13 +431,13 @@ python3 scripts/fetch-covers.py --verify
 
 ## 封面模式
 
-每期视频在四个平台用的是**不同比例的三张封面**，是分开上传的三张图，不是同一张裁出来的：
+每期视频在五个平台用的是**不同比例的封面**，是分开上传的图，不是同一张裁出来的：
 
 | 槽位 | 文件 | 谁在用 |
 | :--- | :--- | :--- |
-| 横屏 4:3 | `4x3.jpg` | 小红书、抖音横封、B 站首页推荐、视频号分享卡片 |
-| 竖屏 3:4 | `3x4.jpg` | 抖音竖封、视频号个人主页卡片 |
-| 横屏 16:9 | `16x9.jpg` | B 站个人空间 |
+| 横屏 4:3 | `4x3.jpg` | 小红书横屏、抖音横封、B 站首页推荐、视频号分享卡片 |
+| 竖屏 3:4 | `3x4.jpg` | 小红书竖屏、抖音竖封、视频号个人主页卡片、X 竖屏视频 |
+| 横屏 16:9 | `16x9.jpg` | B 站个人空间、X 横屏视频 |
 
 **槽位是你制作封面时的规格，不是「像素必须等于这个比例」。** 上传之后平台会按自己的展示框做处理：B 站早年那批存成过 3:2（864×540）、16:10，竖版视频在 B 站的封面本来就是竖的（450×800）。这些都是平台当时展示的那张图，照收。
 
@@ -455,11 +466,8 @@ docs/covers/index.json    # 索引，构建站点时并入 docs/data/videos.json
 ### 怎么抓
 
 ```bash
-# 1) 把抖音 work_list 逐页拉完存盘（两种方式任选其一）
-#    - Ego Lite（推荐）：一次循环拉完所有页裸 JSON 到 /tmp/jackskill-ego/dy-p*.json
+# 1) 用 Ego Lite 一次循环拉完抖音 work_list 所有页裸 JSON 到 /tmp/jackskill-ego/dy-p*.json
 python3 scripts/collect-ego.py --platforms douyin --target stats --mode full
-#    - bsk：打开 creator.douyin.com/janus/douyin/creator/pc/work_list?status=0&count=100&max_cursor=<cursor>&scene=star_atlas&device_platform=android
-#      每页用 bsk_inspect snapshot 落成文件，从尾部取下一个 max_cursor 继续（count=100 约 4 页）
 
 # 2) 离线解析成按 aweme_id 索引的清单
 python3 scripts/parse-dy-dump.py --in /tmp/jackskill-ego/dy-p*.json --out /tmp/dy-covers.json

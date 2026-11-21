@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 校验 data/followers.jsonl（四平台粉丝数唯一真源）。
+ * 校验 data/followers.jsonl（五平台粉丝数唯一真源）。
  *
  *   node scripts/check-followers.mjs
  *
@@ -9,7 +9,7 @@
  *
  * 出错（exit 1）：结构坏了 —— 日期格式不对、平台名不认识、粉丝数不是非负整数、
  *                 同一天记了两条、日期不是倒序。
- * 警告（exit 0）：数据本身合法，但看着可疑 —— 四个平台漏了某个、两条快照间隔太久。
+ * 警告（exit 0）：数据本身合法，但看着可疑 —— 已接入的平台漏了某个、两条快照间隔太久。
  *
  * build-site.mjs 会先调这里的 checkFollowers()，出错就不生成页面。
  */
@@ -21,7 +21,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 const FOLLOWERS_FILE = path.join(REPO_ROOT, "data/followers.jsonl");
 
-export const PLATFORMS = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
+export const PLATFORMS = ["bilibili", "douyin", "xiaohongshu", "wechat_channels", "x"];
+// 晚接入的平台从接入日起才检查是否漏抄，避免更早的历史快照刷屏告警。
+const PLATFORM_SINCE = {
+  x: "2026-11-21",
+};
 // 快照隔太久就没法说「这是此刻的粉丝数」。两周没记一次，提醒一声。
 const STALE_DAYS = 14;
 
@@ -78,10 +82,11 @@ export function checkFollowers({ quiet = false } = {}) {
       }
     }
 
-    // 四个平台一次记齐。缺一个不是错——某个平台确实可能还没开通——
+    // 已接入的平台一次记齐。缺一个不是错——某个平台确实可能还没开通——
     // 但多半是漏抄了，提醒一声。
-    const missing = PLATFORMS.filter((k) => !(k in s.platforms));
-    if (missing.length && missing.length < PLATFORMS.length) {
+    const expected = PLATFORMS.filter((k) => !PLATFORM_SINCE[k] || (s.date || "") >= PLATFORM_SINCE[k]);
+    const missing = expected.filter((k) => !(k in s.platforms));
+    if (missing.length && missing.length < expected.length) {
       warnings.push(`${at}（${s.date}）缺 ${missing.join("、")} 的粉丝数`);
     }
   });

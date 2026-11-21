@@ -15,7 +15,7 @@
 ````markdown
 # 视频标题
 
-- **视频原片**：[B站](https://www.bilibili.com/video/BV...) · [抖音](https://www.douyin.com/video/...)（没有的平台不写）
+- **视频原片**：[B站](https://www.bilibili.com/video/BV...) · [抖音](https://www.douyin.com/video/...) · [X](https://x.com/.../status/...)（没有的平台不写）
 - **发布日期**：YYYY-MM-DD
 - **视频时长**：MM:SS (XX 秒)
 
@@ -31,8 +31,8 @@
 ## 怎么找
 
 - **按主题找**：直接搜 `md/` 里的正文，或者用 GitHub 的仓库内搜索。
-- **按数据找**：四个平台的播放、点赞、收藏这些指标在 [`data/videos.jsonl`](../data/videos.jsonl)，每期的 `transcript` 字段指回这里的对应文稿。
-- **在线看**：数据站把全部期数、四个平台的指标和逐字稿正文放在一个页面里，能搜、能排序：<https://jackaistudio.github.io/jackskill/>
+- **按数据找**：五个平台的播放、点赞、收藏这些指标在 [`data/videos.jsonl`](../data/videos.jsonl)，每期的 `transcript` 字段指回这里的对应文稿。
+- **在线看**：数据站把全部期数、五个平台的指标和逐字稿正文放在一个页面里，能搜、能排序：<https://jackaistudio.github.io/jackskill/>
 - **在 Agent 里用**：装了 `/jack` 之后，它会直接检索这个目录，带着这些原话回应你的困惑。
 
 这里没有手写索引表：它跟数据站是同一件事，站点能搜能排序、还跟着数据自动更新，手写的那份只会滞后。

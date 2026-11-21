@@ -43,7 +43,7 @@ const SITE_URL = "https://jackaistudio.github.io/jackskill";
 const RAW_URL = "https://raw.githubusercontent.com/JackAIStudio/jackskill/main";
 const REPO_URL = "https://github.com/JackAIStudio/jackskill";
 
-const PLATFORM_ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
+const PLATFORM_ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels", "x"];
 const METRICS = ["views", "likes", "collects", "shares", "comments"];
 // 平台中文名和 docs/assets/app.js 里的 PLAT.label 是同一套，改一处要改两处。
 // 之所以不共用一份：那份定义在浏览器脚本里，Node 这边拿不到。
@@ -52,6 +52,7 @@ const PLATFORM_LABEL = {
   douyin: "抖音",
   xiaohongshu: "小红书",
   wechat_channels: "微信视频号",
+  x: "X",
 };
 
 const check = checkData({ quiet: true });
@@ -206,10 +207,10 @@ function checkCoverIds(covers) {
 const coversById = readCovers();
 
 /**
- * 粉丝数快照：一天一条，四平台各一个数。
+ * 粉丝数快照：一天一条，各平台各一个数。
  *
- * 这一份**只有当下的数，不能相加**——账号在四个平台是四个账号，
- * 粉丝叠起来没有意义（同一个人可能四个平台都关注了）。页面上它单独成块，
+ * 这一份**只有当下的数，不能相加**——账号在五个平台是五个账号，
+ * 粉丝叠起来没有意义（同一个人可能多个平台都关注了）。页面上它单独成块，
  * 不与作品指标共用任何合计。
  *
  * 缺平台就整个不写那个键，页面显示「—」而不是 0：
@@ -352,10 +353,10 @@ const toolLines = catalog.length
 
 const llms = `# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
-> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 ${payload.count} 条、视频口播逐字稿 ${withTranscript} 篇（约 ${Math.round(transcriptChars / 10000)} 万字）、四平台粉丝数快照 ${followers.snapshots.length} 条，以及 ${catalog.length} 个自研工具的编号规范。
+> 一个 Agent Skill。安装后在 Agent 中输入 /jack 调用。内含跨平台自媒体数据 ${payload.count} 条、视频口播逐字稿 ${withTranscript} 篇（约 ${Math.round(transcriptChars / 10000)} 万字）、五平台粉丝数快照 ${followers.snapshots.length} 条，以及 ${catalog.length} 个自研工具的编号规范。
 
 数据和逐字稿全部随仓库分发：读取不需要登录、不需要凭证、不连任何外部服务。
-时间跨度 ${from} 至 ${to}，覆盖 ${platformNames}四个平台。
+时间跨度 ${from} 至 ${to}，覆盖 ${platformNames}五个平台（含海外首个渠道 X）。
 
 本文件由 \`scripts/build-site.mjs\` 从仓库真源生成，构建于 ${payload.generatedAt}。
 
@@ -368,17 +369,17 @@ const llms = `# JackSkill — 吴杰克 Jack 的开源自媒体上下文库
 
 ## 数据
 
-- [作品数据（单文件全集）](${SITE_URL}/data/videos.json)：${payload.count} 条记录的 JSON。单条含 id、date、topic、duration、summary（四平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 ${withTranscript} 条带逐字稿。
+- [作品数据（单文件全集）](${SITE_URL}/data/videos.json)：${payload.count} 条记录的 JSON。单条含 id、date、topic、duration、summary（五平台播放/点赞/收藏/分享/评论）、platforms（各平台标题与链接）、transcript（逐字稿正文，按段落）。其中 ${withTranscript} 条带逐字稿。
 - [作品数据真源（JSONL）](${RAW_URL}/data/videos.jsonl)：每行一条，字段与上同。这是唯一真源，上面那份是它的构建产物。
 - [逐字稿目录（Markdown 真源）](${REPO_URL}/tree/main/transcripts/md)：${withTranscript} 个文件，文件名格式 \`YYYY-MM-DD_标题.md\`，\`## 逐字稿\` 之后是口播正文。
 - [数据文件说明](${RAW_URL}/data/README.md)：字段定义与口径。
 
 ### 粉丝数
 
-- [粉丝快照（单文件全集）](${SITE_URL}/data/followers.json)：四平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 ${followerPlatforms.length} 个平台有数，最新快照 ${followers.asOf}。
+- [粉丝快照（单文件全集）](${SITE_URL}/data/followers.json)：五平台粉丝数的时间序列，一天一条快照，字段为 date + platforms（各平台 followers）。当前 ${followerPlatforms.length} 个平台有数，最新快照 ${followers.asOf}。
 - [粉丝数真源（JSONL）](${RAW_URL}/data/followers.jsonl)：每行一条快照，是上面那份的来源。
 
-粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，四个平台是四个账号。要「涨粉」就看两条快照的差。
+粉丝数**不能和作品指标相加，也不能跨平台相加**：账号级数据只有当下的数，五个平台是五个账号。要「涨粉」就看两条快照的差。
 
 注意：数据站页面 ${SITE_URL}/ 的表格由 JavaScript 渲染，直接抓页面拿不到数据行。要数据请取上面作品与粉丝那几个链接。
 

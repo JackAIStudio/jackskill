@@ -27,13 +27,15 @@ make_repo() {
 repo1="$CASE_TMP/repo1"
 make_repo "$repo1"
 cat > "$repo1/data/followers.jsonl" <<'EOF'
-{"date":"2026-10-29","platforms":{"bilibili":{"followers":470},"douyin":{"followers":299}}}
-{"date":"2026-10-30","platforms":{"bilibili":{"followers":479},"douyin":{"followers":299}}}
+{"date":"2026-10-29","platforms":{"bilibili":{"followers":470},"douyin":{"followers":299},"x":{"followers":460}}}
+{"date":"2026-10-30","platforms":{"bilibili":{"followers":479},"douyin":{"followers":299},"x":{"followers":462}}}
 EOF
 out1="$(python3 "$repo1/skills/jack/scripts/numbered-prompts.py" list 2>&1)"
 assert_output_contains "$out1" "粉丝（2026-10-30）" || exit 1
 assert_output_contains "$out1" "B站 479" || exit 1
+assert_output_contains "$out1" "X 462" || exit 1
 assert_output_contains "$out1" "+9" || exit 1
+assert_output_contains "$out1" "+2" || exit 1
 assert_output_contains "$out1" "持平" || exit 1
 
 # --- 2. 一条快照：不编趋势 -------------------------------------------------

@@ -7,14 +7,18 @@
 // 抖音最麻烦：它的品牌红 #FE2C55 和小红书的 #FF2442 几乎一样，
 // 但抖音 logo 本体是黑的（青 #25F4EE 和红只是故障风描边），所以用黑——
 // 既对得上 logo，又能和小红书分开。
+// X 官方 logo 也是黑的，但抖音已经用了 #161823，两个黑在折线图和小圆点上分不清；
+// 早年品牌蓝 #1D9BF0 又和 B 站 #00AEEC 太近，灰线又会混进网格与坐标轴，
+// 所以给 X 选了沉稳的深靛紫 #5E4DB2，保证五个平台一眼分开。
 // short 是列头用的短名：表头里挤不下「微信视频号」五个字
 const PLAT = {
   bilibili:        { label: "B 站",      short: "B 站",   color: "#00AEEC" },
   douyin:          { label: "抖音",       short: "抖音",   color: "#161823" },
   xiaohongshu:     { label: "小红书",     short: "小红书", color: "#FF2442" },
   wechat_channels: { label: "微信视频号", short: "视频号", color: "#FA9D3B" },
+  x:               { label: "X",          short: "X",      color: "#5E4DB2" },
 };
-const ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels"];
+const ORDER = ["bilibili", "douyin", "xiaohongshu", "wechat_channels", "x"];
 const METRICS = ["views", "likes", "collects", "shares", "comments"];
 
 /* ---------------- 小工具 ---------------- */
@@ -83,10 +87,12 @@ const VIDEO_URL = [
   /^https?:\/\/(www\.)?bilibili\.com\/video\/BV[0-9A-Za-z]+/i,
   /^https?:\/\/(www\.)?douyin\.com\/video\/\d+/i,
   /^https?:\/\/(www\.)?xiaohongshu\.com\/explore\/[0-9a-z]+/i,
+  /^https?:\/\/(www\.)?(x|twitter)\.com\/[A-Za-z0-9_]+\/status\/\d+/i,
 ];
 const HOME_URL = [
   /^https?:\/\/(www\.)?xiaohongshu\.com\/?$/i,
   /^https?:\/\/channels\.weixin\.qq\.com\/?$/i,
+  /^https?:\/\/(www\.)?(x|twitter)\.com(\/[A-Za-z0-9_]+)?\/?$/i,
 ];
 
 function urlKind(url) {
@@ -271,8 +277,8 @@ function renderPlatforms() {
         </tr>`).join("")}
       <tr class="dim">
         <td>全部作品</td>
-        <td title="全站收录的总期数。不是上面四行相加——同一期可能发在多个平台">${fmtInt(DATA.count)}</td>
-        <td title="四平台播放量之和">${fmtCompact(sum(rows.map((r) => r.totalViews)))}</td>
+        <td title="全站收录的总期数。不是上面各行相加——同一期可能发在多个平台">${fmtInt(DATA.count)}</td>
+        <td title="五平台播放量之和">${fmtCompact(sum(rows.map((r) => r.totalViews)))}</td>
         <td class="dim">—</td>
         <td class="dim">—</td>
         <td class="dim">—</td>
@@ -283,7 +289,7 @@ function renderPlatforms() {
   $("platNote").textContent =
     `收录期数只算采到数据的期。另有 ${fmtInt(blanks)} 条记录平台侧不提供数据（五个指标全是 0，` +
     `多为作品被限制公开或已删除），它们不进这一张表的任何一列。` +
-    `「全部作品」那行的 ${fmtInt(DATA.count)} 是全站总期数，不是上面四行相加——同一期可能发在多个平台。`;
+    `「全部作品」那行的 ${fmtInt(DATA.count)} 是全站总期数，不是上面各行相加——同一期可能发在多个平台。`;
 }
 
 /* ---------------- 时间线 ---------------- */
@@ -313,7 +319,7 @@ const TREND_MODES = [
 
 function renderTrend(mode) {
   const months = monthList();
-  const buckets = new Map(months.map((m) => [m, { bilibili: [], douyin: [], xiaohongshu: [], wechat_channels: [] }]));
+  const buckets = new Map(months.map((m) => [m, Object.fromEntries(ORDER.map((k) => [k, []]))]));
 
   for (const v of DATA.videos) {
     const mk = (v.date || "").slice(0, 7);
@@ -452,7 +458,7 @@ function renderTrend(mode) {
 // 混在一个文件里迟早有人把粉丝加进「合计」。
 //
 // 读的时候有两条铁律：
-//   1. 粉丝不能跨平台相加。四个平台是四个账号，同一个人可能四个都关注。
+//   1. 粉丝不能跨平台相加。五个平台是五个账号，同一个人可能多个平台都关注。
 //   2. 没采到的平台显示「—」，不显示 0。0 粉丝和没读到数是两件事。
 
 /** 卡片上的粉丝数：过万折成「1.9 万」，但悬浮提示里一定给出原值。 */
@@ -521,7 +527,7 @@ function renderFollowers() {
 
   $("followNote").textContent =
     `最近一次读数：${rangeText}。粉丝数是账号级的存量，不能和作品播放相加，也不跨平台相加——` +
-    `四个平台是四个账号。涨粉看的是两条快照的差；只有一次快照时只显示存量，不编趋势。` +
+    `五个平台是五个账号。涨粉看的是两条快照的差；只有一次快照时只显示存量，不编趋势。` +
     `平台只给到约数的（比如「1.9 万」），照实记，不猜尾数。`;
 }
 
@@ -572,10 +578,11 @@ function renderFollowChart() {
     return;
   }
 
-  // 四格并排；窄屏靠 viewBox 等比缩，不另写一套布局
-  const W = 900, H = 260;
+  // 每行最多两格，总高度随行数线性增长；窄屏靠 viewBox 等比缩，不另写一套布局
+  const W = 900;
   const cols = series.length <= 2 ? series.length : 2;
   const rows = Math.ceil(series.length / cols);
+  const H = rows * 130;
   const cellW = W / cols;
   const cellH = H / rows;
   const pad = { l: 46, r: 12, t: 26, b: 22 };
@@ -664,7 +671,7 @@ function renderFollowChart() {
   });
 
   legend.innerHTML =
-    `<span class="legend-note">每个平台一格、各自一根纵轴：四者量级差二十倍，挤在一根轴上小平台会被压成贴底的一条线。` +
+    `<span class="legend-note">每个平台一格、各自一根纵轴：各平台量级差几十倍，挤在一根轴上小平台会被压成贴底的一条线。` +
     `格子左上角是这次的范围（放大过的，不是从 0 起）。线断掉的地方是那天没读到这个平台的数，没有补值。</span>`;
 }
 
@@ -683,7 +690,7 @@ function niceMax(v) {
 // 分平台播放量各占一列——竖着扫才能比较，塞进主题下面那行小字是比不出来的。
 //
 // 最后两列跟着上面的指标走，值在 renderHead / renderTable 里现算：
-//   合计 = 当前指标的四平台之和（以前这里写死 views，所以切到点赞时它还在显示播放）
+//   合计 = 当前指标的五平台之和（以前这里写死 views，所以切到点赞时它还在显示播放）
 //   效率 = 当前指标 ÷ 播放（播放视图下退回收藏率，见 effMetricKey）
 const COLS = [
   { key: "date",        label: "日期",   cls: "col-date" },
@@ -929,7 +936,7 @@ function renderTable() {
         <td class="col-topic"><div class="t">${highlight(v.topic, state.q)}</div><div class="sub">${esc(eng)}</div>${hitLine}</td>
         <td class="col-num col-dim">${fmtDuration(v.duration)}</td>
         ${cells}
-        <td class="col-num col-total" title="四平台${metricLabel(state.platMetric)}之和">${fmtCompact(v.summary[state.platMetric] || 0)}</td>
+        <td class="col-num col-total" title="五平台${metricLabel(state.platMetric)}之和">${fmtCompact(v.summary[state.platMetric] || 0)}</td>
         <td class="col-num" title="${esc(erTip)}">${v.summary.views ? (er * 100).toFixed(1) + "%" : "—"}</td>
       </tr>`;
     })
@@ -953,8 +960,8 @@ function renderTable() {
 // 槽位名照旧，旁边把实测比例标出来，不拿规格冒充实际。
 const COVER_RATIOS = [
   { key: "4x3", label: "横屏 4:3", note: "小红书 / 抖音横封 / B 站首页推荐 / 视频号分享卡片" },
-  { key: "3x4", label: "竖屏 3:4", note: "抖音竖封 / 视频号个人主页卡片" },
-  { key: "16x9", label: "横屏 16:9", note: "B 站个人空间" },
+  { key: "3x4", label: "竖屏 3:4", note: "抖音竖封 / 视频号个人主页卡片 / X 竖屏视频" },
+  { key: "16x9", label: "横屏 16:9", note: "B 站个人空间 / X 横屏视频" },
 ];
 
 // 把实测宽高说成人话：800×450 是 16:9，800×500 是 3:2。

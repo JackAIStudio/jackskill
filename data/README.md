@@ -4,8 +4,8 @@
 
 | 文件 | 是什么 | 粒度 | 能相加吗 |
 | :--- | :--- | :--- | :--- |
-| `videos.jsonl` | 每一期视频的播放、点赞、收藏、分享、评论 | 一行一期 | 能。`summary` 就是四平台之和 |
-| `followers.jsonl` | 四个账号的粉丝数 | 一行一天（快照） | **不能。**账号级存量，也不跨平台相加 |
+| `videos.jsonl` | 每一期视频的播放、点赞、收藏、分享、评论 | 一行一期 | 能。`summary` 就是五平台之和 |
+| `followers.jsonl` | 五个账号的粉丝数 | 一行一天（快照） | **不能。**账号级存量，也不跨平台相加 |
 
 加粉丝数的时候最容易犯的错，是把它当成第六个指标塞进 `videos.jsonl`。不行：作品指标是「一行一期、可以累加」的量，粉丝是「一天一个、只有当下」的量。混在一起，页面上迟早会有人把粉丝加进「合计」。所以它单独一个文件、单独一道校验（`scripts/check-followers.mjs`）、页面上也单独一块。
 
@@ -13,7 +13,7 @@
 
 # data/videos.jsonl
 
-跨平台自媒体数据，**作品部分唯一真源**。全网四大平台（B 站、抖音、小红书、微信视频号）每一期的真实播放、点赞、收藏、分享、评论都在这里。
+跨平台自媒体数据，**作品部分唯一真源**。全网五大平台（B 站、抖音、小红书、微信视频号、X，其中 X 为海外首个渠道）每一期的真实播放、点赞、收藏、分享、评论都在这里。
 
 - 一行一期，标准 JSON Lines：**每行一个完整 JSON 对象，行与行之间没有逗号，末尾一个换行**。
 - 文件按 `date` 倒序排列（最新在前）。
@@ -34,7 +34,7 @@ node scripts/check-data.mjs
 | `topic` | string | 这一期的标题。有逐字稿时取自文件名。 |
 | `duration` | int | 时长（秒）。跨平台差 1 秒时优先以 B 站接口为准，不知道就填 `0`。 |
 | `transcript` | string \| null | 逐字稿路径，如 `transcripts/md/2026-10-08_标题.md`；没有就填 `null`。 |
-| `summary` | object | 四个平台相加的汇总，见下。**必须等于各平台之和。** |
+| `summary` | object | 五个平台相加的汇总，见下。**必须等于各平台之和。** |
 | `platforms` | object | 按平台分的数据，见下。**某个平台没有数据就整个不写这个键。** |
 
 `summary` 固定五个非负整数：
@@ -43,7 +43,7 @@ node scripts/check-data.mjs
 { "views": 726, "likes": 5, "collects": 4, "shares": 1, "comments": 0 }
 ```
 
-`platforms` 的键只能是这四个：`bilibili`、`douyin`、`xiaohongshu`、`wechat_channels`。
+`platforms` 的键只能是这五个：`bilibili`、`douyin`、`xiaohongshu`、`wechat_channels`、`x`。
 每个平台对象：
 
 ```json
@@ -60,7 +60,9 @@ node scripts/check-data.mjs
 "limited": { "reason": "减少作品推荐", "lastRead": "2026-10-19" }
 ```
 
-`url` 有一条约定：**B 站和抖音填作品永久直链；小红书和微信视频号填平台主页**（`https://www.xiaohongshu.com` 与 `https://channels.weixin.qq.com`）。后两者的笔记链接受风控和 Session 限制，很快会失效，所以数据里不存。
+`url` 有一条约定：**B 站、抖音和 X 填作品永久直链**（`https://www.bilibili.com/video/BV.../`、`https://www.douyin.com/video/<id>`、`https://x.com/<用户名>/status/<tweet_id>`）；**小红书和微信视频号填平台主页**（`https://www.xiaohongshu.com` 与 `https://channels.weixin.qq.com`）。后两者的笔记链接受风控和 Session 限制，很快会失效，所以数据里不存。
+
+X 的五项指标口径：`views` = 观看（Impressions / Views）、`likes` = 喜欢（Likes）、`collects` = 书签（Bookmarks）、`shares` = 转帖 + 引用（Reposts + Quotes）、`comments` = 回复（Replies）。
 
 ## 完整示例
 
@@ -99,12 +101,12 @@ node scripts/check-data.mjs
 
 ## 指标怎么更新
 
-`data/videos.jsonl` 里的数字不会自己变，得有人定期从四个平台读回来写进去。用 `scripts/refresh-stats.py`：
+`data/videos.jsonl` 里的数字不会自己变，得有人定期从五个平台读回来写进去。B 站免登录走公开接口，另外四个需要登录态的平台统一走 Ego Lite（`scripts/collect-ego.py`），再交给 `scripts/refresh-stats.py` 入库：
 
 **日常默认做滚动更新（最近 7~14 天 / 各平台第 1 页或首屏）**——越新的视频变化越快，老视频曲线平缓，无需每次都翻遍全库；只有明确需要全库校准时才不加 `--days` 全量重刷。
 
 ```bash
-# 方式 A：Ego Lite 一次采集三平台首屏与粉丝页到 /tmp/jackskill-ego/（也可继续用 bsk observe 单独存盘）
+# Ego Lite 一次采集抖音 / 小红书 / 微信视频号 / X 的近期作品与粉丝页到 /tmp/jackskill-ego/
 python3 scripts/collect-ego.py
 
 # 日常滚动更新：加 --days 14（只刷新近 14 天，B 站几秒跑完；其余平台只采第 1 页 / 首屏）
@@ -112,17 +114,20 @@ python3 scripts/refresh-stats.py --platform bilibili --days 14
 python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --days 14
 python3 scripts/refresh-stats.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-notes.txt --days 14
 python3 scripts/refresh-stats.py --platform wechat_channels --in /tmp/jackskill-ego/wx-p1.txt --days 14
+python3 scripts/refresh-stats.py --platform x --in /tmp/jackskill-ego/x-videos.json --days 14
 
 # 全量重刷（仅当明确需要全库核对时才运行不带 --days 的全量模式）
 python3 scripts/refresh-stats.py --platform bilibili
 
 # 只看会改什么，不落盘；也可用 --limit N 只刷最新 N 期
-python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1.json --dry-run
+python3 scripts/refresh-stats.py --platform x --in /tmp/jackskill-ego/x-videos.json --dry-run
 ```
 
-`--in` 同时支持 `bsk_session sync saveFull` 外包 JSON、VOM 折行 `StaticText`、Ego Lite `page.snapshot()`、纯文本 `document.body.innerText` 与裸 JSON，不用手工拆壳。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
+`--in` 直接吃 Ego Lite 输出的裸 JSON、`page.snapshot()` 与纯文本 `document.body.innerText`，不用手工预处理。刷完跑 `node scripts/check-data.mjs && node scripts/build-site.mjs`，`summary` 由脚本重算，不用手算。
 
 **B 站不需要开浏览器。** `api.bilibili.com/x/web-interface/view?bvid=` 免登录返回 `view/like/favorite/share/reply`，和创作者后台一致，而且字段有名字，不存在看错列的问题。
+
+**X 走媒体页 GraphQL 旁路 JSON，不靠列表页猜数。** `collect-ego.py` 打开 `x.com/<用户名>/media` 时只读捕获公开的 `UserVideoTimeline` 响应，落盘成 `x-videos.json`。每条自带 `tweet_id`、Media Studio 视频标题与五项精确整数（`views` / `likes` / `bookmarks` / `retweets + quotes` / `replies`），不受 `1.3K` 近似值或中英文界面切换影响；`refresh-stats.py` 按 `tweet_id` 精确匹配，零歧义。
 
 **小红书和微信视频号的后台列表页，数字没有表头，只能靠位置判断。** 列序写在脚本的 `PLATFORM_SPEC` 里：
 
@@ -168,22 +173,22 @@ python3 scripts/refresh-stats.py --platform douyin --in /tmp/jackskill-ego/dy-p1
 
 # data/followers.jsonl
 
-四个平台的粉丝数，**粉丝部分唯一真源**。一行一条快照，四平台各一个数。
+五个平台的粉丝数，**粉丝部分唯一真源**。一行一条快照，各平台各一个数。
 
 - 标准 JSON Lines，**按 `date` 倒序**（最新在前），与 `videos.jsonl` 同一习惯。
 - **一天一条**。涨粉看的是两条快照的差；同一天重刷会替换当天那条，不会多出一条。
-- 四个平台一次记齐；某个平台暂时读不到，就先不写那个键，页面显示「—」，不要写 0。
+- 已接入的平台一次记齐；某个平台暂时读不到，就先不写那个键，页面显示「—」，不要写 0。
 
 ## 字段
 
 ```json
-{"date":"2026-10-30","platforms":{"bilibili":{"followers":479},"douyin":{"followers":299},"xiaohongshu":{"followers":6441},"wechat_channels":{"followers":446}}}
+{"date":"2026-11-21","platforms":{"bilibili":{"followers":507},"douyin":{"followers":328},"xiaohongshu":{"followers":6456},"wechat_channels":{"followers":471},"x":{"followers":462}}}
 ```
 
 | 字段 | 类型 | 说明 |
 | :--- | :--- | :--- |
 | `date` | string | `YYYY-MM-DD`，读数的日期。 |
-| `platforms` | object | 键只能是 `bilibili`、`douyin`、`xiaohongshu`、`wechat_channels`。 |
+| `platforms` | object | 键只能是 `bilibili`、`douyin`、`xiaohongshu`、`wechat_channels`、`x`。 |
 | `platforms.<平台>.followers` | int | 该平台的粉丝总数，非负整数。 |
 
 **只允许 `followers` 一个字段。** 多写（比如 `index`、`delta`、`gained`）会直接报错：那些要么能算出来，要么是平台自己的口径，存进来只会各自解释一套。
@@ -199,7 +204,7 @@ node scripts/check-followers.mjs
 粉丝和作品指标是三处不一样：
 
 1. **粒度不同**：作品一行一期，粉丝一行一天。
-2. **能不能加不同**：`summary` 是四平台之和，粉丝**不能**加——四个平台是四个账号，同一个人可能四个都关注。
+2. **能不能加不同**：`summary` 是五平台之和，粉丝**不能**加——五个平台是五个账号，同一个人可能多个平台都关注。
 3. **更新节奏不同**：作品指标刷一次覆盖一批，粉丝一天一条快照，攒起来才有曲线。
 
 塞进 `videos.jsonl` 的话，第一件事就会有人在页面上把粉丝加进「合计」。
@@ -210,21 +215,23 @@ node scripts/check-followers.mjs
 # B 站：公开接口，免登录
 python3 scripts/refresh-followers.py --platform bilibili
 
-# 另外三个：走 Ego Lite 采集（或用 bsk observe 存成文件），--in 兼容 VOM / Ego snapshot / 纯文本
+# 另外四个：统一走 Ego Lite 一次采集到 /tmp/jackskill-ego/
 python3 scripts/collect-ego.py --target followers
 python3 scripts/refresh-followers.py --platform douyin --in /tmp/jackskill-ego/dy-followers.txt
 python3 scripts/refresh-followers.py --platform xiaohongshu --in /tmp/jackskill-ego/xhs-home.txt
 python3 scripts/refresh-followers.py --platform wechat_channels --in /tmp/jackskill-ego/wx-home.txt
+python3 scripts/refresh-followers.py --platform x --in /tmp/jackskill-ego/x-followers.json
 ```
 
 各处读什么：
 
-| 平台 | 打开哪里 | 认的标签 | 备注 |
+| 平台 | 打开哪里 | 认的字段 / 标签 | 备注 |
 | :--- | :--- | :--- | :--- |
 | B 站 | 不用开浏览器 | `relation/stat` 接口的 `follower` | 精确整数，免登录 |
 | 抖音 | 创作者中心 → 数据中心（**点侧栏进去**） | `总粉丝量` | 见下面那个坑 |
 | 小红书 | `creator.xiaohongshu.com/new/home` | `粉丝数` | 精确整数 |
 | 视频号 | `channels.weixin.qq.com/platform` | `关注者` | 精确整数 |
+| X | `x.com/<用户名>`（或 `/media`） | `UserByScreenName` 的 `relationship_counts.followers` | 精确整数，页面 `关注者 / Followers` 兜底 |
 
 **抖音有四个坑，都实测过：**
 
